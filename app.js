@@ -89,22 +89,34 @@ app.get("/api/family/:familyId",async(req,res)=>{
   }catch(e){res.status(400).json({ok:false,error:e.message})}
 });
 
-app.delete("/api/person/:id",async(req,res)=>{
+app.delete("/api/admin/person/:id",async(req,res)=>{
   try{
+    const adminKey=process.env.ADMIN_KEY || "Akashkey123";
+    if(!adminKey || req.headers["x-admin-key"]!==adminKey)
+      return res.status(401).json({ok:false,error:"Unauthorized"});
+
     await connectDB();
     const p=await Person.findById(req.params.id);
-    if(!p)return res.status(404).json({ok:false,error:"Not found"});
+    if(!p)return res.status(404).json({ok:false,error:"Member not found"});
+
+    // Delete this member and all of its descendants so no broken tree links remain.
     const queue=[p._id];
     const ids=[];
     while(queue.length){
       const parentId=queue.shift();
       ids.push(parentId);
-      const kids=await Person.find({familyId:p.familyId,parentId}).select('_id').lean();
+      const kids=await Person.find({
+        familyId:p.familyId,
+        parentId
+      }).select('_id').lean();
       kids.forEach(k=>queue.push(k._id));
     }
+
     await Person.deleteMany({_id:{$in:ids}});
-    res.json({ok:true});
-  }catch(e){res.status(400).json({ok:false,error:e.message})}
+    res.json({ok:true,deletedCount:ids.length});
+  }catch(e){
+    res.status(400).json({ok:false,error:e.message});
+  }
 });
 
 app.get("/api/admin/families",async(req,res)=>{
