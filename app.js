@@ -192,4 +192,12 @@ app.get("/admin",(req,res)=>res.sendFile(path.join(__dirname,"public","admin.htm
 
 app.get("/{*splat}",(req,res)=>res.sendFile(path.join(__dirname,"public","index.html")));
 
+// Multer errors must be converted to JSON; otherwise the browser may show "Unexpected token <"
+// when it tries to parse Vercel/Express HTML error output as JSON.
+app.use((err,req,res,next)=>{
+  if(!err) return next();
+  const msg=err.code==="LIMIT_FILE_SIZE" ? "Photo is too large. Maximum 50MB allowed." : (err.message || "Upload failed");
+  res.status(err.code==="LIMIT_FILE_SIZE" ? 413 : 400).json({ok:false,error:msg});
+});
+
 module.exports={app,connectDB};

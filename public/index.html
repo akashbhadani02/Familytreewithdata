@@ -85,7 +85,7 @@ async function preparePhoto(file){
    img.src=url;
  });
 }
-async function createRoot(){const name=$('rootName').value.trim();if(!name)return alert('કૃપા કરીને નામ લખો');const fd=new FormData();fd.append('name',name);try{const photo=await preparePhoto($('rootPhoto').files[0]);if(photo)fd.append('photo',photo);}catch(e){return alert('ફોટો upload માટે તૈયાર થઈ શક્યો નથી. બીજો ફોટો પસંદ કરો.');}const r=await fetch('/api/family/start',{method:'POST',body:fd});const d=await r.json();if(!d.ok)return alert(d.error);familyId=d.familyId;token=d.person.addToken;const link=absoluteLink(d.addLink);$('rootSuccess').style.display='block';$('rootSuccess').innerHTML='<b>નામ સાચવાઈ ગયું! 🎉</b><div>હવે આ link '+safe(name)+'ના દીકરા/આગળના સભ્યને મોકલો:</div><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">Link copy કરો</div>';history.replaceState({},'', '/?family='+encodeURIComponent(familyId));$('rootBox').classList.add('hidden');$('viewBox').classList.remove('hidden');$('currentLink').textContent=link;loadFamily()}
+async function createRoot(){const name=$('rootName').value.trim();if(!name)return alert('કૃપા કરીને નામ લખો');const fd=new FormData();fd.append('name',name);try{const photo=await preparePhoto($('rootPhoto').files[0]);if(photo)fd.append('photo',photo);}catch(e){return alert('ફોટો upload માટે તૈયાર થઈ શક્યો નથી. બીજો ફોટો પસંદ કરો.');}const r=await fetch('/api/family/start',{method:'POST',body:fd});const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}if(!r.ok||!d.ok)return alert(d.error||'Upload failed');familyId=d.familyId;token=d.person.addToken;const link=absoluteLink(d.addLink);$('rootSuccess').style.display='block';$('rootSuccess').innerHTML='<b>નામ સાચવાઈ ગયું! 🎉</b><div>હવે આ link '+safe(name)+'ના દીકરા/આગળના સભ્યને મોકલો:</div><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">Link copy કરો</div>';history.replaceState({},'', '/?family='+encodeURIComponent(familyId));$('rootBox').classList.add('hidden');$('viewBox').classList.remove('hidden');$('currentLink').textContent=link;loadFamily()}
 async function addPerson(){
  const btn=$('addPersonBtn');
  const name=$('addName').value.trim();
@@ -98,7 +98,7 @@ async function addPerson(){
    const photo=await preparePhoto($('addPhoto').files[0]);
    if(photo)fd.append('photo',photo);
    const r=await fetch('/api/add/'+token,{method:'POST',body:fd});
-   const d=await r.json();
+   const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}
    if(!d.ok)throw new Error(d.error||'નામ add થયું નથી');
    const link=absoluteLink(d.addLink);token=d.person.addToken;
    $('addSuccess').style.display='block';

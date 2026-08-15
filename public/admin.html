@@ -301,12 +301,36 @@
             }catch(e){alert('Families load error: '+e.message);}
         }
 
-        async function createFamily(){
+        async function prepareAdminPhoto(file){
+    if(!file) return null;
+    if(!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type)) throw new Error('માત્ર image photo પસંદ કરો.');
+    // Vercel serverless requests have a much smaller practical request limit than 50MB.
+    // Accept up to 50MB from the phone, then compress it in the browser before upload.
+    if(file.size <= 900*1024 && /^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
+    return await new Promise((resolve,reject)=>{
+        const img=new Image(); const url=URL.createObjectURL(file);
+        img.onload=()=>{
+            URL.revokeObjectURL(url);
+            const max=1600, scale=Math.min(1,max/Math.max(img.width,img.height));
+            const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale));
+            const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,c.width,c.height);
+            const make=(q)=>c.toBlob(b=>{
+                if(!b) return reject(new Error('Photo processing failed'));
+                if(b.size>4*1024*1024 && q>0.55) return make(q-0.08);
+                resolve(new File([b],'family-photo.jpg',{type:'image/jpeg'}));
+            },'image/jpeg',q);
+            make(0.82);
+        };
+        img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Invalid photo'))}; img.src=url;
+    });
+}
+
+async function createFamily(){
             const name=prompt('નવી Family માટે પ્રથમ સભ્યનું પૂરું નામ લખો:');
             if(!name||!name.trim())return;
             const fd=new FormData(); fd.append('name',name.trim());
             try{
-                const r=await fetch('/api/family/start',{method:'POST',body:fd}); const d=await r.json();
+                const r=await fetch('/api/family/start',{method:'POST',body:fd}); const raw=await r.text(); let d; try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}
                 if(!r.ok||!d.ok)return alert(d.error||'Family બનાવી શકાઈ નથી');
                 await loadFamilies(); await viewFamily(d.familyId);
             }catch(e){alert('Create error: '+e.message);}
@@ -504,14 +528,14 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
 
                 const fd=new FormData();
                 fd.append('name',name.trim());
-                if(file) fd.append('photo',file);
+                if(file){ file=await prepareAdminPhoto(file); fd.append('photo',file); }
 
                 const r=await fetch('/api/admin/person/'+encodeURIComponent(parentId)+'/add',{
                     method:'POST',
                     headers:{'x-admin-key':key},
                     body:fd
                 });
-                const d=await r.json();
+                const raw=await r.text(); let d; try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}
                 if(!r.ok || !d.ok) throw new Error(d.error||'Member add થયો નથી');
 
                 await viewFamily(currentFamilyId);
