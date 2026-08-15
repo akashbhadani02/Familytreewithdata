@@ -196,6 +196,21 @@
             font-size: 13px
         }
     </style>
+
+<style id="photoChoicePopupStyle">
+.photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:99999;align-items:center;justify-content:center;padding:20px}
+.photo-choice-overlay.show{display:flex}
+.photo-choice-box{width:min(360px,100%);background:#fff;border-radius:20px;padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.28);text-align:center}
+.photo-choice-box h3{margin:0 0 8px;font-size:20px}
+.photo-choice-box p{margin:0 0 18px;color:#666;font-size:14px}
+.photo-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.photo-choice-btn{border:0;border-radius:13px;padding:14px 10px;font-size:15px;font-weight:700;cursor:pointer}
+.photo-camera{background:#eef5ff;color:#1769d2}
+.photo-gallery{background:#edf9f0;color:#16833b}
+.photo-cancel{margin-top:12px;width:100%;background:#f2f2f2;color:#555}
+.photo-choice-input{display:none!important}
+</style>
+
 </head>
 
 <body>
@@ -480,5 +495,55 @@
             if(ok){showAdminApp();await loadFamilies();}else{localStorage.removeItem('adminKey');key='';showLogin();}
         })();
     </script>
+
+<div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()">
+  <div class="photo-choice-box">
+    <h3>📷 Photo ઉમેરો</h3>
+    <p>Photo ક્યાંથી લેવી છે?</p>
+    <div class="photo-choice-actions">
+      <button type="button" class="photo-choice-btn photo-camera" onclick="chooseCamera()">📷 Camera</button>
+      <button type="button" class="photo-choice-btn photo-gallery" onclick="chooseGallery()">🖼️ Gallery</button>
+    </div>
+    <button type="button" class="photo-choice-btn photo-cancel" onclick="closePhotoChoice()">Cancel</button>
+    <input id="photoCameraInput" class="photo-choice-input" type="file" accept="image/*" capture="environment">
+    <input id="photoGalleryInput" class="photo-choice-input" type="file" accept="image/*">
+  </div>
+</div>
+
+<script id="photoChoicePopupScript">
+let photoChoiceTargetInput = null;
+
+function openPhotoChoice(input){
+  photoChoiceTargetInput = input || null;
+  const o=document.getElementById('photoChoiceOverlay');
+  if(o)o.classList.add('show');
+}
+function closePhotoChoice(){
+  const o=document.getElementById('photoChoiceOverlay');
+  if(o)o.classList.remove('show');
+  photoChoiceTargetInput=null;
+}
+function forwardPhoto(file){
+  if(!photoChoiceTargetInput || !file){ closePhotoChoice(); return; }
+  const dt=new DataTransfer();
+  dt.items.add(file);
+  photoChoiceTargetInput.files=dt.files;
+  photoChoiceTargetInput.dispatchEvent(new Event('change',{bubbles:true}));
+  closePhotoChoice();
+}
+function chooseCamera(){
+  const i=document.getElementById('photoCameraInput');
+  i.value='';
+  i.onchange=()=>forwardPhoto(i.files && i.files[0]);
+  i.click();
+}
+function chooseGallery(){
+  const i=document.getElementById('photoGalleryInput');
+  i.value='';
+  i.onchange=()=>forwardPhoto(i.files && i.files[0]);
+  i.click();
+}
+</script>
+
 </body>
 </html>
