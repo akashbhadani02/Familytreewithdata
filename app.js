@@ -9,14 +9,14 @@ const app=express();
 const MONGO_URI=process.env.MONGO_URI;
 if(!MONGO_URI) console.warn("MONGO_URI is not set.");
 
-app.use(express.json({limit:"5mb"}));
-app.use(express.urlencoded({extended:true,limit:"5mb"}));
+app.use(express.json({limit:"50mb"}));
+app.use(express.urlencoded({extended:true,limit:"50mb"}));
 app.use(express.static(path.join(__dirname,"public")));
 
 const storage=multer.memoryStorage();
 const upload=multer({
   storage,
-  limits:{fileSize:5*1024*1024},
+  limits:{fileSize:50*1024*1024},
   fileFilter:(req,file,cb)=>{ if(/^image\/(jpeg|png|webp)$/.test(file.mimetype)) cb(null,true); else cb(new Error('Only JPG, PNG or WEBP images are allowed.')); }
 });
 
@@ -52,7 +52,7 @@ app.post("/api/family/start",upload.single("photo"),async(req,res)=>{
       photo:photoData(req.file),addToken:newToken()
     });
     res.json({ok:true,familyId,person:p,addLink:"/add/"+p.addToken});
-  }catch(e){res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 5MB allowed.":e.message})}
+  }catch(e){res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 50MB allowed.":e.message})}
 });
 
 app.post("/api/add/:token",upload.single("photo"),async(req,res)=>{
@@ -68,7 +68,7 @@ app.post("/api/add/:token",upload.single("photo"),async(req,res)=>{
       generation:parent.generation+1,photo:photoData(req.file),addToken:newToken()
     });
     res.json({ok:true,person:{_id:p._id,name:p.name,parentId:p.parentId,generation:p.generation,addToken:p.addToken},addLink:"/add/"+p.addToken});
-  }catch(e){res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 5MB allowed.":e.message})}
+  }catch(e){res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 50MB allowed.":e.message})}
 });
 
 app.get("/api/add/:token",async(req,res)=>{
@@ -168,7 +168,7 @@ app.post("/api/admin/person/:id/add",upload.single("photo"),async(req,res)=>{
     });
     res.json({ok:true,person:child,addLink:"/add/"+child.addToken});
   }catch(e){
-    res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 5MB allowed.":e.message});
+    res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 50MB allowed.":e.message});
   }
 });
 

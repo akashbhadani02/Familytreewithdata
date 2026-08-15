@@ -496,7 +496,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                     }
 
                     if(!file) throw new Error('ફોટો પસંદ કરો.');
-                    if(file.size>5*1024*1024) throw new Error('Photo maximum 5MB હોવો જોઈએ.');
+                    if(file.size>50*1024*1024) throw new Error('Photo maximum 50MB હોવો જોઈએ.');
                     if(!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type)){
                         throw new Error('માત્ર image photo પસંદ કરો.');
                     }
