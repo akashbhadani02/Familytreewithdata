@@ -352,7 +352,7 @@
             people.forEach(p=>{
                 const q=positions.get(String(p._id)); if(!q)return;
                 const d=document.createElement('div'); d.className='card'; d.style.left=q.x+'px'; d.style.top=q.y+'px';
-                d.innerHTML=`<img src="${esc(p.photo||avatar(p.name))}" alt=""><b>${esc(p.name)}</b><small>Generation ${p.generation}</small><button class="btn" style="width:100%;margin-top:10px;padding:9px 8px;font-size:12px" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}')">➕ Add Child</button>`;
+                d.innerHTML=`<img src="${esc(p.photo||avatar(p.name))}" alt=""><b>${esc(p.name)}</b><small>Generation ${p.generation}</small><button class="btn" style="width:100%;margin-top:10px;padding:9px 8px;font-size:12px" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button>`;
                 cards.appendChild(d);
             });
 
@@ -404,42 +404,44 @@
             const box=$('memberLinks'); box.innerHTML='';
             people.forEach(p=>{
                 const link=addLink(p.addToken), item=document.createElement('div'); item.className='member-item';
-                item.innerHTML=`<div class="name">${esc(p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}')">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
+                item.innerHTML=`<div class="name">${esc(p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
                 box.appendChild(item);
             });
         }
         function addLink(token){return location.origin+'/add/'+token;}
         async function copyLink(link){try{await navigator.clipboard.writeText(link);alert('Link copy થઈ ગઈ.');}catch(e){prompt('Link copy કરો:',link);}}
 
-        async function adminAddChild(parentId,parentName){
-            const name=prompt('"'+parentName+'" ના નીચે જે સભ્ય ઉમેરવો છે તેનું નામ લખો:');
-            if(!name||!name.trim()) return;
-            // OK = photo જોઈએ, Cancel = ફક્ત નામ add કરવું
-            const wantPhoto=confirm('શું આ Child માટે ફોટો પણ ઉમેરવો છે?\n\nOK = હા, ફોટો પસંદ કરો\nCancel = ના, ફક્ત નામ add કરો');
-            let file=null;
-            if(wantPhoto){
-                const input=document.createElement('input');
-                input.type='file'; input.accept='image/jpeg,image/png,image/webp';
-                input.style.display='none'; document.body.appendChild(input);
-                input.click();
-                await new Promise(resolve=>{input.onchange=resolve; input.oncancel=resolve;});
-                file=input.files && input.files[0] ? input.files[0] : null;
-                input.remove();
-                if(!file) return alert('તમે ફોટો માટે હા પસંદ કરી છે, તેથી ફોટો પસંદ કરો.');
-                if(file.size>5*1024*1024) return alert('Photo maximum 5MB હોવો જોઈએ.');
-            }
-            const fd=new FormData();
-            fd.append('name',name.trim());
-            // No = photo field મોકલાતું નથી, એટલે માત્ર નામ save થશે.
-            if(file) fd.append('photo',file);
+        async function adminAddChild(parentId,parentName,btn){
+            if(btn && btn.disabled) return;
+            if(btn){btn.disabled=true;btn.dataset.oldText=btn.textContent;btn.textContent='⏳ Adding...';btn.style.opacity='.6';btn.style.cursor='not-allowed';}
             try{
+                const name=prompt('"'+parentName+'" ના નીચે જે સભ્ય ઉમેરવો છે તેનું નામ લખો:');
+                if(!name||!name.trim()) return;
+                const wantPhoto=confirm('શું આ Child માટે ફોટો પણ ઉમેરવો છે?\n\nOK = હા, ફોટો પસંદ કરો\nCancel = ના, ફક્ત નામ add કરો');
+                let file=null;
+                if(wantPhoto){
+                    const input=document.createElement('input');
+                    input.type='file'; input.accept='image/jpeg,image/png,image/webp';
+                    input.style.position='fixed';input.style.left='-9999px';document.body.appendChild(input);
+                    input.click();
+                    await new Promise(resolve=>{input.onchange=resolve;});
+                    file=input.files && input.files[0] ? input.files[0] : null;
+                    input.remove();
+                    if(!file) throw new Error('તમે ફોટો માટે હા પસંદ કરી છે, તેથી ફોટો પસંદ કરો.');
+                    if(file.size>5*1024*1024) throw new Error('Photo maximum 5MB હોવો જોઈએ.');
+                }
+                const fd=new FormData();fd.append('name',name.trim());if(file)fd.append('photo',file);
                 const r=await fetch('/api/admin/person/'+encodeURIComponent(parentId)+'/add',{method:'POST',headers:{'x-admin-key':key},body:fd});
                 const d=await r.json();
-                if(!r.ok||!d.ok) return alert(d.error||'Member add થયો નથી');
+                if(!r.ok||!d.ok) throw new Error(d.error||'Member add થયો નથી');
                 await viewFamily(currentFamilyId); await loadFamilies();
                 const link=location.origin+d.addLink;
+                alert('✅ '+name.trim()+' સફળતાપૂર્વક Family Tree માં add થઈ ગયો!');
                 prompt('નવો member add થઈ ગયો. તેની link copy કરો:',link);
-            }catch(e){alert('Add member error: '+e.message);}
+            }catch(e){alert('❌ '+e.message);}
+            finally{
+                if(btn){btn.disabled=false;btn.textContent=btn.dataset.oldText||'➕ Add Child';btn.style.opacity='1';btn.style.cursor='pointer';}
+            }
         }
 
         async function editName(id){

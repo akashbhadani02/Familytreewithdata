@@ -10,7 +10,7 @@
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
 <div id="rootBox" class="panel hidden"><div class="center title">પરિવારની શરૂઆત કરો</div><div class="center sub">સૌથી પહેલા પરિવારના સૌથી મોટા/જૂના સભ્યનું પૂરું નામ લખો. પછી તેમને મળેલી link તેમના દીકરા/આગળના સભ્યને મોકલો.</div><div class="form"><label class="label">પૂરું નામ</label><input id="rootName" type="text" placeholder="ઉદાહરણ: રમેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 5MB સુધી)</label><input id="rootPhoto" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'rootPreview')"><img id="rootPreview" class="preview"><button class="btn" onclick="createRoot()">✅ પરિવાર વૃક્ષ શરૂ કરો</button><div id="rootSuccess" class="success"></div></div></div>
-<div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 5MB સુધી)</label><input id="addPhoto" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'addPreview')"><img id="addPreview" class="preview"><button class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div></div></div>
+<div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 5MB સુધી)</label><input id="addPhoto" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'addPreview')"><img id="addPreview" class="preview"><button id="addPersonBtn" class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div></div></div>
 <div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્ય માટે છે.</div><div class="topActions"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treebox"><div id="canvas" class="canvas"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div>
 </div>
 <script>
@@ -73,7 +73,33 @@ async function preparePhoto(file){
  });
 }
 async function createRoot(){const name=$('rootName').value.trim();if(!name)return alert('કૃપા કરીને નામ લખો');const fd=new FormData();fd.append('name',name);try{const photo=await preparePhoto($('rootPhoto').files[0]);if(photo)fd.append('photo',photo);}catch(e){return alert('ફોટો upload માટે તૈયાર થઈ શક્યો નથી. બીજો ફોટો પસંદ કરો.');}const r=await fetch('/api/family/start',{method:'POST',body:fd});const d=await r.json();if(!d.ok)return alert(d.error);familyId=d.familyId;token=d.person.addToken;const link=absoluteLink(d.addLink);$('rootSuccess').style.display='block';$('rootSuccess').innerHTML='<b>નામ સાચવાઈ ગયું! 🎉</b><div>હવે આ link '+safe(name)+'ના દીકરા/આગળના સભ્યને મોકલો:</div><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">Link copy કરો</div>';history.replaceState({},'', '/?family='+encodeURIComponent(familyId));$('rootBox').classList.add('hidden');$('viewBox').classList.remove('hidden');$('currentLink').textContent=link;loadFamily()}
-async function addPerson(){const name=$('addName').value.trim();if(!name)return alert('કૃપા કરીને તમારું પૂરું નામ લખો');if(!token)return alert('આ add link મળતી નથી');const fd=new FormData();fd.append('name',name);try{const photo=await preparePhoto($('addPhoto').files[0]);if(photo)fd.append('photo',photo);}catch(e){return alert('ફોટો upload માટે તૈયાર થઈ શક્યો નથી. બીજો ફોટો પસંદ કરો.');}const r=await fetch('/api/add/'+token,{method:'POST',body:fd});const d=await r.json();if(!d.ok)return alert(d.error);const link=absoluteLink(d.addLink);token=d.person.addToken;$('addSuccess').style.display='block';$('addSuccess').innerHTML='<b>'+safe(name)+'નું નામ ઉમેરાઈ ગયું! 🎉</b><div class="nextBox"><b>હવે સૌથી મહત્વનું:</b>'+safe(name)+'ના દીકરા/આગળના સભ્યને આ નવી link મોકલો:<div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">🔗 નવી link copy કરો</div></div>'; $('addName').value='';$('addPhoto').value='';$('addPreview').style.display='none';$('parentText').innerHTML='હવે આગળનું નામ <b>'+safe(name)+'</b>ની નીચે ઉમેરાશે.';loadFamily()}
+async function addPerson(){
+ const btn=$('addPersonBtn');
+ const name=$('addName').value.trim();
+ if(!name)return alert('કૃપા કરીને તમારું પૂરું નામ લખો');
+ if(!token)return alert('આ add link મળતી નથી');
+ if(btn.disabled)return;
+ btn.disabled=true;btn.textContent='⏳ Upload થઈ રહ્યું છે...';btn.style.opacity='.6';btn.style.cursor='not-allowed';
+ const fd=new FormData();fd.append('name',name);
+ try{
+   const photo=await preparePhoto($('addPhoto').files[0]);
+   if(photo)fd.append('photo',photo);
+   const r=await fetch('/api/add/'+token,{method:'POST',body:fd});
+   const d=await r.json();
+   if(!d.ok)throw new Error(d.error||'નામ add થયું નથી');
+   const link=absoluteLink(d.addLink);token=d.person.addToken;
+   $('addSuccess').style.display='block';
+   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે આગળનું નામ ઉમેરવા માટે:</b><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">🔗 નવી link copy કરો</div></div>';
+   $('addName').value='';$('addPhoto').value='';$('addPreview').style.display='none';
+   $('parentText').innerHTML='હવે આગળનું નામ <b>'+safe(name)+'</b>ની નીચે ઉમેરાશે.';
+   await loadFamily();
+   alert('✅ Child સફળતાપૂર્વક add થઈ ગયો!');
+ }catch(e){
+   alert('❌ '+e.message);
+ }finally{
+   btn.disabled=false;btn.textContent='✅ નામ ઉમેરો';btn.style.opacity='1';btn.style.cursor='pointer';
+ }
+}
 async function loadFamily(){if(!familyId)return;const r=await fetch('/api/family/'+encodeURIComponent(familyId));const d=await r.json();if(d.ok){people=d.people;renderTree()}}
 function renderTree(){const cards=$('cards'),svg=$('svg');cards.innerHTML='';svg.innerHTML='';if(!people.length)return;
  const children={};people.forEach(p=>(children[p.parentId||'root']??=[]).push(p));Object.values(children).forEach(a=>a.sort((x,y)=>new Date(x.createdAt)-new Date(y.createdAt)));
