@@ -102,6 +102,8 @@ app.delete("/api/person/:id",async(req,res)=>{
 
 app.get("/api/admin/families",async(req,res)=>{
   try{
+    const adminKey=process.env.ADMIN_KEY;
+    if(!adminKey || req.headers["x-admin-key"]!==adminKey) return res.status(401).json({ok:false,error:"Unauthorized"});
     await connectDB();
     res.json({ok:true,families:await Person.aggregate([
       {$group:{_id:"$familyId",people:{$sum:1},latest:{$max:"$createdAt"}}},
@@ -109,6 +111,8 @@ app.get("/api/admin/families",async(req,res)=>{
     ])});
   }catch(e){res.status(400).json({ok:false,error:e.message})}
 });
+
+app.get("/admin",(req,res)=>res.sendFile(path.join(__dirname,"public","admin.html")));
 
 app.get("/{*splat}",(req,res)=>res.sendFile(path.join(__dirname,"public","index.html")));
 
