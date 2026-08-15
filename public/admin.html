@@ -190,6 +190,17 @@
         .member-item .name { font-weight:800; }
         .member-item small { color:#718096; display:block; margin:3px 0 8px; }
 
+        /* Real family tree mode */
+        .real-mode .canvas { background:linear-gradient(#fffdf8,#f8fbff); }
+        .real-mode .card {
+            border:2px solid #8aa58f; border-radius:18px; background:#fff;
+            box-shadow:0 7px 20px rgba(32,48,71,.12);
+        }
+        .real-mode .card b { font-size:15px; }
+        .real-mode .card small { font-size:11px; }
+        .real-mode #svg path { stroke:#718a73 !important; stroke-width:4 !important; }
+        .real-badge { display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border-radius:999px; background:#eef7ef; color:#47664c; font-size:12px; font-weight:800; }
+
         .status {
             margin-top: 10px;
             color: #315f91;
@@ -211,13 +222,13 @@
         </div>
         <div id="app" style="display:none">
             <div class="panel">
-                <div class="row"><button class="btn" onclick="loadFamilies()">🔄 Refresh</button><button class="btn" onclick="createFamily()">➕ નવી Family બનાવો</button><button
+                <div class="row"><button class="btn" onclick="loadFamilies()">🔄 Refresh</button><button class="btn" onclick="createFamily()">➕ નવી Family બનાવો</button><button class="btn" onclick="openRealTree()">🌳 Real Family Tree</button><button
                         class="btn gray" onclick="logout()">Logout</button></div>
                 <div id="families" class="families" style="margin-top:14px"></div>
             </div>
             <div id="viewer" class="panel" style="display:none">
                 <div class="row">
-                    <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button class="btn" onclick="downloadPNG()">🖼️ Download PNG</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ આખી Tree Delete</button>
+                    <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button class="btn" onclick="openRealTree()">🌳 Real Tree View</button><button class="btn" onclick="downloadPNG()">🖼️ Download PNG</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ આખી Tree Delete</button>
                 </div>
                 <div id="treebox" class="treebox">
                     <div id="canvas" class="canvas"><svg id="svg" width="8000" height="4500"
@@ -313,8 +324,30 @@
             }catch(e){alert('Tree load error: '+e.message);}
         }
 
-        function renderTree(){
+        function openRealTree(){
+            if(!currentFamilyId){
+                const first=document.querySelector('.family-actions .btn');
+                if(first) first.click();
+                else return alert('પહેલા Family માંથી Tree જુઓ પસંદ કરો.');
+                return;
+            }
+            renderRealFamilyTree();
+        }
+
+        function renderRealFamilyTree(){
+            if(!people.length) return;
+            const box=$('treebox');
+            box.classList.add('real-mode');
+            renderTree(true);
+            box.classList.add('real-mode');
+            const title=document.querySelector('#viewer h2');
+            if(title) title.innerHTML='🌳 Real Family Tree <span class="real-badge">Family પ્રમાણે hierarchy</span>';
+            setTimeout(focusTreeRoot,100);
+        }
+
+        function renderTree(keepReal=false){
             const cards=$('cards'), svg=$('svg'), canvas=$('canvas');
+            if(!keepReal) $('treebox').classList.remove('real-mode');
             cards.innerHTML=''; svg.innerHTML='';
             if(!people.length){cards.innerHTML='<div class="empty">આ Family માં member નથી.</div>';return;}
             const byId=new Map(people.map(p=>[String(p._id),p]));
