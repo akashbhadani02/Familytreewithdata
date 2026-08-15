@@ -258,11 +258,11 @@
         let key = localStorage.getItem('adminKey') || '';
         let people = [];
         let currentFamilyId = '';
-        let treeZoom=1; let pinchStartDistance=0; let pinchStartZoom=1; let displayLanguage=localStorage.getItem('familyTreeLanguage')||'gu'; const nameLangCache=JSON.parse(localStorage.getItem('familyTreeNameCache')||'{}');
+        let treeZoom=1; let pinchStartDistance=0; let pinchStartZoom=1; let displayLanguage=localStorage.getItem('familyTreeLanguage')||'gu'; const nameLangCache=JSON.parse(localStorage.getItem('familyTreeNameCacheV2')||'{}');
         const $ = id => document.getElementById(id);
 
         function hasGujarati(text){return /[\u0A80-\u0AFF]/.test(String(text||''))}
-function saveNameCache(){try{localStorage.setItem('familyTreeNameCache',JSON.stringify(nameLangCache))}catch(e){}}
+function saveNameCache(){try{localStorage.setItem('familyTreeNameCacheV2',JSON.stringify(nameLangCache))}catch(e){}}
 async function transliterateName(name,target){
  const text=String(name||'').trim();if(!text)return text;
  if(target==='gu'&&hasGujarati(text))return text;
@@ -270,9 +270,13 @@ async function transliterateName(name,target){
  const key=target+'|'+text;if(nameLangCache[key])return nameLangCache[key];
  try{
   const itc=target==='gu'?'gu-t-i0-und':'en-t-i0-und';
-  const r=await fetch('https://inputtools.google.com/request?itc='+itc+'&num=1&text='+encodeURIComponent(text),{mode:'cors'});
+   const inputText=target==='gu'?text.toLowerCase():text;
+  const r=await fetch('https://inputtools.google.com/request?itc='+itc+'&num=1&text='+encodeURIComponent(inputText),{mode:'cors'});
   const d=await r.json();const out=d&&d[0]==='SUCCESS'&&d[1]&&d[1][0]&&d[1][0][1]&&d[1][0][1][0];
-  if(out){nameLangCache[key]=out;saveNameCache();return out;}
+  if(out){
+      const fixed=out;
+      nameLangCache[key]=fixed;saveNameCache();return fixed;
+    }
  }catch(e){}
  return text;
 }

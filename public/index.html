@@ -15,14 +15,14 @@
 <div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub viewSubtitle">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્ય માટે છે.</div><div class="topActions viewControls"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treeZoomControls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="treeZoomLabel">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div><div class="treebox"><div id="canvas" class="canvas"><div id="treeLayer" class="treeLayer"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div>
 </div>
 <script>
-const $=id=>document.getElementById(id);let token=null,familyId=null,people=[],focusPersonId=null;let displayLanguage=localStorage.getItem('familyTreeLanguage')||'gu';const nameLangCache=JSON.parse(localStorage.getItem('familyTreeNameCache')||'{}');let treeZoom=1;let pinchStartDistance=0,pinchStartZoom=1;const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
+const $=id=>document.getElementById(id);let token=null,familyId=null,people=[],focusPersonId=null;let displayLanguage=localStorage.getItem('familyTreeLanguage')||'gu';const nameLangCache=JSON.parse(localStorage.getItem('familyTreeNameCacheV2')||'{}');let treeZoom=1;let pinchStartDistance=0,pinchStartZoom=1;const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
 function showPreview(input,id){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{$(id).src=e.target.result;$(id).style.display='block'};r.readAsDataURL(f)}
 function absoluteLink(path){return location.origin+path}
 function copyText(text){navigator.clipboard.writeText(text).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',text))}
 function safe(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function hasGujarati(text){return /[\u0A80-\u0AFF]/.test(String(text||''))}
 function hasLatin(text){return /[A-Za-z]/.test(String(text||''))}
-function saveNameCache(){try{localStorage.setItem('familyTreeNameCache',JSON.stringify(nameLangCache))}catch(e){}}
+function saveNameCache(){try{localStorage.setItem('familyTreeNameCacheV2',JSON.stringify(nameLangCache))}catch(e){}}
 async function transliterateName(name,target){
  const text=String(name||'').trim(); if(!text)return text;
  if(target==='gu' && hasGujarati(text))return text;
@@ -31,11 +31,15 @@ async function transliterateName(name,target){
  if(nameLangCache[key])return nameLangCache[key];
  try{
    const itc=target==='gu'?'gu-t-i0-und':'en-t-i0-und';
-   const url='https://inputtools.google.com/request?itc='+itc+'&num=1&text='+encodeURIComponent(text);
+   const inputText=target==='gu'?text.toLowerCase():text;
+   const url='https://inputtools.google.com/request?itc='+itc+'&num=1&text='+encodeURIComponent(inputText);
    const r=await fetch(url,{mode:'cors'});
    const d=await r.json();
    const out=d&&d[0]==='SUCCESS'&&d[1]&&d[1][0]&&d[1][0][1]&&d[1][0][1][0];
-   if(out){nameLangCache[key]=out;saveNameCache();return out;}
+   if(out){
+      const fixed=out;
+      nameLangCache[key]=fixed;saveNameCache();return fixed;
+    }
  }catch(e){}
  return text;
 }
