@@ -90,7 +90,7 @@ async function addPerson(){
    if(!d.ok)throw new Error(d.error||'નામ add થયું નથી');
    const link=absoluteLink(d.addLink);token=d.person.addToken;
    $('addSuccess').style.display='block';
-   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે આગળનું નામ ઉમેરવા માટે:</b><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">🔗 નવી link copy કરો</div></div>';
+   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે આગળનું નામ ઉમેરવા માટે:</b><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">🔗 નવી link copy કરો</div><button type="button" class="btn" onclick="showFamilyTree()">🌳 Family Tree જુઓ</button></div>';
    $('addName').value='';$('addPhoto').value='';$('addPreview').style.display='none';
    $('parentText').innerHTML='હવે આગળનું નામ <b>'+safe(name)+'</b>ની નીચે ઉમેરાશે.';
    await loadFamily();
@@ -100,6 +100,15 @@ async function addPerson(){
  }finally{
    btn.disabled=false;btn.textContent='✅ નામ ઉમેરો';btn.style.opacity='1';btn.style.cursor='pointer';
  }
+}
+function showFamilyTree(){
+ $('addBox').classList.add('hidden');
+ $('rootBox').classList.add('hidden');
+ $('viewBox').classList.remove('hidden');
+ history.replaceState({},'', '/?family='+encodeURIComponent(familyId));
+ $('currentLink').textContent='Family Tree';
+ loadFamily();
+ window.scrollTo({top:0,behavior:'smooth'});
 }
 async function loadFamily(){if(!familyId)return;const r=await fetch('/api/family/'+encodeURIComponent(familyId));const d=await r.json();if(d.ok){people=d.people;renderTree()}}
 function renderTree(){const cards=$('cards'),svg=$('svg');cards.innerHTML='';svg.innerHTML='';if(!people.length)return;
