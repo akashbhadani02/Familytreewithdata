@@ -10,8 +10,20 @@
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
 <div id="rootBox" class="panel hidden"><div class="center title">પરિવારની શરૂઆત કરો</div><div class="center sub">સૌથી પહેલા પરિવારના સૌથી મોટા/જૂના સભ્યનું પૂરું નામ લખો. પછી તેમને મળેલી link તેમના દીકરા/આગળના સભ્યને મોકલો.</div><div class="form"><label class="label">પૂરું નામ</label><input id="rootName" type="text" placeholder="ઉદાહરણ: રમેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો)</label><input id="rootPhoto" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'rootPreview')"><img id="rootPreview" class="preview"><button class="btn" onclick="createRoot()">✅ પરિવાર વૃક્ષ શરૂ કરો</button><div id="rootSuccess" class="success"></div></div></div>
-<div id="addBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub">આ link હવે માત્ર Family Tree જોવા માટે છે. નામ ઉમેરવાનું અધિકાર માત્ર Admin પાસે છે.</div></div>
-<div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્ય માટે છે.</div><div class="topActions"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treebox"><div id="canvas" class="canvas"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div>
+<div id="addBox" class="panel hidden">
+<div class="center title">👨‍👦 તમારા દીકરાનું નામ ઉમેરો</div>
+<div id="parentInfo" class="center sub"></div>
+<div class="form">
+<label class="label">દીકરાનું પૂરું નામ</label>
+<input id="childName" type="text" placeholder="ઉદાહરણ: રાહુલ પટેલ">
+<label class="label">દીકરાનો ફોટો (ઇચ્છા હોય તો)</label>
+<input id="childPhoto" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'childPreview')">
+<img id="childPreview" class="preview">
+<button class="btn" onclick="addPerson()">✅ નામ અને ફોટો ઉમેરો</button>
+<div id="addSuccess" class="success"></div>
+<button class="btn secondary" onclick="showMyFamilyTree()">🌳 મારું Family Tree જુઓ</button>
+</div></div>
+<div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્યને મોકલી શકાય છે.</div><div class="topActions"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treebox"><div id="canvas" class="canvas"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div>
 </div>
 <script>
 const $=id=>document.getElementById(id);let token=null,familyId=null,people=[];const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
@@ -26,9 +38,8 @@ async function init(){
    const r=await fetch('/api/add/'+token); const d=await r.json();
    if(!d.ok){document.body.innerHTML='<div style="padding:40px;text-align:center">આ link સાચી નથી અથવા expire થઈ ગઈ છે.</div>';return}
    familyId=d.parent.familyId;
-   $('viewBox').classList.remove('hidden');
-   $('currentLink').textContent=location.origin+'/?family='+encodeURIComponent(familyId);
-   history.replaceState({},'', '/?family='+encodeURIComponent(familyId));
+   $('addBox').classList.remove('hidden');
+   $('parentInfo').innerHTML='આ link <b>'+safe(d.parent.name)+'</b> ના દીકરા/આગળના સભ્ય માટે છે.';
    loadFamily();
  }else{
    const q=new URLSearchParams(location.search); familyId=q.get('family');
@@ -37,7 +48,22 @@ async function init(){
  }
 }
 async function createRoot(){alert('Family Tree બનાવવાનું અધિકાર માત્ર Admin પાસે છે.');}
-async function addPerson(){alert('નામ ઉમેરવાનું અધિકાર માત્ર Admin પાસે છે.');}
+async function addPerson(){
+ const name=$('childName').value.trim();
+ const photo=$('childPhoto').files[0];
+ if(!name)return alert('કૃપા કરીને નામ લખો.');
+ const fd=new FormData();fd.append('name',name);if(photo)fd.append('photo',photo);
+ const btn=document.querySelector('#addBox .btn:not(.secondary)');btn.disabled=true;btn.textContent='⏳ ઉમેરાઈ રહ્યું છે...';
+ try{
+   const r=await fetch('/api/add/'+encodeURIComponent(token),{method:'POST',body:fd});
+   const d=await r.json();
+   if(!d.ok){alert(d.error||'નામ ઉમેરાઈ શક્યું નથી');return;}
+   $('addSuccess').style.display='block';
+   $('addSuccess').innerHTML='✅ <b>'+safe(d.person.name)+'</b> ઉમેરાઈ ગયું.<div class="linkbox">આ નવા સભ્ય માટેની link:<br>'+safe(absoluteLink(d.addLink))+'</div><button class="btn secondary" onclick="copyText(''+safe(absoluteLink(d.addLink)).replace(/'/g,"\\'")+'')">🔗 Link copy કરો</button>';
+   $('childName').value='';$('childPhoto').value='';$('childPreview').style.display='none';
+   await loadFamily();
+ }catch(e){alert('Server error');}finally{btn.disabled=false;btn.textContent='✅ નામ અને ફોટો ઉમેરો';}
+}
 function showMyFamilyTree(){
  if(familyId){$('viewBox').classList.remove('hidden');loadFamily();}
 }async function loadFamily(){if(!familyId)return;const r=await fetch('/api/family/'+encodeURIComponent(familyId));const d=await r.json();if(d.ok){people=d.people;renderTree()}}

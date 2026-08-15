@@ -65,7 +65,6 @@ app.post("/api/family/start",upload.single("photo"),async(req,res)=>{
 });
 
 app.post("/api/add/:token",upload.single("photo"),async(req,res)=>{
-  if(!adminOnly(req,res)) return;
   try{
     await connectDB();
     const parent=await Person.findOne({addToken:req.params.token});
