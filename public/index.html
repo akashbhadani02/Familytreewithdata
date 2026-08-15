@@ -4,34 +4,18 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>અમારું પરિવાર વૃક્ષ</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#203047}header{background:#fff;border-bottom:1px solid #dce4ec;padding:16px;text-align:center}header h1{margin:0;font-size:24px}.wrap{max-width:1100px;margin:18px auto;padding:0 14px}.panel{background:#fff;border:1px solid #dce4ec;border-radius:16px;padding:20px;box-shadow:0 8px 28px #20304712}.center{text-align:center}.title{font-size:20px;font-weight:800;margin-bottom:8px}.sub{font-size:13px;color:#68778a;line-height:1.6}.form{max-width:520px;margin:18px auto}.label{font-weight:800;font-size:13px;margin:14px 0 6px;display:block}input[type=text]{width:100%;padding:14px;border:1px solid #cbd6e2;border-radius:10px;font-size:16px}input[type=file]{width:100%;padding:12px;border:1px dashed #cbd6e2;border-radius:10px}.btn{width:100%;padding:14px;border:0;border-radius:10px;background:#315f91;color:white;font-size:16px;font-weight:800;cursor:pointer;margin-top:15px}.btn.secondary{background:#e9eef4;color:#30445b}.preview{width:100px;height:100px;border-radius:50%;object-fit:cover;display:none;margin:10px auto}.success{background:#edf8f1;border:1px solid #b9e2c8;padding:15px;border-radius:10px;margin-top:16px;text-align:center;display:none}.linkbox{word-break:break-all;background:#f3f6fa;padding:10px;border-radius:8px;margin-top:8px;font-size:12px}.treebox{margin-top:18px;background:#fff;border:1px solid #dce4ec;border-radius:16px;overflow:auto;height:650px}.canvas{position:relative;width:10000px;height:5200px;background:#fbfcfe}.card{position:absolute;width:190px;background:#fff;border:1px solid #cbd7e4;border-radius:14px;padding:10px;text-align:center;box-shadow:0 5px 18px #24384e18;z-index:2}.card img{width:62px;height:62px;border-radius:50%;object-fit:cover;border:2px solid #e0e7ef}.card b{display:block;font-size:14px;margin-top:6px;white-space:normal;overflow-wrap:anywhere}.card small{display:block;color:#718096;font-size:10px;margin-top:3px}.card .relation{color:#718096}.card .personLink{display:block;margin-top:8px;font-size:11px;color:#315f91;cursor:pointer;text-decoration:underline}.line{position:absolute;background:#71849a;height:3px;transform-origin:0 0;z-index:1}.hidden{display:none}.copy{font-size:12px;color:#315f91;cursor:pointer;text-decoration:underline;margin-top:7px}.topActions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.topActions button{width:auto;padding:10px 14px;font-size:13px}.note{font-size:12px;background:#fff7df;border:1px solid #ead89c;border-radius:10px;padding:10px;margin-top:12px}.nextBox{margin-top:12px;background:#eef5ff;border:1px solid #c8ddf5;padding:12px;border-radius:10px}.nextBox b{display:block;margin-bottom:5px}.photoActions{display:flex;gap:8px;margin-top:8px}.photoActions .btn{margin-top:0;flex:1}.fileHint{font-size:11px;color:#68778a;text-align:center;margin-top:6px}
-</style>
-<style id="photoChoicePopupStyle">
-.photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:99999;align-items:center;justify-content:center;padding:20px}
-.photo-choice-overlay.show{display:flex}
-.photo-choice-box{width:min(360px,100%);background:#fff;border-radius:20px;padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.28);text-align:center}
-.photo-choice-box h3{margin:0 0 8px;font-size:20px}
-.photo-choice-box p{margin:0 0 18px;color:#666;font-size:14px}
-.photo-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.photo-choice-btn{border:0;border-radius:13px;padding:14px 10px;font-size:15px;font-weight:700;cursor:pointer}
-.photo-camera{background:#eef5ff;color:#1769d2}
-.photo-gallery{background:#edf9f0;color:#16833b}
-.photo-cancel{margin-top:12px;width:100%;background:#f2f2f2;color:#555}
-.photo-choice-input{display:none!important}
-</style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#203047}header{background:#fff;border-bottom:1px solid #dce4ec;padding:16px;text-align:center}header h1{margin:0;font-size:24px}.wrap{max-width:1100px;margin:18px auto;padding:0 14px}.panel{background:#fff;border:1px solid #dce4ec;border-radius:16px;padding:20px;box-shadow:0 8px 28px #20304712}.center{text-align:center}.title{font-size:20px;font-weight:800;margin-bottom:8px}.sub{font-size:13px;color:#68778a;line-height:1.6}.form{max-width:520px;margin:18px auto}.label{font-weight:800;font-size:13px;margin:14px 0 6px;display:block}input[type=text]{width:100%;padding:14px;border:1px solid #cbd6e2;border-radius:10px;font-size:16px}input[type=file]{width:100%;padding:12px;border:1px dashed #cbd6e2;border-radius:10px}.btn{width:100%;padding:14px;border:0;border-radius:10px;background:#315f91;color:white;font-size:16px;font-weight:800;cursor:pointer;margin-top:15px}.btn.secondary{background:#e9eef4;color:#30445b}.preview{width:100px;height:100px;border-radius:50%;object-fit:cover;display:none;margin:10px auto}.success{background:#edf8f1;border:1px solid #b9e2c8;padding:15px;border-radius:10px;margin-top:16px;text-align:center;display:none}.linkbox{word-break:break-all;background:#f3f6fa;padding:10px;border-radius:8px;margin-top:8px;font-size:12px}.treebox{margin-top:18px;background:#fff;border:1px solid #dce4ec;border-radius:16px;overflow:auto;height:650px}.canvas{position:relative;width:10000px;height:5200px;background:#fbfcfe}.card{position:absolute;width:190px;background:#fff;border:1px solid #cbd7e4;border-radius:14px;padding:10px;text-align:center;box-shadow:0 5px 18px #24384e18;z-index:2}.card img{width:62px;height:62px;border-radius:50%;object-fit:cover;border:2px solid #e0e7ef}.card b{display:block;font-size:14px;margin-top:6px;white-space:normal;overflow-wrap:anywhere}.card small{display:block;color:#718096;font-size:10px;margin-top:3px}.card .relation{color:#718096}.card .personLink{display:block;margin-top:8px;font-size:11px;color:#315f91;cursor:pointer;text-decoration:underline}.line{position:absolute;background:#71849a;height:3px;transform-origin:0 0;z-index:1}.hidden{display:none}.copy{font-size:12px;color:#315f91;cursor:pointer;text-decoration:underline;margin-top:7px}.topActions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.topActions button{width:auto;padding:10px 14px;font-size:13px}.note{font-size:12px;background:#fff7df;border:1px solid #ead89c;border-radius:10px;padding:10px;margin-top:12px}.nextBox{margin-top:12px;background:#eef5ff;border:1px solid #c8ddf5;padding:12px;border-radius:10px}.nextBox b{display:block;margin-bottom:5px}
 
-</head>
+<style id="photoChoiceCss">.photoActions{display:flex;gap:10px;margin-top:8px}.photoActions .btn{margin-top:0;flex:1}.photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center;padding:18px}.photo-choice-overlay.show{display:flex}.photo-choice-box{width:min(360px,100%);background:#fff;border-radius:18px;padding:20px;text-align:center}.photo-choice-box h3{margin:0 0 8px}.photo-choice-box p{color:#667085;margin:0 0 16px}.photo-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.photo-choice-btn{border:0;border-radius:12px;padding:14px;font-weight:800;font-size:15px}.camera-btn{background:#eaf2ff;color:#155dcc}.gallery-btn{background:#edf9f0;color:#16823b}.cancel-btn{margin-top:10px;width:100%;background:#f1f1f1;color:#555}.photo-hidden{display:none!important}</style></style></head>
 <body>
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
-<div id="rootBox" class="panel hidden"><div class="center title">પરિવારની શરૂઆત કરો</div><div class="center sub">સૌથી પહેલા પરિવારના સૌથી મોટા/જૂના સભ્યનું પૂરું નામ લખો. પછી તેમને મળેલી link તેમના દીકરા/આગળના સભ્યને મોકલો.</div><div class="form"><label class="label">પૂરું નામ</label><input id="rootName" type="text" placeholder="ઉદાહરણ: રમેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો)</label><input id="rootPhoto" type="file" accept="image/*" style="display:none" onchange="showPreview(this,'rootPreview')" onkeydown="return false;" onclick="event.preventDefault();openPhotoChoice(this);return false;"><div class="photoActions"><button type="button" class="btn secondary" onclick="openCamera('rootPhoto')">📷 Camera</button><button type="button" class="btn secondary" onclick="openGallery('rootPhoto')">🖼️ Gallery</button></div><div class="fileHint">Mobileમાં Cameraથી સીધો photo લઈ શકો છો અથવા Galleryમાંથી પસંદ કરી શકો છો.</div><img id="rootPreview" class="preview"><button class="btn" onclick="createRoot()">✅ પરિવાર વૃક્ષ શરૂ કરો</button><div id="rootSuccess" class="success"></div></div></div>
-<div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો)</label><input id="addPhoto" type="file" accept="image/*" style="display:none" onchange="showPreview(this,'addPreview')" onkeydown="return false;" onclick="event.preventDefault();openPhotoChoice(this);return false;"><div class="photoActions"><button type="button" class="btn secondary" onclick="openCamera('addPhoto')">📷 Camera</button><button type="button" class="btn secondary" onclick="openGallery('addPhoto')">🖼️ Gallery</button></div><div class="fileHint">Mobileમાં Cameraથી સીધો photo લઈ શકો છો અથવા Galleryમાંથી પસંદ કરી શકો છો.</div><img id="addPreview" class="preview"><button id="addPersonBtn" class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div></div></div>
+<div id="rootBox" class="panel hidden"><div class="center title">પરિવારની શરૂઆત કરો</div><div class="center sub">સૌથી પહેલા પરિવારના સૌથી મોટા/જૂના સભ્યનું પૂરું નામ લખો. પછી તેમને મળેલી link તેમના દીકરા/આગળના સભ્યને મોકલો.</div><div class="form"><label class="label">પૂરું નામ</label><input id="rootName" type="text" placeholder="ઉદાહરણ: રમેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 5MB સુધી)</label><input id="rootPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'rootPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('rootPhoto')">📷 Photo પસંદ કરો</button></div><img id="rootPreview" class="preview"><button class="btn" onclick="createRoot()">✅ પરિવાર વૃક્ષ શરૂ કરો</button><div id="rootSuccess" class="success"></div></div></div>
+<div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 5MB સુધી)</label><input id="addPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'addPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('addPhoto')">📷 Photo પસંદ કરો</button></div><img id="addPreview" class="preview"><button id="addPersonBtn" class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div></div></div>
 <div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્ય માટે છે.</div><div class="topActions"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treebox"><div id="canvas" class="canvas"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div>
 </div>
 <script>
 const $=id=>document.getElementById(id);let token=null,familyId=null,people=[];const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
-function openCamera(id){const input=$(id);input.setAttribute('capture','environment');input.accept='image/*';input.value='';input.click();setTimeout(()=>input.removeAttribute('capture'),1000)}
-function openGallery(id){const input=$(id);input.removeAttribute('capture');input.accept='image/*';input.value='';input.click()}
 function showPreview(input,id){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{$(id).src=e.target.result;$(id).style.display='block'};r.readAsDataURL(f)}
 function absoluteLink(path){return location.origin+path}
 function copyText(text){navigator.clipboard.writeText(text).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',text))}
@@ -131,100 +115,4 @@ function avatar(n){return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent
 function copyCurrentLink(){copyText(location.href)}
 async function downloadPNG(){if(!people.length)return alert('Tree ખાલી છે');if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r)}const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe'}),a=document.createElement('a');a.download='family-tree.png';a.href=c.toDataURL('image/png');a.click()}
 init();
-</script>
-<div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()">
-  <div class="photo-choice-box">
-    <h3>📷 Photo ઉમેરો</h3>
-    <p>Photo ક્યાંથી લેવી છે?</p>
-    <div class="photo-choice-actions">
-      <button type="button" class="photo-choice-btn photo-camera" onclick="chooseCamera()">📷 Camera</button>
-      <button type="button" class="photo-choice-btn photo-gallery" onclick="chooseGallery()">🖼️ Gallery</button>
-    </div>
-    <button type="button" class="photo-choice-btn photo-cancel" onclick="closePhotoChoice()">Cancel</button>
-    <input id="photoCameraInput" class="photo-choice-input" type="file" accept="image/*">
-    <input id="photoGalleryInput" class="photo-choice-input" type="file" accept="image/*">
-  </div>
-</div>
-
-<script id="photoChoicePopupScript">
-let photoChoiceTargetInput = null;
-
-function openPhotoChoice(input){
-  photoChoiceTargetInput = input || null;
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.add('show');
-}
-function closePhotoChoice(){
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.remove('show');
-  photoChoiceTargetInput=null;
-}
-function forwardPhoto(file){
-  if(!photoChoiceTargetInput || !file){ closePhotoChoice(); return; }
-  const dt=new DataTransfer();
-  dt.items.add(file);
-  photoChoiceTargetInput.files=dt.files;
-  photoChoiceTargetInput.dispatchEvent(new Event('change',{bubbles:true}));
-  closePhotoChoice();
-}
-function chooseCamera(){
-  const i=document.getElementById('photoCameraInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files && i.files[0]);
-  i.click();
-}
-function chooseGallery(){
-  const i=document.getElementById('photoGalleryInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files && i.files[0]);
-  i.click();
-}
-</script>
-
-
-<script id="adminPhotoChoiceScript">
-let photoChoiceTargetInput=null;
-function openPhotoChoice(input){
-  photoChoiceTargetInput=input||null;
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.add('show');
-}
-function closePhotoChoice(){
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.remove('show');
-  photoChoiceTargetInput=null;
-}
-function forwardPhoto(file){
-  if(!photoChoiceTargetInput||!file){closePhotoChoice();return;}
-  try{
-    const dt=new DataTransfer();
-    dt.items.add(file);
-    photoChoiceTargetInput.files=dt.files;
-    photoChoiceTargetInput.dispatchEvent(new Event('change',{bubbles:true}));
-  }catch(e){}
-  closePhotoChoice();
-}
-function chooseCamera(){
-  const i=document.getElementById('photoCameraInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
-  i.click();
-}
-function chooseGallery(){
-  const i=document.getElementById('photoGalleryInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
-  i.click();
-}
-</script>
-
-</body></html>
-
-<script id="adminTreeAddChildHelper">
-function adminTreeAddChild(parentId){
-  if(typeof window.addChild==='function'){ window.addChild(parentId); return; }
-  if(typeof window.openAddChild==='function'){ window.openAddChild(parentId); return; }
-  if(typeof window.showAddChild==='function'){ window.showAddChild(parentId); return; }
-  alert('Add Child form તૈયાર નથી.');
-}
-</script>
+</script><div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()"><div class="photo-choice-box"><h3>📷 Photo પસંદ કરો</h3><p>Photo ક્યાંથી લેવી છે?</p><div class="photo-choice-actions"><button type="button" class="photo-choice-btn camera-btn" onclick="chooseCamera()">📷 Camera</button><button type="button" class="photo-choice-btn gallery-btn" onclick="chooseGallery()">🖼️ Gallery</button></div><button type="button" class="photo-choice-btn cancel-btn" onclick="closePhotoChoice()">Cancel</button><input id="cameraPicker" class="photo-hidden" type="file" accept="image/*" capture="environment"><input id="galleryPicker" class="photo-hidden" type="file" accept="image/*"></div></div><script>let photoTargetId=null;function openPhotoChoice(id){photoTargetId=id;document.getElementById('photoChoiceOverlay').classList.add('show')}function closePhotoChoice(){document.getElementById('photoChoiceOverlay').classList.remove('show');photoTargetId=null}function setPhoto(file){if(!file||!photoTargetId){closePhotoChoice();return}const target=document.getElementById(photoTargetId);const dt=new DataTransfer();dt.items.add(file);target.files=dt.files;target.dispatchEvent(new Event('change',{bubbles:true}));closePhotoChoice()}function chooseCamera(){const i=document.getElementById('cameraPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}function chooseGallery(){const i=document.getElementById('galleryPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}</script></body></html>
