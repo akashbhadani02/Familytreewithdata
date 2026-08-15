@@ -114,7 +114,9 @@
 
         .card {
             position: absolute;
-            width: 190px;
+            width: 210px;
+            height: 190px;
+            box-sizing: border-box;
             background: #fff;
             border: 1px solid #cbd7e4;
             border-radius: 14px;
@@ -148,10 +150,10 @@
         /* Clean parent-child connectors: lines stay only in the gap between cards. */
         #svg { pointer-events:none; }
         #svg path {
-            stroke: #7b8da3 !important;
-            stroke-width: 3 !important;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+            stroke: #64748b !important;
+            stroke-width: 5 !important;
+            stroke-linecap: butt;
+            stroke-linejoin: miter;
             fill: none !important;
         }
         .treebox { -webkit-overflow-scrolling: touch; }
@@ -162,7 +164,7 @@
             .treebox { height: 560px; }
             .canvas { width: 7000px; height: 5000px; }
             .card { width: 190px; }
-            #svg path { stroke-width: 3 !important; }
+            #svg path { stroke-width: 5 !important; }
             .member-list { grid-template-columns: 1fr; }
             .row .btn { min-height: 42px; }
         }
@@ -354,23 +356,41 @@
                 cards.appendChild(d);
             });
 
-            // Draw only in the empty space between parent and child cards.
+            // Card-to-card joined connectors: every line touches the exact bottom/top edge.
+            // For multiple children, one horizontal bus joins all child branches.
+            const grouped=new Map();
             people.forEach(p=>{
                 if(!p.parentId)return;
-                const a=positions.get(String(p.parentId)), b=positions.get(String(p._id));
-                if(!a||!b)return;
-                const x1=a.x+CARD_W/2, y1=a.y+CARD_H;
-                const x2=b.x+CARD_W/2, y2=b.y;
-                const mid=y1+(y2-y1)/2;
-                draw(svg, x1,y1,x1,mid,x2,mid,x2,y2);
+                const pid=String(p.parentId);
+                if(!grouped.has(pid))grouped.set(pid,[]);
+                grouped.get(pid).push(p);
+            });
+            grouped.forEach((kids,pid)=>{
+                const parent=positions.get(pid);
+                if(!parent)return;
+                const px=parent.x+CARD_W/2, py=parent.y+CARD_H;
+                const childData=kids.map(k=>positions.get(String(k._id))).filter(Boolean);
+                if(!childData.length)return;
+                const childY=childData[0].y;
+                const busY=py+(childY-py)/2;
+                const xs=childData.map(q=>q.x+CARD_W/2);
+                const minX=Math.min(...xs), maxX=Math.max(...xs);
+                drawLine(svg,px,py,px,busY);
+                if(childData.length>1) drawLine(svg,minX,busY,maxX,busY);
+                childData.forEach(q=>drawLine(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY));
             });
             renderMemberLinks();
         }
 
-        function draw(svg,x1,y1,xm,ym,x2,ym2,x3,y3){
+        function drawLine(svg,x1,y1,x2,y2){
             const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');
-            p.setAttribute('d',`M${x1} ${y1} L${xm} ${ym} L${x2} ${ym2} L${x3} ${y3}`);
-            p.setAttribute('fill','none');p.setAttribute('stroke','#71849a');p.setAttribute('stroke-width','4');p.setAttribute('stroke-linecap','round');p.setAttribute('stroke-linejoin','round');svg.appendChild(p);
+            p.setAttribute('d',`M${x1} ${y1} L${x2} ${y2}`);
+            p.setAttribute('fill','none');
+            p.setAttribute('stroke','#64748b');
+            p.setAttribute('stroke-width','5');
+            p.setAttribute('stroke-linecap','butt');
+            p.setAttribute('stroke-linejoin','miter');
+            svg.appendChild(p);
         }
 
         function focusTreeRoot(){
