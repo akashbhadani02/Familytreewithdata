@@ -1,9 +1,194 @@
-<!doctype html><html lang="gu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Family Tree Admin</title><style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#203047}header{background:#fff;border-bottom:1px solid #dce4ec;padding:16px;text-align:center}header h1{margin:0}.wrap{max-width:1250px;margin:18px auto;padding:0 14px}.panel{background:#fff;border:1px solid #dce4ec;border-radius:16px;padding:18px;box-shadow:0 8px 28px #20304712;margin-bottom:18px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}input{padding:12px;border:1px solid #cbd6e2;border-radius:10px;font-size:15px}.btn{padding:11px 15px;border:0;border-radius:10px;background:#315f91;color:#fff;font-weight:800;cursor:pointer}.btn.gray{background:#e9eef4;color:#30445b}.families{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.family{border:1px solid #dce4ec;border-radius:12px;padding:14px}.family b{display:block;margin-bottom:6px}.treebox{overflow:auto;border:1px solid #dce4ec;border-radius:14px;height:680px}.canvas{position:relative;width:8000px;height:4500px;background:#fbfcfe}.card{position:absolute;width:190px;background:#fff;border:1px solid #cbd7e4;border-radius:14px;padding:10px;text-align:center;box-shadow:0 5px 18px #24384e18;z-index:2}.card img{width:62px;height:62px;border-radius:50%;object-fit:cover;border:2px solid #e0e7ef}.card b{display:block;font-size:14px;margin-top:6px}.card small{display:block;color:#718096;font-size:10px;margin-top:3px}.empty{padding:30px;text-align:center;color:#718096}.danger{background:#b53a3a}.status{margin-top:10px;color:#315f91;font-size:13px}
-</style></head><body><header><h1>🌳 Family Tree Admin</h1></header><div class="wrap">
-<div id="login" class="panel"><h2>Admin Login</h2><div class="row"><input id="key" type="password" placeholder="Admin password"><button class="btn" onclick="login()">Login</button></div><div class="status">ADMIN_KEY Vercel Environment Variableમાં જે password રાખશો તે અહીં નાખો.</div></div>
-<div id="app" style="display:none"><div class="panel"><div class="row"><button class="btn" onclick="loadFamilies()">🔄 Refresh</button><button class="btn gray" onclick="logout()">Logout</button></div><div id="families" class="families" style="margin-top:14px"></div></div><div id="viewer" class="panel" style="display:none"><div class="row"><h2 style="margin:0;flex:1">🌳 Selected Family</h2><button class="btn" onclick="downloadPNG()">🖼️ Download PNG</button></div><div class="treebox"><div id="canvas" class="canvas"><svg id="svg" width="8000" height="4500" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div></div></div>
-<script>
-let key='',people=[];const $=id=>document.getElementById(id);function login(){key=$('key').value.trim();if(!key)return;sessionStorage.setItem('adminKey',key);$('login').style.display='none';$('app').style.display='block';loadFamilies()}function logout(){sessionStorage.removeItem('adminKey');location.reload()}async function loadFamilies(){key=sessionStorage.getItem('adminKey')||key;let r=await fetch('/api/admin/families',{headers:{'x-admin-key':key}});let d=await r.json();if(!r.ok||!d.ok){alert(d.error||'Admin password ખોટો છે');sessionStorage.removeItem('adminKey');$('app').style.display='none';$('login').style.display='block';return}let box=$('families');box.innerHTML='';if(!d.families.length){box.innerHTML='<div class="empty">હજુ કોઈ family data નથી.</div>';return}d.families.forEach(f=>{let div=document.createElement('div');div.className='family';div.innerHTML='<b>Family ID: '+esc(f._id)+'</b><div>સભ્યો: '+f.people+'</div><div style="margin-top:10px"><button class="btn" onclick="viewFamily(\''+escAttr(f._id)+'\')">Tree જુઓ</button></div>';box.appendChild(div)})}async function viewFamily(id){let r=await fetch('/api/family/'+encodeURIComponent(id)),d=await r.json();if(!d.ok)return alert(d.error);people=d.people;$('viewer').style.display='block';renderTree();$('viewer').scrollIntoView({behavior:'smooth'})}function renderTree(){let cards=$('cards'),svg=$('svg');cards.innerHTML='';svg.innerHTML='';let by={};people.forEach(p=>(by[p.generation]??=[]).push(p));let pos={};for(let g=1;g<=13;g++){let a=by[g]||[];a.forEach((p,i)=>{p.x=4000+(i-(a.length-1)/2)*240;p.y=80+(g-1)*330;pos[p._id]=p})}people.forEach(p=>{let d=document.createElement('div');d.className='card';d.style.left=p.x+'px';d.style.top=p.y+'px';d.innerHTML='<img src="'+(p.photo||avatar(p.name))+'"><b>'+esc(p.name)+'</b><small>Generation '+p.generation+'</small>';cards.appendChild(d)});people.forEach(p=>{if(!p.parentId)return;let a=pos[p.parentId],b=pos[p._id];if(a&&b)draw(svg,a.x+95,a.y+132,b.x+95,b.y)})}function draw(svg,x1,y1,x2,y2){let ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path'),m=(y1+y2)/2;p.setAttribute('d',`M${x1} ${y1} L${x1} ${m} L${x2} ${m} L${x2} ${y2}`);p.setAttribute('fill','none');p.setAttribute('stroke','#71849a');p.setAttribute('stroke-width','4');svg.appendChild(p)}function avatar(n){return'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n||'?')[0].toUpperCase()}</text></svg>`)}function esc(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}function escAttr(v){return String(v||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")}async function downloadPNG(){if(!people.length)return;if(!window.html2canvas){let s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r)}let c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe',useCORS:true}),a=document.createElement('a');a.download='family-tree-admin.png';a.href=c.toDataURL('image/png');a.click()}
-if(sessionStorage.getItem('adminKey'))login();
-</script></body></html>
+<!doctype html>
+<html lang="gu">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Family Tree Admin</title>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #203047
+        }
+
+        header {
+            background: #fff;
+            border-bottom: 1px solid #dce4ec;
+            padding: 16px;
+            text-align: center
+        }
+
+        header h1 {
+            margin: 0
+        }
+
+        .wrap {
+            max-width: 1250px;
+            margin: 18px auto;
+            padding: 0 14px
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid #dce4ec;
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 8px 28px #20304712;
+            margin-bottom: 18px
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center
+        }
+
+        input {
+            padding: 12px;
+            border: 1px solid #cbd6e2;
+            border-radius: 10px;
+            font-size: 15px
+        }
+
+        .btn {
+            padding: 11px 15px;
+            border: 0;
+            border-radius: 10px;
+            background: #315f91;
+            color: #fff;
+            font-weight: 800;
+            cursor: pointer
+        }
+
+        .btn.gray {
+            background: #e9eef4;
+            color: #30445b
+        }
+
+        .families {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px
+        }
+
+        .family {
+            border: 1px solid #dce4ec;
+            border-radius: 12px;
+            padding: 14px
+        }
+
+        .family b {
+            display: block;
+            margin-bottom: 6px
+        }
+
+        .treebox {
+            overflow: auto;
+            border: 1px solid #dce4ec;
+            border-radius: 14px;
+            height: 680px
+        }
+
+        .canvas {
+            position: relative;
+            width: 8000px;
+            height: 4500px;
+            background: #fbfcfe
+        }
+
+        .card {
+            position: absolute;
+            width: 190px;
+            background: #fff;
+            border: 1px solid #cbd7e4;
+            border-radius: 14px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 5px 18px #24384e18;
+            z-index: 2
+        }
+
+        .card img {
+            width: 62px;
+            height: 62px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e0e7ef
+        }
+
+        .card b {
+            display: block;
+            font-size: 14px;
+            margin-top: 6px
+        }
+
+        .card small {
+            display: block;
+            color: #718096;
+            font-size: 10px;
+            margin-top: 3px
+        }
+
+        .empty {
+            padding: 30px;
+            text-align: center;
+            color: #718096
+        }
+
+        .danger {
+            background: #b53a3a
+        }
+
+        .status {
+            margin-top: 10px;
+            color: #315f91;
+            font-size: 13px
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>🌳 Family Tree Admin</h1>
+    </header>
+    <div class="wrap">
+        <div id="login" class="panel">
+            <h2>Admin Login</h2>
+            <div class="row"><input id="key" type="password" placeholder="Admin password"><button class="btn"
+                    onclick="login()">Login</button></div>
+            <div class="status">Admin password: Akashkey123</div>
+        </div>
+        <div id="app" style="display:none">
+            <div class="panel">
+                <div class="row"><button class="btn" onclick="loadFamilies()">🔄 Refresh</button><button
+                        class="btn gray" onclick="logout()">Logout</button></div>
+                <div id="families" class="families" style="margin-top:14px"></div>
+            </div>
+            <div id="viewer" class="panel" style="display:none">
+                <div class="row">
+                    <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button class="btn" onclick="downloadPNG()">🖼️
+                        Download PNG</button>
+                </div>
+                <div class="treebox">
+                    <div id="canvas" class="canvas"><svg id="svg" width="8000" height="4500"
+                            style="position:absolute;left:0;top:0;z-index:1"></svg>
+                        <div id="cards"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let key = '', people = []; const $ = id => document.getElementById(id); function login() { key = $('key').value.trim(); if (!key) return; sessionStorage.setItem('adminKey', key); $('login').style.display = 'none'; $('app').style.display = 'block'; loadFamilies() } function logout() { sessionStorage.removeItem('adminKey'); location.reload() } async function loadFamilies() { key = sessionStorage.getItem('adminKey') || key; let r = await fetch('/api/admin/families', { headers: { 'x-admin-key': key } }); let d = await r.json(); if (!r.ok || !d.ok) { alert(d.error || 'Admin password ખોટો છે'); sessionStorage.removeItem('adminKey'); $('app').style.display = 'none'; $('login').style.display = 'block'; return } let box = $('families'); box.innerHTML = ''; if (!d.families.length) { box.innerHTML = '<div class="empty">હજુ કોઈ family data નથી.</div>'; return } d.families.forEach(f => { let div = document.createElement('div'); div.className = 'family'; div.innerHTML = '<b>Family ID: ' + esc(f._id) + '</b><div>સભ્યો: ' + f.people + '</div><div style="margin-top:10px"><button class="btn" onclick="viewFamily(\'' + escAttr(f._id) + '\')">Tree જુઓ</button></div>'; box.appendChild(div) }) } async function viewFamily(id) { let r = await fetch('/api/family/' + encodeURIComponent(id)), d = await r.json(); if (!d.ok) return alert(d.error); people = d.people; $('viewer').style.display = 'block'; renderTree(); $('viewer').scrollIntoView({ behavior: 'smooth' }) } function renderTree() { let cards = $('cards'), svg = $('svg'); cards.innerHTML = ''; svg.innerHTML = ''; let by = {}; people.forEach(p => (by[p.generation] ??= []).push(p)); let pos = {}; for (let g = 1; g <= 13; g++) { let a = by[g] || []; a.forEach((p, i) => { p.x = 4000 + (i - (a.length - 1) / 2) * 240; p.y = 80 + (g - 1) * 330; pos[p._id] = p }) } people.forEach(p => { let d = document.createElement('div'); d.className = 'card'; d.style.left = p.x + 'px'; d.style.top = p.y + 'px'; d.innerHTML = '<img src="' + (p.photo || avatar(p.name)) + '"><b>' + esc(p.name) + '</b><small>Generation ' + p.generation + '</small>'; cards.appendChild(d) }); people.forEach(p => { if (!p.parentId) return; let a = pos[p.parentId], b = pos[p._id]; if (a && b) draw(svg, a.x + 95, a.y + 132, b.x + 95, b.y) }) } function draw(svg, x1, y1, x2, y2) { let ns = 'http://www.w3.org/2000/svg', p = document.createElementNS(ns, 'path'), m = (y1 + y2) / 2; p.setAttribute('d', `M${x1} ${y1} L${x1} ${m} L${x2} ${m} L${x2} ${y2}`); p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#71849a'); p.setAttribute('stroke-width', '4'); svg.appendChild(p) } function avatar(n) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n || '?')[0].toUpperCase()}</text></svg>`) } function esc(v) { return String(v || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) } function escAttr(v) { return String(v || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'") } async function downloadPNG() { if (!people.length) return; if (!window.html2canvas) { let s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'; document.head.appendChild(s); await new Promise(r => s.onload = r) } let c = await html2canvas($('canvas'), { scale: 2, backgroundColor: '#fbfcfe', useCORS: true }), a = document.createElement('a'); a.download = 'family-tree-admin.png'; a.href = c.toDataURL('image/png'); a.click() }
+        if (sessionStorage.getItem('adminKey')) login();
+    </script>
+</body>
+
+</html>
