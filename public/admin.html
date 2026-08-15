@@ -284,7 +284,7 @@
             if(!name||!name.trim())return;
             const fd=new FormData(); fd.append('name',name.trim());
             try{
-                const r=await fetch('/api/family/start',{method:'POST',body:fd}); const d=await r.json();
+                const r=await fetch('/api/family/start',{method:'POST',headers:{'x-admin-key':key},body:fd}); const d=await r.json();
                 if(!r.ok||!d.ok)return alert(d.error||'Family બનાવી શકાઈ નથી');
                 await loadFamilies(); await viewFamily(d.familyId);
             }catch(e){alert('Create error: '+e.message);}
@@ -352,7 +352,7 @@
             people.forEach(p=>{
                 const q=positions.get(String(p._id)); if(!q)return;
                 const d=document.createElement('div'); d.className='card'; d.style.left=q.x+'px'; d.style.top=q.y+'px';
-                d.innerHTML=`<img src="${esc(p.photo||avatar(p.name))}" alt=""><b>${esc(p.name)}</b><small>Generation ${p.generation}</small>`;
+                d.innerHTML=`<img src="${esc(p.photo||avatar(p.name))}" alt=""><b>${esc(p.name)}</b><small>Generation ${p.generation}</small><button class="btn" style="width:100%;margin-top:8px;font-size:11px;padding:8px" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}')">➕ નામ સીધું ઉમેરો</button>`;
                 cards.appendChild(d);
             });
 
@@ -398,6 +398,19 @@
             if(!box||!root)return;
             const card=[...$('cards').children].find(el=>el.querySelector('b')?.textContent===root.name);
             if(card)box.scrollTo({left:Math.max(0,card.offsetLeft-box.clientWidth/2+card.offsetWidth/2),top:Math.max(0,card.offsetTop-20),behavior:'smooth'});
+        }
+
+        async function adminAddChild(parentId,parentName){
+            const name=prompt('"'+parentName+'"ની નીચે કયું નામ ઉમેરવું છે?');
+            if(!name||!name.trim())return;
+            try{
+                const fd=new FormData(); fd.append('name',name.trim());
+                const r=await fetch('/api/admin/person/'+encodeURIComponent(parentId)+'/add',{method:'POST',headers:{'x-admin-key':key},body:fd});
+                const d=await r.json();
+                if(!r.ok||!d.ok)return alert(d.error||'નામ ઉમેરાઈ શક્યું નથી');
+                await viewFamily(currentFamilyId); await loadFamilies();
+                alert(name.trim()+'નું નામ Family Tree માં ઉમેરાઈ ગયું! 🎉');
+            }catch(e){alert('Add member error: '+e.message);}
         }
 
         function renderMemberLinks(){
