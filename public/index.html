@@ -160,6 +160,19 @@
             z-index: 2
         }
 
+        .cardLinkBtn {
+            margin-top: 8px;
+            border: 0;
+            border-radius: 8px;
+            padding: 7px 9px;
+            background: #e9eef4;
+            color: #30445b;
+            font-weight: 700;
+            font-size: 11px;
+            cursor: pointer;
+            width: 100%;
+        }
+
         .card img {
             width: 62px;
             height: 62px;
@@ -281,7 +294,40 @@
         function absoluteLink(path) { return location.origin + path }
         async function init() { const m = location.pathname.match(/^\/add\/([^/]+)$/); if (m) { token = m[1]; let r = await fetch('/api/add/' + token), d = await r.json(); if (!d.ok) { document.body.innerHTML = '<div style="padding:40px;text-align:center">આ link સાચી નથી.</div>'; return } familyId = d.parent.familyId; $('addBox').classList.remove('hidden'); $('parentText').innerHTML = 'આ નામ <b>' + esc(d.parent.name) + '</b> પછી પરિવાર વૃક્ષમાં ઉમેરાશે.'; loadFamily(); } else { const q = new URLSearchParams(location.search); familyId = q.get('family'); if (familyId) { $('viewBox').classList.remove('hidden'); $('currentLink').textContent = location.href; loadFamily() } else $('rootBox').classList.remove('hidden') } }
         async function createRoot() { const name = $('rootName').value.trim(); if (!name) return alert('કૃપા કરીને નામ લખો'); const fd = new FormData(); fd.append('name', name); if ($('rootPhoto').files[0]) fd.append('photo', $('rootPhoto').files[0]); let r = await fetch('/api/family/start', { method: 'POST', body: fd }), d = await r.json(); if (!d.ok) return alert(d.error); familyId = d.familyId; const link = absoluteLink(d.addLink); $('rootSuccess').style.display = 'block'; $('rootSuccess').innerHTML = '<b>નામ સાચવાઈ ગયું! 🎉</b><div>હવે આ link તમારા દીકરા/આગળના પરિવાર સભ્યને મોકલો:</div><div class="linkbox">' + link + '</div><div class="copy" onclick="navigator.clipboard.writeText(\'' + link + '\');alert(\'Link copy થઈ ગઈ\')">Link copy કરો</div>'; $('rootBox').classList.add('hidden'); history.replaceState({}, '', '/?family=' + familyId); $('viewBox').classList.remove('hidden'); $('currentLink').textContent = location.href; loadFamily() }
-        async function addPerson() { const name = $('addName').value.trim(); if (!name) return alert('કૃપા કરીને તમારું પૂરું નામ લખો'); const fd = new FormData(); fd.append('name', name); if ($('addPhoto').files[0]) fd.append('photo', $('addPhoto').files[0]); let r = await fetch('/api/add/' + token, { method: 'POST', body: fd }), d = await r.json(); if (!d.ok) return alert(d.error); const link = absoluteLink(d.addLink); $('addSuccess').style.display = 'block'; $('addSuccess').innerHTML = '<b>તમારું નામ ઉમેરાઈ ગયું! 🎉</b><div>હવે આ link તમારા દીકરા/આગળના પરિવાર સભ્યને મોકલો:</div><div class="linkbox">' + link + '</div><div class="copy" onclick="navigator.clipboard.writeText(\'' + link + '\');alert(\'Link copy થઈ ગઈ\')">Link copy કરો</div>'; $('addName').value = ''; $('addPhoto').value = ''; $('addPreview').style.display = 'none'; loadFamily() }
+        async function addPerson() {
+            const name = $('addName').value.trim();
+            if (!name) return alert('કૃપા કરીને તમારું પૂરું નામ લખો');
+
+            const fd = new FormData();
+            fd.append('name', name);
+            if ($('addPhoto').files[0]) fd.append('photo', $('addPhoto').files[0]);
+
+            let r = await fetch('/api/add/' + token, { method: 'POST', body: fd });
+            let d = await r.json();
+            if (!d.ok) return alert(d.error);
+
+            // IMPORTANT: હવે આ નવા સભ્યની પોતાની link token બનાવો.
+            // એટલે આગળનું નામ આ નવા સભ્યના son/daughter તરીકે ઉમેરાશે.
+            token = d.person.addToken;
+
+            const link = absoluteLink(d.addLink);
+
+            $('addSuccess').style.display = 'block';
+            $('addSuccess').innerHTML =
+                '<b>✅ ' + esc(name) + ' નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b>' +
+                '<div style="margin-top:8px">હવે <b>' + esc(name) + '</b> ના દીકરા/આગળના પરિવાર સભ્યને આ નવી link મોકલો:</div>' +
+                '<div class="linkbox">' + link + '</div>' +
+                '<div class="copy" onclick="navigator.clipboard.writeText(\'' + link + '\');alert(\'Link copy થઈ ગઈ\')">🔗 Link copy કરો</div>';
+
+            // હવે આ જ page પર આગળનું નામ ઉમેરશો તો તે નવા સભ્યનું child બનશે.
+            $('parentText').innerHTML =
+                'હવે આગળનું નામ <b>' + esc(name) + '</b> ના પરિવાર સભ્ય તરીકે ઉમેરાશે.';
+
+            $('addName').value = '';
+            $('addPhoto').value = '';
+            $('addPreview').style.display = 'none';
+            loadFamily();
+        }
         async function loadFamily() { if (!familyId) return; let r = await fetch('/api/family/' + familyId), d = await r.json(); if (d.ok) { people = d.people; renderTree() } }
         function renderTree() {
             const cards = $('cards'), svg = $('svg'); cards.innerHTML = ''; svg.innerHTML = '';
@@ -293,7 +339,14 @@
              people.forEach(p => {
                 let d = document.createElement('div');
                  d.className = 'card';
-                 d.style.left = p.x + 'px'; d.style.top = p.y + 'px'; d.innerHTML = '<img src="' + (p.photo || avatar(p.name)) + '"><b>' + esc(p.name) + '</b><small>સંબંધિત સભ્ય+</small> ';cards.appendChild(d)});people.forEach(p=>{if(!p.parentId)return;const a=positions[p.parentId],b=positions[p._id];if(a&&b)draw(svg,a.x+95,a.y+132,b.x+95,b.y)})}
+                 d.style.left = p.x + 'px'; d.style.top = p.y + 'px';
+                 const personLink = absoluteLink('/add/' + p.addToken);
+                 d.innerHTML = '<img src="' + (p.photo || avatar(p.name)) + '"><b>' + esc(p.name) + '</b><small>સંબંધિત સભ્ય+</small><button class="cardLinkBtn" type="button">🔗 આગળનું નામ ઉમેરો</button>';
+                 d.querySelector('.cardLinkBtn').onclick = () => {
+                     navigator.clipboard.writeText(personLink);
+                     alert('આ સભ્યની આગળનું નામ ઉમેરવાની link copy થઈ ગઈ');
+                 };
+                 cards.appendChild(d)});people.forEach(p=>{if(!p.parentId)return;const a=positions[p.parentId],b=positions[p._id];if(a&&b)draw(svg,a.x+95,a.y+132,b.x+95,b.y)})}
                 function draw(svg, x1, y1, x2, y2) { const ns = 'http://www.w3.org/2000/svg', p = document.createElementNS(ns, 'path'), m = (y1 + y2) / 2; p.setAttribute('d', `M${x1} ${y1} L${x1} ${m} L${x2} ${m} L${x2} ${y2}`); p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#71849a'); p.setAttribute('stroke-width', '4'); svg.appendChild(p) }
                 function avatar(n) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n || '?')[0].toUpperCase()}</text></svg>`) }
                 function esc(v) { return String(v || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) }
