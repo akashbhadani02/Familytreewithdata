@@ -26,3 +26,6 @@ Photos are stored as data URLs inside MongoDB in this version, so the Vercel fil
 
 ## Security
 The uploaded source archive contained a real MongoDB password in `.env`. This ready ZIP intentionally excludes that secret. Rotate/change that MongoDB database user's password in MongoDB Atlas before using the repository or deploying it.
+
+## Admin flow
+After logging in at `/admin`, use **➕ નવી Family બનાવો** to open the family-start page. If no families exist, the same button appears in the empty state.
