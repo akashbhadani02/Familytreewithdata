@@ -146,6 +146,32 @@ app.get("/api/admin/families",async(req,res)=>{
 
 
 // Admin: update a member name without changing that member's add-link/token.
+// Admin: add a child/member directly under an existing member.
+app.post("/api/admin/person/:id/add",upload.single("photo"),async(req,res)=>{
+  try{
+    const adminKey=process.env.ADMIN_KEY || "Akashkey123";
+    if(!adminKey || req.headers["x-admin-key"]!==adminKey)
+      return res.status(401).json({ok:false,error:"Unauthorized"});
+    await connectDB();
+    const parent=await Person.findById(req.params.id);
+    if(!parent) return res.status(404).json({ok:false,error:"Parent member not found"});
+    if(parent.generation>=13) return res.status(400).json({ok:false,error:"This family tree has reached the maximum of 13 generations."});
+    const name=(req.body.name||"").trim();
+    if(!name) return res.status(400).json({ok:false,error:"Name is required"});
+    const child=await Person.create({
+      familyId:parent.familyId,
+      name,
+      parentId:parent._id,
+      generation:parent.generation+1,
+      photo:photoData(req.file),
+      addToken:newToken()
+    });
+    res.json({ok:true,person:child,addLink:"/add/"+child.addToken});
+  }catch(e){
+    res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 5MB allowed.":e.message});
+  }
+});
+
 app.put("/api/admin/person/:id",async(req,res)=>{
   try{
     const adminKey=process.env.ADMIN_KEY || "Akashkey123";

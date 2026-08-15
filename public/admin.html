@@ -404,12 +404,39 @@
             const box=$('memberLinks'); box.innerHTML='';
             people.forEach(p=>{
                 const link=addLink(p.addToken), item=document.createElement('div'); item.className='member-item';
-                item.innerHTML=`<div class="name">${esc(p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
+                item.innerHTML=`<div class="name">${esc(p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}')">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
                 box.appendChild(item);
             });
         }
         function addLink(token){return location.origin+'/add/'+token;}
         async function copyLink(link){try{await navigator.clipboard.writeText(link);alert('Link copy થઈ ગઈ.');}catch(e){prompt('Link copy કરો:',link);}}
+
+        async function adminAddChild(parentId,parentName){
+            const name=prompt('"'+parentName+'" ના નીચે જે સભ્ય ઉમેરવો છે તેનું નામ લખો:');
+            if(!name||!name.trim()) return;
+            const wantPhoto=confirm('શું આ સભ્યનો ફોટો પણ ઉમેરવો છે?');
+            let file=null;
+            if(wantPhoto){
+                const input=document.createElement('input');
+                input.type='file'; input.accept='image/jpeg,image/png,image/webp';
+                input.style.display='none'; document.body.appendChild(input);
+                input.click();
+                await new Promise(resolve=>{input.onchange=resolve;});
+                file=input.files && input.files[0] ? input.files[0] : null;
+                input.remove();
+                if(wantPhoto && !file) return;
+                if(file && file.size>5*1024*1024) return alert('Photo maximum 5MB હોવો જોઈએ.');
+            }
+            const fd=new FormData(); fd.append('name',name.trim()); if(file) fd.append('photo',file);
+            try{
+                const r=await fetch('/api/admin/person/'+encodeURIComponent(parentId)+'/add',{method:'POST',headers:{'x-admin-key':key},body:fd});
+                const d=await r.json();
+                if(!r.ok||!d.ok) return alert(d.error||'Member add થયો નથી');
+                await viewFamily(currentFamilyId); await loadFamilies();
+                const link=location.origin+d.addLink;
+                prompt('નવો member add થઈ ગયો. તેની link copy કરો:',link);
+            }catch(e){alert('Add member error: '+e.message);}
+        }
 
         async function editName(id){
             const p=people.find(x=>String(x._id)===String(id)); if(!p)return;
