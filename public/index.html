@@ -24,8 +24,8 @@
 <body>
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
-<div id="rootBox" class="panel hidden"><div class="center title">પરિવારની શરૂઆત કરો</div><div class="center sub">સૌથી પહેલા પરિવારના સૌથી મોટા/જૂના સભ્યનું પૂરું નામ લખો. પછી તેમને મળેલી link તેમના દીકરા/આગળના સભ્યને મોકલો.</div><div class="form"><label class="label">પૂરું નામ</label><input id="rootName" type="text" placeholder="ઉદાહરણ: રમેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો)</label><input id="rootPhoto" type="file" accept="image/*" style="display:none" onchange="showPreview(this,'rootPreview')" onclick="openPhotoChoice(this)" onkeydown="return false;"><div class="photoActions"><button type="button" class="btn secondary" onclick="openCamera('rootPhoto')">📷 Camera</button><button type="button" class="btn secondary" onclick="openGallery('rootPhoto')">🖼️ Gallery</button></div><div class="fileHint">Mobileમાં Cameraથી સીધો photo લઈ શકો છો અથવા Galleryમાંથી પસંદ કરી શકો છો.</div><img id="rootPreview" class="preview"><button class="btn" onclick="createRoot()">✅ પરિવાર વૃક્ષ શરૂ કરો</button><div id="rootSuccess" class="success"></div></div></div>
-<div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો)</label><input id="addPhoto" type="file" accept="image/*" style="display:none" onchange="showPreview(this,'addPreview')" onclick="openPhotoChoice(this)" onkeydown="return false;"><div class="photoActions"><button type="button" class="btn secondary" onclick="openCamera('addPhoto')">📷 Camera</button><button type="button" class="btn secondary" onclick="openGallery('addPhoto')">🖼️ Gallery</button></div><div class="fileHint">Mobileમાં Cameraથી સીધો photo લઈ શકો છો અથવા Galleryમાંથી પસંદ કરી શકો છો.</div><img id="addPreview" class="preview"><button id="addPersonBtn" class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div></div></div>
+<div id="rootBox" class="panel hidden"><div class="center title">પરિવારની શરૂઆત કરો</div><div class="center sub">સૌથી પહેલા પરિવારના સૌથી મોટા/જૂના સભ્યનું પૂરું નામ લખો. પછી તેમને મળેલી link તેમના દીકરા/આગળના સભ્યને મોકલો.</div><div class="form"><label class="label">પૂરું નામ</label><input id="rootName" type="text" placeholder="ઉદાહરણ: રમેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો)</label><input id="rootPhoto" type="file" accept="image/*" style="display:none" onchange="showPreview(this,'rootPreview')" onkeydown="return false;" onclick="event.preventDefault();openPhotoChoice(this);return false;"><div class="photoActions"><button type="button" class="btn secondary" onclick="openCamera('rootPhoto')">📷 Camera</button><button type="button" class="btn secondary" onclick="openGallery('rootPhoto')">🖼️ Gallery</button></div><div class="fileHint">Mobileમાં Cameraથી સીધો photo લઈ શકો છો અથવા Galleryમાંથી પસંદ કરી શકો છો.</div><img id="rootPreview" class="preview"><button class="btn" onclick="createRoot()">✅ પરિવાર વૃક્ષ શરૂ કરો</button><div id="rootSuccess" class="success"></div></div></div>
+<div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો)</label><input id="addPhoto" type="file" accept="image/*" style="display:none" onchange="showPreview(this,'addPreview')" onkeydown="return false;" onclick="event.preventDefault();openPhotoChoice(this);return false;"><div class="photoActions"><button type="button" class="btn secondary" onclick="openCamera('addPhoto')">📷 Camera</button><button type="button" class="btn secondary" onclick="openGallery('addPhoto')">🖼️ Gallery</button></div><div class="fileHint">Mobileમાં Cameraથી સીધો photo લઈ શકો છો અથવા Galleryમાંથી પસંદ કરી શકો છો.</div><img id="addPreview" class="preview"><button id="addPersonBtn" class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div></div></div>
 <div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્ય માટે છે.</div><div class="topActions"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treebox"><div id="canvas" class="canvas"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div>
 </div>
 <script>
@@ -141,7 +141,7 @@ init();
       <button type="button" class="photo-choice-btn photo-gallery" onclick="chooseGallery()">🖼️ Gallery</button>
     </div>
     <button type="button" class="photo-choice-btn photo-cancel" onclick="closePhotoChoice()">Cancel</button>
-    <input id="photoCameraInput" class="photo-choice-input" type="file" accept="image/*" capture="environment">
+    <input id="photoCameraInput" class="photo-choice-input" type="file" accept="image/*">
     <input id="photoGalleryInput" class="photo-choice-input" type="file" accept="image/*">
   </div>
 </div>
@@ -181,4 +181,50 @@ function chooseGallery(){
 }
 </script>
 
+
+<script id="adminPhotoChoiceScript">
+let photoChoiceTargetInput=null;
+function openPhotoChoice(input){
+  photoChoiceTargetInput=input||null;
+  const o=document.getElementById('photoChoiceOverlay');
+  if(o)o.classList.add('show');
+}
+function closePhotoChoice(){
+  const o=document.getElementById('photoChoiceOverlay');
+  if(o)o.classList.remove('show');
+  photoChoiceTargetInput=null;
+}
+function forwardPhoto(file){
+  if(!photoChoiceTargetInput||!file){closePhotoChoice();return;}
+  try{
+    const dt=new DataTransfer();
+    dt.items.add(file);
+    photoChoiceTargetInput.files=dt.files;
+    photoChoiceTargetInput.dispatchEvent(new Event('change',{bubbles:true}));
+  }catch(e){}
+  closePhotoChoice();
+}
+function chooseCamera(){
+  const i=document.getElementById('photoCameraInput');
+  i.value='';
+  i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
+  i.click();
+}
+function chooseGallery(){
+  const i=document.getElementById('photoGalleryInput');
+  i.value='';
+  i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
+  i.click();
+}
+</script>
+
 </body></html>
+
+<script id="adminTreeAddChildHelper">
+function adminTreeAddChild(parentId){
+  if(typeof window.addChild==='function'){ window.addChild(parentId); return; }
+  if(typeof window.openAddChild==='function'){ window.openAddChild(parentId); return; }
+  if(typeof window.showAddChild==='function'){ window.showAddChild(parentId); return; }
+  alert('Add Child form તૈયાર નથી.');
+}
+</script>
