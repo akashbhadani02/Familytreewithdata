@@ -196,6 +196,21 @@
             font-size: 13px
         }
     </style>
+
+<style id="photoChoicePopupStyle">
+.photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:99999;align-items:center;justify-content:center;padding:20px}
+.photo-choice-overlay.show{display:flex}
+.photo-choice-box{width:min(360px,100%);background:#fff;border-radius:20px;padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.28);text-align:center}
+.photo-choice-box h3{margin:0 0 8px;font-size:20px}
+.photo-choice-box p{margin:0 0 18px;color:#666;font-size:14px}
+.photo-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.photo-choice-btn{border:0;border-radius:13px;padding:14px 10px;font-size:15px;font-weight:700;cursor:pointer}
+.photo-camera{background:#eef5ff;color:#1769d2}
+.photo-gallery{background:#edf9f0;color:#16833b}
+.photo-cancel{margin-top:12px;width:100%;background:#f2f2f2;color:#555}
+.photo-choice-input{display:none!important}
+</style>
+
 </head>
 
 <body>
@@ -273,7 +288,7 @@
                 if(!d.families.length){box.innerHTML='<div class="empty">હજુ કોઈ Family નથી.<br><button class="btn" style="margin-top:12px" onclick="createFamily()">➕ પ્રથમ Family બનાવો</button></div>';return;}
                 d.families.forEach(f=>{
                     const div=document.createElement('div'); div.className='family';
-                    div.innerHTML=`<b>Family ID: ${esc(f._id)}</b><div>સભ્યો: ${f.people}</div><div class="family-actions"><button class="btn" onclick="viewFamily('${escAttr(f._id)}')">🌳 Tree જુઓ</button><button class="btn danger" onclick="deleteFamily('${escAttr(f._id)}')">🗑️ Delete Tree</button></div>`;
+                    div.innerHTML=`<b>👤 Main Person: ${esc(f.mainPersonName||'Unknown')}</b><div>🆔 Family ID: ${esc(f._id)}</div><div>સભ્યો: ${f.people}</div><div class="family-actions"><button class="btn" onclick="viewFamily('${escAttr(f._id)}')">🌳 Tree જુઓ</button><button class="btn danger" onclick="deleteFamily('${escAttr(f._id)}')">🗑️ Delete Tree</button></div>`;
                     box.appendChild(div);
                 });
             }catch(e){alert('Families load error: '+e.message);}
@@ -413,34 +428,88 @@
 
         async function adminAddChild(parentId,parentName,btn){
             if(btn && btn.disabled) return;
-            if(btn){btn.disabled=true;btn.dataset.oldText=btn.textContent;btn.textContent='⏳ Adding...';btn.style.opacity='.6';btn.style.cursor='not-allowed';}
+            if(btn){
+                btn.disabled=true;
+                btn.dataset.oldText=btn.textContent;
+                btn.textContent='⏳ Saving...';
+                btn.style.opacity='.6';
+                btn.style.cursor='not-allowed';
+            }
             try{
                 const name=prompt('"'+parentName+'" ના નીચે જે સભ્ય ઉમેરવો છે તેનું નામ લખો:');
-                if(!name||!name.trim()) return;
-                const wantPhoto=confirm('શું આ Child માટે ફોટો પણ ઉમેરવો છે?\n\nOK = હા, ફોટો પસંદ કરો\nCancel = ના, ફક્ત નામ add કરો');
+                if(!name || !name.trim()) return;
+
+                const wantPhoto=confirm('શું આ Child માટે ફોટો પણ ઉમેરવો છે?\\n\\nOK = હા, Camera / Gallery પસંદ કરો\\nCancel = ના, ફક્ત નામ add કરો');
                 let file=null;
+
                 if(wantPhoto){
                     const input=document.createElement('input');
-                    input.type='file'; input.accept='image/jpeg,image/png,image/webp';
-                    input.style.position='fixed';input.style.left='-9999px';document.body.appendChild(input);
-                    input.click();
-                    await new Promise(resolve=>{input.onchange=resolve;});
-                    file=input.files && input.files[0] ? input.files[0] : null;
-                    input.remove();
-                    if(!file) throw new Error('તમે ફોટો માટે હા પસંદ કરી છે, તેથી ફોટો પસંદ કરો.');
+                    input.type='file';
+                    input.accept='image/*';
+                    input.style.display='none';
+                    input.id='adminTreeTempPhotoInput';
+                    document.body.appendChild(input);
+
+                    const photoPromise=new Promise((resolve,reject)=>{
+                        let done=false;
+                        const finish=(f)=>{
+                            if(done)return;
+                            done=true;
+                            input.removeEventListener('change',onChange);
+                            if(f) resolve(f); else reject(new Error('ફોટો પસંદ કરવામાં આવ્યો નથી.'));
+                        };
+                        const onChange=()=>finish(input.files && input.files[0] ? input.files[0] : null);
+                        input.addEventListener('change',onChange);
+                        setTimeout(()=>{ if(!done){ done=true; input.removeEventListener('change',onChange); reject(new Error('Photo selection cancelled.')); } },120000);
+                    });
+
+                    if(typeof openPhotoChoice==='function'){
+                        openPhotoChoice(input);
+                    }else{
+                        input.click();
+                    }
+
+                    try{
+                        file=await photoPromise;
+                    }finally{
+                        input.remove();
+                    }
+
+                    if(!file) throw new Error('ફોટો પસંદ કરો.');
                     if(file.size>5*1024*1024) throw new Error('Photo maximum 5MB હોવો જોઈએ.');
+                    if(!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type)){
+                        throw new Error('માત્ર image photo પસંદ કરો.');
+                    }
                 }
-                const fd=new FormData();fd.append('name',name.trim());if(file)fd.append('photo',file);
-                const r=await fetch('/api/admin/person/'+encodeURIComponent(parentId)+'/add',{method:'POST',headers:{'x-admin-key':key},body:fd});
+
+                const fd=new FormData();
+                fd.append('name',name.trim());
+                if(file) fd.append('photo',file);
+
+                const r=await fetch('/api/admin/person/'+encodeURIComponent(parentId)+'/add',{
+                    method:'POST',
+                    headers:{'x-admin-key':key},
+                    body:fd
+                });
                 const d=await r.json();
-                if(!r.ok||!d.ok) throw new Error(d.error||'Member add થયો નથી');
-                await viewFamily(currentFamilyId); await loadFamilies();
+                if(!r.ok || !d.ok) throw new Error(d.error||'Member add થયો નથી');
+
+                await viewFamily(currentFamilyId);
+                await loadFamilies();
+
                 const link=location.origin+d.addLink;
-                alert('✅ '+name.trim()+' સફળતાપૂર્વક Family Tree માં add થઈ ગયો!');
+                alert('✅ '+name.trim()+' સફળતાપૂર્વક Family Tree માં add થઈ ગયો!'+(file?'\\n📷 Photo પણ save થઈ ગયો.':''));
                 prompt('નવો member add થઈ ગયો. તેની link copy કરો:',link);
-            }catch(e){alert('❌ '+e.message);}
-            finally{
-                if(btn){btn.disabled=false;btn.textContent=btn.dataset.oldText||'➕ Add Child';btn.style.opacity='1';btn.style.cursor='pointer';}
+            }catch(e){
+                if(e && e.message!=='Photo selection cancelled.')
+                    alert('❌ '+e.message);
+            }finally{
+                if(btn){
+                    btn.disabled=false;
+                    btn.textContent=btn.dataset.oldText||'➕ Add Child';
+                    btn.style.opacity='1';
+                    btn.style.cursor='pointer';
+                }
             }
         }
 
@@ -480,5 +549,101 @@
             if(ok){showAdminApp();await loadFamilies();}else{localStorage.removeItem('adminKey');key='';showLogin();}
         })();
     </script>
+
+<div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()">
+  <div class="photo-choice-box">
+    <h3>📷 Photo ઉમેરો</h3>
+    <p>Photo ક્યાંથી લેવી છે?</p>
+    <div class="photo-choice-actions">
+      <button type="button" class="photo-choice-btn photo-camera" onclick="chooseCamera()">📷 Camera</button>
+      <button type="button" class="photo-choice-btn photo-gallery" onclick="chooseGallery()">🖼️ Gallery</button>
+    </div>
+    <button type="button" class="photo-choice-btn photo-cancel" onclick="closePhotoChoice()">Cancel</button>
+    <input id="photoCameraInput" class="photo-choice-input" type="file" accept="image/*" capture="environment">
+    <input id="photoGalleryInput" class="photo-choice-input" type="file" accept="image/*">
+  </div>
+</div>
+
+<script id="photoChoicePopupScript">
+let photoChoiceTargetInput = null;
+
+function openPhotoChoice(input){
+  photoChoiceTargetInput = input || null;
+  const o=document.getElementById('photoChoiceOverlay');
+  if(o)o.classList.add('show');
+}
+function closePhotoChoice(){
+  const o=document.getElementById('photoChoiceOverlay');
+  if(o)o.classList.remove('show');
+  photoChoiceTargetInput=null;
+}
+function forwardPhoto(file){
+  if(!photoChoiceTargetInput || !file){ closePhotoChoice(); return; }
+  const dt=new DataTransfer();
+  dt.items.add(file);
+  photoChoiceTargetInput.files=dt.files;
+  photoChoiceTargetInput.dispatchEvent(new Event('change',{bubbles:true}));
+  closePhotoChoice();
+}
+function chooseCamera(){
+  const i=document.getElementById('photoCameraInput');
+  i.value='';
+  i.onchange=()=>forwardPhoto(i.files && i.files[0]);
+  i.click();
+}
+function chooseGallery(){
+  const i=document.getElementById('photoGalleryInput');
+  i.value='';
+  i.onchange=()=>forwardPhoto(i.files && i.files[0]);
+  i.click();
+}
+</script>
+
+
+<script id="adminPhotoChoiceScript">
+let photoChoiceTargetInput=null;
+function openPhotoChoice(input){
+  photoChoiceTargetInput=input||null;
+  const o=document.getElementById('photoChoiceOverlay');
+  if(o)o.classList.add('show');
+}
+function closePhotoChoice(){
+  const o=document.getElementById('photoChoiceOverlay');
+  if(o)o.classList.remove('show');
+  photoChoiceTargetInput=null;
+}
+function forwardPhoto(file){
+  if(!photoChoiceTargetInput||!file){closePhotoChoice();return;}
+  try{
+    const dt=new DataTransfer();
+    dt.items.add(file);
+    photoChoiceTargetInput.files=dt.files;
+    photoChoiceTargetInput.dispatchEvent(new Event('change',{bubbles:true}));
+  }catch(e){}
+  closePhotoChoice();
+}
+function chooseCamera(){
+  const i=document.getElementById('photoCameraInput');
+  i.value='';
+  i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
+  i.click();
+}
+function chooseGallery(){
+  const i=document.getElementById('photoGalleryInput');
+  i.value='';
+  i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
+  i.click();
+}
+</script>
+
 </body>
 </html>
+
+<script id="adminTreeAddChildHelper">
+function adminTreeAddChild(parentId){
+  if(typeof window.addChild==='function'){ window.addChild(parentId); return; }
+  if(typeof window.openAddChild==='function'){ window.openAddChild(parentId); return; }
+  if(typeof window.showAddChild==='function'){ window.showAddChild(parentId); return; }
+  alert('Add Child form તૈયાર નથી.');
+}
+</script>
