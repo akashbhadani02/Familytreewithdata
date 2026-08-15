@@ -197,49 +197,24 @@
         /* =========================
            NATURAL / REAL TREE MODE
         ========================== */
-        .treebox.natural-mode { background:linear-gradient(#eaf7ff 0 48%,#dff1d0 100%); }
-        .natural-canvas {
-            position:relative; width:2600px; min-height:1850px; overflow:hidden;
-            background:
-              radial-gradient(circle at 18% 20%,rgba(255,255,255,.75),transparent 18%),
-              radial-gradient(circle at 82% 24%,rgba(255,255,255,.55),transparent 20%),
-              linear-gradient(#eaf8ff 0 55%,#dff2cf 56% 100%);
-        }
-        .natural-canvas .ground {
-            position:absolute; left:-5%; right:-5%; bottom:-80px; height:260px;
-            background:radial-gradient(ellipse at center,#8bc35f 0 35%,#6cae45 55%,transparent 72%);
-            border-radius:50%; z-index:1;
-        }
-        .natural-canvas .trunk {
-            position:absolute; left:50%; top:240px; width:235px; height:1420px;
-            transform:translateX(-50%); z-index:2;
-            background:linear-gradient(90deg,#4d2a14 0%,#7a4925 18%,#9b6335 39%,#6a3d1d 58%,#a06a38 78%,#4b2813 100%);
-            border-radius:48% 48% 18% 18% / 8% 8% 3% 3%;
-            box-shadow:inset 18px 0 24px rgba(30,12,2,.28),inset -18px 0 24px rgba(30,12,2,.22),0 12px 25px rgba(50,30,10,.2);
-        }
-        .natural-canvas .trunk:before,.natural-canvas .trunk:after{content:"";position:absolute;top:50px;bottom:40px;width:8px;border-radius:50%;background:rgba(52,27,10,.25)}
-        .natural-canvas .trunk:before{left:55px;transform:rotate(4deg)} .natural-canvas .trunk:after{right:58px;transform:rotate(-5deg)}
-        .natural-canvas .roots{position:absolute;left:50%;bottom:45px;width:620px;height:190px;transform:translateX(-50%);z-index:2;background:radial-gradient(ellipse,#74451f 0 34%,transparent 36%);filter:drop-shadow(0 8px 7px rgba(40,25,10,.2))}
-        .natural-canvas .canopy{position:absolute;left:50%;top:20px;width:1900px;height:680px;transform:translateX(-50%);z-index:1;filter:drop-shadow(0 16px 12px rgba(44,85,30,.18));
-            background:
-              radial-gradient(circle at 8% 60%,#4f9639 0 135px,transparent 138px),
-              radial-gradient(circle at 18% 35%,#67b94a 0 170px,transparent 173px),
-              radial-gradient(circle at 32% 22%,#76c652 0 175px,transparent 178px),
-              radial-gradient(circle at 48% 17%,#5cae40 0 190px,transparent 193px),
-              radial-gradient(circle at 64% 20%,#71bf4b 0 175px,transparent 178px),
-              radial-gradient(circle at 79% 36%,#5ba43d 0 175px,transparent 178px),
-              radial-gradient(circle at 92% 60%,#478d35 0 135px,transparent 138px),
-              radial-gradient(circle at 50% 50%,#3e8a32 0 280px,transparent 283px);
-        }
-        .natural-canvas .leaf-dot{position:absolute;width:12px;height:12px;border-radius:50%;background:#91cf5b;z-index:3;opacity:.75}
+        .treebox.natural-mode{background:linear-gradient(#dff3ff 0%,#f7fcff 48%,#d8efc6 100%);overflow:auto;min-height:760px;border-radius:16px}
+        .natural-canvas{position:relative;width:2600px;height:1900px;min-height:1900px;overflow:hidden;background:linear-gradient(to bottom,#e9f8ff 0 56%,#cce8ae 100%)}
+        .natural-canvas .ground{position:absolute;left:-5%;right:-5%;bottom:-55px;height:180px;background:radial-gradient(ellipse at 50% 15%,#78aa4e 0,#91bf68 28%,#5f963f 72%,#4d8036 100%);border-radius:50% 50% 0 0/35% 35% 0 0;z-index:2}
+        .natural-canvas .canopy{position:absolute;left:50%;top:25px;width:2050px;height:760px;transform:translateX(-50%);z-index:1;background:radial-gradient(circle at 8% 56%,#3e8631 0 150px,transparent 153px),radial-gradient(circle at 18% 30%,#62ad43 0 180px,transparent 183px),radial-gradient(circle at 32% 18%,#76bf4d 0 190px,transparent 193px),radial-gradient(circle at 48% 13%,#58a83d 0 210px,transparent 213px),radial-gradient(circle at 64% 17%,#70bb4a 0 195px,transparent 198px),radial-gradient(circle at 79% 32%,#5aa33c 0 180px,transparent 183px),radial-gradient(circle at 92% 57%,#3f8731 0 145px,transparent 148px),radial-gradient(circle at 50% 50%,#3b8730 0 320px,transparent 323px);filter:drop-shadow(0 18px 14px rgba(45,90,30,.2))}
+        .natural-canvas .canopy:after{content:"";position:absolute;inset:80px;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.18) 0 5px,transparent 6px),radial-gradient(circle at 40% 12%,rgba(255,255,255,.14) 0 4px,transparent 5px),radial-gradient(circle at 68% 28%,rgba(255,255,255,.16) 0 5px,transparent 6px),radial-gradient(circle at 82% 18%,rgba(255,255,255,.13) 0 4px,transparent 5px)}
+        .natural-canvas .trunk{position:absolute;left:50%;top:370px;width:245px;height:1320px;transform:translateX(-50%);z-index:3;border-radius:48% 48% 18% 18%/8% 8% 4% 4%;background:linear-gradient(90deg,#4e2b16 0%,#70421f 16%,#9b6232 34%,#6a3d1d 51%,#9a6030 68%,#72421f 84%,#4c2915 100%);box-shadow:inset 18px 0 24px rgba(35,16,5,.25),inset -18px 0 25px rgba(35,16,5,.2),0 12px 25px rgba(55,35,15,.2)}
+        .natural-canvas .trunk:before,.natural-canvas .trunk:after{content:"";position:absolute;top:50px;bottom:60px;width:8px;border-radius:50%;background:rgba(45,22,8,.22)}.natural-canvas .trunk:before{left:78px;transform:rotate(3deg)}.natural-canvas .trunk:after{right:74px;transform:rotate(-4deg)}
+        .natural-canvas .roots{position:absolute;left:50%;bottom:25px;width:850px;height:240px;transform:translateX(-50%);z-index:3;background:radial-gradient(ellipse at center,#70401e 0 25%,transparent 27%),radial-gradient(ellipse at 20% 75%,#70401e 0 13%,transparent 15%),radial-gradient(ellipse at 80% 75%,#70401e 0 13%,transparent 15%);filter:drop-shadow(0 8px 8px rgba(40,25,10,.25))}
         .natural-canvas .natural-svg{position:absolute;inset:0;z-index:4;pointer-events:none}
-        .natural-card{position:absolute;width:178px;min-height:142px;padding:10px 9px;text-align:center;background:rgba(255,255,255,.96);border:4px solid #fff;border-radius:20px;box-shadow:0 10px 24px rgba(30,55,25,.22);z-index:10}
-        .natural-card img{width:70px;height:70px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.2)}
-        .natural-card b{display:block;margin-top:6px;font-size:14px;color:#26351f}.natural-card small{display:block;margin-top:3px;color:#3f8c46;font-weight:700}
-        .natural-card.root-card{width:205px;min-height:165px;border:5px solid #e1a51e;box-shadow:0 12px 28px rgba(90,65,15,.3)}
-        .natural-card.root-card img{width:84px;height:84px}.natural-card.root-card:before{content:"♛";position:absolute;top:-25px;left:50%;transform:translateX(-50%);font-size:26px;color:#d39a13}
-        .natural-tools{position:absolute;top:18px;right:22px;z-index:30;display:flex;gap:8px;flex-wrap:wrap}
-        .natural-tools .btn{box-shadow:0 5px 14px rgba(0,0,0,.12)}
+        .natural-card{position:absolute;width:158px;min-height:112px;padding:8px;text-align:center;background:rgba(255,255,255,.97);border:3px solid #fff;border-radius:18px;box-shadow:0 9px 22px rgba(30,55,25,.22);z-index:12}
+        .natural-card img{width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 3px 9px rgba(0,0,0,.22)}
+        .natural-card b{display:block;margin-top:5px;font-size:13px;color:#25361f}.natural-card small{display:block;margin-top:2px;color:#3f8c46;font-weight:700}
+        .natural-card.trunk-card{width:210px;min-height:145px;border:5px solid #e2ad31;border-radius:22px;background:linear-gradient(#fffdf2,#fff);box-shadow:0 10px 28px rgba(65,45,12,.3);z-index:20}
+        .natural-card.trunk-card img{width:78px;height:78px}.natural-card.trunk-card:before{content:"♛";position:absolute;top:-28px;left:50%;transform:translateX(-50%);font-size:27px;color:#d39b13}
+        .natural-card.branch-card{border-color:#ead7bc;background:#fffdf9}
+        .natural-card.leaf-card{width:145px;min-height:96px;border:3px solid #9bcf6b;border-radius:52% 48% 52% 48%/58% 42% 58% 42%;background:linear-gradient(145deg,#fbfff7,#eaf7dc);box-shadow:0 8px 18px rgba(49,95,35,.2)}
+        .natural-card.leaf-card img{width:50px;height:50px}.natural-card.leaf-card b{font-size:12px}.natural-card.leaf-card small{font-size:10px}
+        .natural-tools{position:absolute;top:16px;right:18px;z-index:30;display:flex;gap:8px;flex-wrap:wrap}.natural-tools .btn{box-shadow:0 5px 14px rgba(0,0,0,.12)}
         @media(max-width:700px){
             .natural-canvas{width:1900px;min-height:1500px}.natural-canvas .canopy{width:1450px;height:500px}.natural-canvas .trunk{width:175px;height:1180px;top:190px}.natural-canvas .roots{width:470px}.natural-card{width:145px;min-height:120px}.natural-card img{width:58px;height:58px}.natural-card.root-card{width:170px;min-height:140px}.natural-card.root-card img{width:72px;height:72px}.natural-tools{left:12px;right:auto;top:12px}
         }
@@ -397,38 +372,69 @@ function renderNaturalTree(){
   canvas.innerHTML='<div class="canopy"></div><div class="trunk"></div><div class="roots"></div><div class="ground"></div><svg id="naturalSvg" class="natural-svg"></svg><div id="naturalCards"></div><div class="natural-tools"><button class="btn gray" onclick="renderTree()">▦ Simple</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ Delete Tree</button></div>';
   const svg=document.getElementById('naturalSvg'), cards=document.getElementById('naturalCards');
   if(!people.length)return;
-  const byParent={}; people.forEach(p=>(byParent[String(p.parentId||'root')]??=[]).push(p));
-  Object.values(byParent).forEach(a=>a.sort((x,y)=>new Date(x.createdAt)-new Date(y.createdAt)));
   const root=people.find(p=>!p.parentId); if(!root)return;
+  const children={}; people.forEach(p=>(children[String(p.parentId||'root')]??=[]).push(p));
+  Object.values(children).forEach(a=>a.sort((x,y)=>new Date(x.createdAt)-new Date(y.createdAt)));
   const maxGen=Math.max(...people.map(p=>Number(p.generation)||1));
-  const W=2600,H=Math.max(1850,360+maxGen*330); canvas.style.width=W+'px'; canvas.style.height=H+'px'; svg.setAttribute('width',W); svg.setAttribute('height',H);
-  const positions={};
-  const levelGap=330, rootY=145, usableLeft=180, usableRight=W-180;
-  const genGroups={}; people.forEach(p=>(genGroups[p.generation]??=[]).push(p));
-  Object.keys(genGroups).forEach(g=>{
-    const arr=genGroups[g]; const y=rootY+(Number(g)-1)*levelGap;
-    const span=Math.min(usableRight-usableLeft, Math.max(900,(arr.length-1)*300));
-    const start=W/2-span/2;
-    arr.forEach((p,i)=>{ positions[String(p._id)]={x:start+(arr.length===1?span/2:i*(span/(arr.length-1))),y}; });
-  });
-  positions[String(root._id)]={x:W/2,y:120};
-  function path(x1,y1,x2,y2,branchWidth){
-    const ns='http://www.w3.org/2000/svg';
-    const p=document.createElementNS(ns,'path'); const mid=y1+(y2-y1)*.48;
-    p.setAttribute('d',`M ${x1} ${y1} C ${x1} ${mid-80}, ${x2} ${mid+80}, ${x2} ${y2}`);
-    p.setAttribute('fill','none'); p.setAttribute('stroke','#70421f'); p.setAttribute('stroke-width',String(branchWidth)); p.setAttribute('stroke-linecap','round'); p.setAttribute('stroke-linejoin','round'); svg.appendChild(p);
-    const h=document.createElementNS(ns,'path'); h.setAttribute('d',`M ${x1} ${y1-2} C ${x1} ${mid-82}, ${x2} ${mid+78}, ${x2} ${y2-2}`); h.setAttribute('fill','none'); h.setAttribute('stroke','#9b6737'); h.setAttribute('stroke-width',String(Math.max(4,branchWidth*.28))); h.setAttribute('stroke-linecap','round'); svg.appendChild(h);
+  const W=Math.max(2600, Math.min(4200, 1250 + people.length*150));
+  const H=Math.max(1900, 1050 + maxGen*250);
+  canvas.style.width=W+'px'; canvas.style.height=H+'px'; svg.setAttribute('width',W); svg.setAttribute('height',H);
+  const center=W/2, pos={};
+  const ns='http://www.w3.org/2000/svg';
+  function addPath(parent, child, gen){
+    const a=pos[String(parent._id)], b=pos[String(child._id)]; if(!a||!b)return;
+    const p=document.createElementNS(ns,'path');
+    const width=Math.max(10,34-(gen*4));
+    let x1=a.x, y1=a.y, x2=b.x, y2=b.y;
+    const bend=y1+(y2-y1)*.48;
+    p.setAttribute('d',`M ${x1} ${y1} C ${x1+(x2-x1)*.10} ${bend-120}, ${x2-(x2-x1)*.10} ${bend+100}, ${x2} ${y2}`);
+    p.setAttribute('fill','none'); p.setAttribute('stroke','#633918'); p.setAttribute('stroke-width',width); p.setAttribute('stroke-linecap','round'); p.setAttribute('stroke-linejoin','round'); svg.appendChild(p);
+    const hi=document.createElementNS(ns,'path');
+    hi.setAttribute('d',p.getAttribute('d')); hi.setAttribute('fill','none'); hi.setAttribute('stroke','#a16b39'); hi.setAttribute('stroke-width',Math.max(3,width*.25)); hi.setAttribute('stroke-linecap','round'); svg.appendChild(hi);
   }
-  // Draw parent-child branches first so cards sit on top.
-  people.forEach(p=>{ if(!p.parentId)return; const a=positions[String(p.parentId)],b=positions[String(p._id)]; if(a&&b) path(a.x,a.y+82,b.x,b.y-8,Math.max(18,30-(Number(p.generation)||1)*2)); });
+  // Root / grandfather lives visually inside the trunk.
+  pos[String(root._id)]={x:center,y:1390}; root.__naturalPos=pos[String(root._id)];
+  // Lay out every generation as a natural layer: children on branches, grandchildren on leaves.
+  const groups={}; people.forEach(p=>{const g=Number(p.generation)||1;(groups[g]??=[]).push(p)});
+  Object.keys(groups).map(Number).sort((a,b)=>a-b).forEach(g=>{
+    if(g===1)return;
+    const arr=groups[g];
+    const y = g===2 ? 1040 : Math.max(230, 1040-(g-2)*245);
+    const spread=Math.min(W-700, Math.max(720,(arr.length-1)*250));
+    const start=center-spread/2;
+    arr.forEach((p,i)=>{
+      const x=arr.length===1?center:start+i*(spread/(arr.length-1));
+      pos[String(p._id)]={x,y}; p.__naturalPos=pos[String(p._id)];
+    });
+  });
+  // If there is no generation field consistency, place generation-1 members on the main branches.
+  (groups[1]||[]).forEach((p,i,arr)=>{
+    const spread=Math.min(W-900,Math.max(700,(arr.length-1)*380));
+    const x=arr.length===1?center:center-spread/2+i*(spread/(arr.length-1));
+    pos[String(p._id)]={x,y:720}; p.__naturalPos=pos[String(p._id)];
+  });
+  // Draw branch network first: trunk -> branch -> leaf.
+  people.forEach(p=>{if(!p.parentId)return;const parent=people.find(x=>String(x._id)===String(p.parentId));if(parent)addPath(parent,p,Number(p.generation)||1)});
+  // Add short leaf twigs behind leaf cards.
+  people.filter(p=>(Number(p.generation)||1)>=2).forEach(p=>{
+    const q=pos[String(p._id)]; if(!q)return;
+    const twig=document.createElementNS(ns,'path');
+    twig.setAttribute('d',`M ${q.x} ${q.y+70} C ${q.x} ${q.y+35} ${q.x+(q.x<center?-22:22)} ${q.y+18} ${q.x+(q.x<center?-34:34)} ${q.y-4}`);
+    twig.setAttribute('fill','none'); twig.setAttribute('stroke','#765025'); twig.setAttribute('stroke-width','8'); twig.setAttribute('stroke-linecap','round'); svg.appendChild(twig);
+  });
   people.forEach(p=>{
-    const q=positions[String(p._id)]; if(!q)return;
-    const d=document.createElement('div'); d.className='natural-card'+(p._id===root._id?' root-card':''); d.style.left=(q.x-(p._id===root._id?102.5:89))+'px'; d.style.top=q.y+'px';
-    d.innerHTML='<img src="'+(p.photo||avatar(p.name))+'"><b>'+esc(p.name)+'</b><small>Generation '+esc(p.generation)+'</small>';
+    const q=pos[String(p._id)]; if(!q)return;
+    const g=Number(p.generation)||1;
+    const d=document.createElement('div');
+    d.className='natural-card '+(p._id===root._id?'trunk-card':(g>=2?'leaf-card':'branch-card'));
+    const w=p._id===root._id?105:g>=2?72:79;
+    const h=p._id===root._id?145:g>=2?96:112;
+    d.style.left=(q.x-w/2)+'px'; d.style.top=(q.y-h/2)+'px';
+    d.innerHTML='<img src="'+(p.photo||avatar(p.name))+'"><b>'+esc(p.name)+'</b><small>'+(p._id===root._id?'👑 Grand Father / Main Person':g===1?'🌿 Child / Branch':'🍃 Generation '+esc(g))+'</small>';
     cards.appendChild(d);
   });
   $('viewerTitle').innerHTML='🌳 Real Family Tree';
-  setTimeout(()=>{$('treebox').scrollLeft=Math.max(0,W/2-$('treebox').clientWidth/2);$('treebox').scrollTop=0;},50);
+  setTimeout(()=>{$('treebox').scrollLeft=Math.max(0,center-$('treebox').clientWidth/2);$('treebox').scrollTop=Math.max(0,900-$('treebox').clientHeight/2)},60);
 }
 function restoreSimpleCanvas(){ const canvas=$('canvas'); canvas.className='canvas'; canvas.innerHTML='<svg id="svg" width="8000" height="4500" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div>'; }
 function draw(svg, x1, y1, x2, y2) { let ns = 'http://www.w3.org/2000/svg', p = document.createElementNS(ns, 'path'), m = (y1 + y2) / 2; p.setAttribute('d', `M${x1} ${y1} L${x1} ${m} L${x2} ${m} L${x2} ${y2}`); p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#71849a'); p.setAttribute('stroke-width', '4'); svg.appendChild(p) } function avatar(n) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n || '?')[0].toUpperCase()}</text></svg>`) } function esc(v) { return String(v || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) } function escAttr(v) { return String(v || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'") } async function downloadPNG() { if (!people.length) return; if (!window.html2canvas) { let s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'; document.head.appendChild(s); await new Promise(r => s.onload = r) } let c = await html2canvas($('canvas'), { scale: 2, backgroundColor: '#fbfcfe', useCORS: true }), a = document.createElement('a'); a.download = 'family-tree-admin.png'; a.href = c.toDataURL('image/png'); a.click() }
