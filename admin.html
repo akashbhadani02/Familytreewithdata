@@ -195,40 +195,116 @@
         }
 
         /* =========================
-           TRUE BOTANICAL FAMILY TREE
-           Oldest person = trunk base. Each generation grows upward.
-           Children are leaves at branch tips.
+           NATURAL REAL FAMILY TREE
+           Bottom-up: trunk = oldest/root, branches grow upward
         ========================== */
-        .treebox.natural-mode{
-          background:linear-gradient(#fbfcf8 0%,#f8faf3 72%,#eef4e7 100%);
-          overflow:auto;min-height:760px;border-radius:16px;padding:0;
-        }
-        .natural-canvas{position:relative;width:3400px;height:2300px;overflow:hidden;background:linear-gradient(#fbfcf7,#f5f8ee 72%,#e8efdf)}
-        .natural-canvas .ground{position:absolute;left:0;right:0;bottom:-70px;height:170px;background:radial-gradient(ellipse at 50% 20%,#a9c58a 0,#c8d9b3 40%,transparent 72%);z-index:1}
-        /* No artificial green canopy: the brown silhouette itself is the tree. */
-        .natural-canvas .canopy{display:none}
-        .natural-canvas .trunk{
-          position:absolute;left:50%;bottom:85px;width:260px;height:1260px;transform:translateX(-50%);z-index:3;
-          background:linear-gradient(90deg,#3f260d 0%,#5a3814 13%,#744a1d 29%,#4c2f10 43%,#7f5522 57%,#573510 72%,#6e451b 88%,#3a220b 100%);
-          clip-path:polygon(39% 0,61% 0,66% 8%,64% 25%,67% 43%,63% 63%,69% 82%,78% 96%,100% 100%,0 100%,22% 96%,34% 82%,38% 63%,36% 43%,39% 25%,34% 8%);
-          box-shadow:inset 24px 0 24px rgba(20,10,2,.28),inset -22px 0 24px rgba(20,10,2,.2);
-        }
-        .natural-canvas .trunk:before,.natural-canvas .trunk:after{content:"";position:absolute;top:30px;bottom:90px;width:8px;border-radius:50%;background:rgba(35,18,5,.24)}
-        .natural-canvas .trunk:before{left:82px;transform:rotate(4deg)}.natural-canvas .trunk:after{right:84px;transform:rotate(-3deg)}
-        .natural-canvas .roots{position:absolute;left:50%;bottom:28px;width:1200px;height:230px;transform:translateX(-50%);z-index:2;background:radial-gradient(ellipse at 50% 35%,#573411 0 18%,transparent 20%),radial-gradient(ellipse at 15% 70%,#70461a 0 11%,transparent 13%),radial-gradient(ellipse at 85% 70%,#70461a 0 11%,transparent 13%),radial-gradient(ellipse at 3% 94%,#835c27 0 7%,transparent 9%),radial-gradient(ellipse at 97% 94%,#835c27 0 7%,transparent 9%)}
-        .natural-canvas .natural-svg{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:visible}
-        .natural-card{position:absolute;width:150px;min-height:102px;padding:7px;text-align:center;background:#fff;border:3px solid #fff;border-radius:50%;box-shadow:0 6px 16px rgba(40,55,25,.18);z-index:12;transform:translateZ(0)}
-        .natural-card img{width:55px;height:55px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.18)}
-        .natural-card b{display:block;margin-top:3px;font-size:12px;color:#26351e}.natural-card small{display:block;margin-top:1px;color:#4b8242;font-weight:700;font-size:10px}
-        .natural-card.trunk-card{width:205px;min-height:138px;border:4px solid #7b531d;border-radius:24px;background:#fffdf5;box-shadow:0 8px 22px rgba(50,35,10,.2)}
-        .natural-card.trunk-card img{width:72px;height:72px}.natural-card.trunk-card:before{content:"♛";position:absolute;top:-25px;left:50%;transform:translateX(-50%);font-size:24px;color:#8b671e}
-        .natural-card.branch-card{width:145px;min-height:98px;border-radius:50%;border-color:#d9c9a7;background:#fffdf8}
-        .natural-card.leaf-card{width:128px;min-height:88px;border:3px solid #7ea95a;border-radius:65% 35% 65% 35% / 55% 65% 35% 45%;background:linear-gradient(145deg,#f9fff2,#dceec9);box-shadow:0 6px 14px rgba(45,85,30,.16)}
-        .natural-card.leaf-card img{width:46px;height:46px}.natural-card.leaf-card b{font-size:11px}.natural-card.leaf-card small{font-size:9px}
-        .natural-tools{position:absolute;top:16px;right:18px;z-index:30;display:flex;gap:8px;flex-wrap:wrap}.natural-tools .btn{box-shadow:0 4px 12px rgba(0,0,0,.1)}
+        .treebox.natural-mode{background:linear-gradient(#dff5ff 0%,#f8fcff 48%,#d9efc7 100%);overflow:auto;min-height:760px;border-radius:16px;padding:0}
+        .natural-canvas{position:relative;width:3000px;height:2100px;overflow:hidden;background:linear-gradient(to bottom,#eaf8ff 0 55%,#d4edbd 100%)}
+        .natural-canvas .ground{position:absolute;left:-5%;right:-5%;bottom:-90px;height:260px;background:radial-gradient(ellipse at 50% 8%,#87b85b 0,#a4cc78 32%,#679c47 72%,#4c7e38 100%);border-radius:50% 50% 0 0/32% 32% 0 0;z-index:2}
+        .natural-canvas .canopy{position:absolute;left:50%;top:45px;width:2200px;height:760px;transform:translateX(-50%);z-index:1;background:radial-gradient(circle at 9% 58%,#347c2e 0 145px,transparent 149px),radial-gradient(circle at 20% 32%,#4f9a37 0 180px,transparent 184px),radial-gradient(circle at 34% 19%,#68ad43 0 175px,transparent 179px),radial-gradient(circle at 50% 13%,#4b9635 0 210px,transparent 214px),radial-gradient(circle at 65% 18%,#62a943 0 185px,transparent 189px),radial-gradient(circle at 80% 34%,#4f9638 0 180px,transparent 184px),radial-gradient(circle at 92% 58%,#347c2e 0 145px,transparent 149px),radial-gradient(circle at 50% 52%,#3e8b31 0 300px,transparent 304px);filter:drop-shadow(0 18px 16px rgba(45,90,30,.18))}
+        .natural-canvas .canopy:after{content:"";position:absolute;inset:70px;background:radial-gradient(circle at 18% 25%,rgba(255,255,255,.17) 0 5px,transparent 6px),radial-gradient(circle at 37% 15%,rgba(255,255,255,.13) 0 4px,transparent 5px),radial-gradient(circle at 62% 23%,rgba(255,255,255,.15) 0 5px,transparent 6px),radial-gradient(circle at 82% 18%,rgba(255,255,255,.12) 0 4px,transparent 5px)}
+        .natural-canvas .trunk{position:absolute;left:50%;bottom:120px;width:330px;height:1180px;transform:translateX(-50%);z-index:3;border-radius:46% 46% 18% 18%/7% 7% 4% 4%;background:linear-gradient(90deg,#452513 0%,#67401f 12%,#936033 29%,#70431f 43%,#a56d39 57%,#71421f 72%,#976039 87%,#492713 100%);box-shadow:inset 25px 0 32px rgba(35,16,5,.26),inset -25px 0 32px rgba(35,16,5,.23),0 15px 30px rgba(55,35,15,.25)}
+        .natural-canvas .trunk:before,.natural-canvas .trunk:after{content:"";position:absolute;top:35px;bottom:45px;width:9px;border-radius:50%;background:rgba(45,22,8,.23)}.natural-canvas .trunk:before{left:92px;transform:rotate(3deg)}.natural-canvas .trunk:after{right:88px;transform:rotate(-4deg)}
+        .natural-canvas .roots{position:absolute;left:50%;bottom:35px;width:1050px;height:300px;transform:translateX(-50%);z-index:3;background:radial-gradient(ellipse at 50% 55%,#633719 0 24%,transparent 26%),radial-gradient(ellipse at 16% 78%,#74441f 0 12%,transparent 14%),radial-gradient(ellipse at 84% 78%,#74441f 0 12%,transparent 14%),radial-gradient(ellipse at 3% 92%,#805126 0 8%,transparent 10%),radial-gradient(ellipse at 97% 92%,#805126 0 8%,transparent 10%);filter:drop-shadow(0 9px 9px rgba(40,25,10,.25))}
+        .natural-canvas .natural-svg{position:absolute;inset:0;z-index:5;pointer-events:none}
+        .natural-card{position:absolute;width:168px;min-height:112px;padding:8px;text-align:center;background:rgba(255,255,255,.96);border:3px solid #fff;border-radius:18px;box-shadow:0 9px 22px rgba(30,55,25,.22);z-index:12}
+        .natural-card img{width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 3px 9px rgba(0,0,0,.22)}
+        .natural-card b{display:block;margin-top:5px;font-size:13px;color:#25361f}.natural-card small{display:block;margin-top:2px;color:#3f8c46;font-weight:700}
+        .natural-card.trunk-card{width:215px;min-height:148px;border:5px solid #d99b2b;border-radius:24px;background:linear-gradient(#fffdf2,#fff);box-shadow:0 10px 28px rgba(65,45,12,.3);z-index:20}
+        .natural-card.trunk-card img{width:78px;height:78px}.natural-card.trunk-card:before{content:"♛";position:absolute;top:-28px;left:50%;transform:translateX(-50%);font-size:27px;color:#d39b13}
+        .natural-card.branch-card{border-color:#e8cfab;background:#fffdf8}
+        .natural-card.leaf-card{width:148px;min-height:98px;border:3px solid #91c85e;border-radius:48% 52% 45% 55%/58% 42% 58% 42%;background:linear-gradient(145deg,#fbfff7,#eaf7dc);box-shadow:0 8px 18px rgba(49,95,35,.2)}
+        .natural-card.leaf-card img{width:50px;height:50px}.natural-card.leaf-card b{font-size:12px}.natural-card.leaf-card small{font-size:10px}
+        .natural-tools{position:absolute;top:16px;right:18px;z-index:30;display:flex;gap:8px;flex-wrap:wrap}.natural-tools .btn{box-shadow:0 5px 14px rgba(0,0,0,.12)}
         @media(max-width:700px){
-          .natural-canvas{width:2500px;height:2050px}.natural-canvas .trunk{width:205px;height:1110px}.natural-canvas .roots{width:760px;height:190px}.natural-card{width:132px;min-height:96px}.natural-card img{width:52px;height:52px}.natural-card.trunk-card{width:175px;min-height:125px}.natural-card.trunk-card img{width:66px;height:66px}.natural-tools{left:12px;right:auto;top:12px}
+          .natural-canvas{width:2200px;height:1900px}.natural-canvas .canopy{width:1650px;height:560px}.natural-canvas .trunk{width:230px;height:1050px}.natural-canvas .roots{width:650px;height:230px}.natural-card{width:145px;min-height:112px}.natural-card img{width:58px;height:58px}.natural-card.trunk-card{width:185px;min-height:132px}.natural-card.trunk-card img{width:70px;height:70px}.natural-tools{left:12px;right:auto;top:12px}
         }
+    
+/* ===== REAL TREE POLISH ===== */
+.natural-mode {
+  border: 1px solid #cfe0c6 !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 12px 35px rgba(42,75,35,.10);
+}
+.natural-canvas {
+  background:
+    radial-gradient(circle at 12% 14%, rgba(255,255,255,.85) 0 42px, transparent 43px),
+    radial-gradient(circle at 84% 20%, rgba(255,255,255,.7) 0 55px, transparent 56px),
+    linear-gradient(180deg,#eaf8ff 0%,#f7fcff 44%,#dcefcf 100%) !important;
+}
+.natural-canvas .canopy {
+  opacity:.72;
+  filter: blur(.2px) drop-shadow(0 18px 18px rgba(45,90,30,.16)) !important;
+}
+.natural-canvas .trunk {
+  background:
+    repeating-linear-gradient(86deg,rgba(54,28,10,.12) 0 4px,transparent 4px 28px),
+    linear-gradient(90deg,#3d2111 0%,#6c421f 12%,#9b6435 29%,#6d401d 43%,#a9703d 56%,#71421f 72%,#996039 87%,#432411 100%) !important;
+}
+.natural-canvas .roots {
+  opacity:.95;
+}
+.natural-canvas .ground {
+  box-shadow: inset 0 20px 30px rgba(255,255,255,.18);
+}
+.natural-svg path {
+  filter: drop-shadow(0 3px 2px rgba(55,30,10,.18));
+}
+.natural-card {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.natural-card:hover {
+  transform: translateY(-5px) scale(1.025);
+  box-shadow: 0 14px 30px rgba(30,55,25,.28);
+}
+.natural-card.branch-card {
+  border-color:#d8bb8f;
+  background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(255,249,237,.96));
+}
+.natural-card.leaf-card {
+  border-color:#78ad4e;
+  background:linear-gradient(145deg,#fbfff8,#e6f5d8);
+  box-shadow:0 8px 20px rgba(49,95,35,.22);
+}
+.natural-card .tree-link-btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  margin-top:7px;
+  padding:5px 8px;
+  border:1px solid #b8d8aa;
+  border-radius:999px;
+  background:#f2faed;
+  color:#2d7a38;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+}
+.natural-card .tree-link-btn:hover { background:#e1f2d8; }
+.links-panel {
+  background:linear-gradient(180deg,#ffffff,#f8fbff);
+  border:1px solid #dce7f0;
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 8px 24px rgba(32,48,71,.08);
+}
+.member-list { grid-template-columns:repeat(auto-fill,minmax(280px,1fr)) !important; }
+.member-item {
+  background:#fff !important;
+  box-shadow:0 4px 14px rgba(32,48,71,.07);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.member-item:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(32,48,71,.11); }
+.member-item .member-link { font-size:11px; color:#40566d; }
+.member-item .tool-row { margin-top:8px; }
+@media(max-width:700px){
+  .links-panel{padding:12px;margin-top:12px}
+  .member-list{grid-template-columns:1fr !important}
+  .natural-card .tree-link-btn{font-size:9px;padding:5px 7px}
+}
+
     </style>
 </head>
 
@@ -380,104 +456,184 @@ function renderTree(){
 function renderNaturalTree(){
   const box=$('treebox'); box.classList.add('natural-mode');
   const canvas=$('canvas'); canvas.className='natural-canvas';
-  canvas.innerHTML='<div class="trunk"></div><div class="roots"></div><div class="ground"></div><svg id="naturalSvg" class="natural-svg"></svg><div id="naturalCards"></div><div class="natural-tools"><button class="btn gray" onclick="renderTree()">▦ Simple</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ Delete Tree</button></div>';
+  canvas.innerHTML='<div class="canopy"></div><div class="trunk"></div><div class="roots"></div><div class="ground"></div><svg id="naturalSvg" class="natural-svg"></svg><div id="naturalCards"></div><div class="natural-tools"><button class="btn gray" onclick="renderTree()">▦ Simple</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ Delete Tree</button></div>';
   if(!people.length)return;
   const root=people.find(p=>!p.parentId) || people.slice().sort((a,b)=>(Number(a.generation)||1)-(Number(b.generation)||1))[0];
   if(!root)return;
 
   const svg=document.getElementById('naturalSvg'), cards=document.getElementById('naturalCards');
   const children={};
-  people.forEach(p=>{const k=String(p.parentId||'root');(children[k]??=[]).push(p);});
+  people.forEach(p=>{ const k=String(p.parentId||'root'); (children[k]??=[]).push(p); });
   Object.values(children).forEach(a=>a.sort((x,y)=>new Date(x.createdAt||0)-new Date(y.createdAt||0)));
 
-  // Build the real hierarchy. Level 0 is the oldest/root at the bottom.
-  const levels=[], visited=new Set();
+  // Build levels from the actual parentId relationship. Root is at the bottom; every child is above its parent.
+  const levels=[];
+  const visited=new Set();
   function walk(p,level){
     if(visited.has(String(p._id))) return;
-    visited.add(String(p._id)); (levels[level]??=[]).push(p);
+    visited.add(String(p._id));
+    (levels[level]??=[]).push(p);
     (children[String(p._id)]||[]).forEach(c=>walk(c,level+1));
   }
   walk(root,0);
   people.forEach(p=>{if(!visited.has(String(p._id))) walk(p,0);});
 
   const maxLevel=Math.max(0,levels.length-1);
-  const W=Math.max(3400,Math.min(7000,2100+Math.max(0,people.length-1)*260));
-  const H=Math.max(2300,1050+maxLevel*360);
+  const W=Math.max(3000,Math.min(6000,1800+Math.max(0,people.length-1)*240));
+  const H=Math.max(2100,900+levels.length*330);
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
-  svg.setAttribute('width',W); svg.setAttribute('height',H); svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
-
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
   const center=W/2, pos={};
-  // Root is the trunk base. Every generation grows upward.
+
+  // Root is deep in the trunk. Higher generations move upward toward the crown.
   const rootY=H-430;
-  const topY=260;
-  const levelGap=maxLevel?Math.max(300,(rootY-topY)/maxLevel):360;
+  const topY=250;
+  const gap=maxLevel?Math.max(230,(rootY-topY)/maxLevel):330;
 
-  // Calculate subtree width so brothers get their own natural branch space.
-  const sub={};
-  function width(p){
+  // Give each generation a wide natural spread, while keeping each child's subtree close to its parent.
+  const subtree={};
+  function subtreeWidth(p){
     const kids=children[String(p._id)]||[];
-    if(!kids.length){sub[String(p._id)]=1;return 1;}
-    sub[String(p._id)]=Math.max(1,kids.reduce((n,c)=>n+width(c),0)); return sub[String(p._id)];
+    if(!kids.length){ subtree[String(p._id)]=1; return 1; }
+    const n=kids.reduce((sum,k)=>sum+subtreeWidth(k),0);
+    subtree[String(p._id)]=Math.max(1,n);
+    return subtree[String(p._id)];
   }
-  width(root);
+  subtreeWidth(root);
 
-  function place(p,left,right,level){
-    const kids=children[String(p._id)]||[];
+  function layoutChildren(parent, left, right, level){
+    const kids=children[String(parent._id)]||[];
     if(!kids.length)return;
-    const total=kids.reduce((n,c)=>n+sub[String(c._id)],0);
-    let cur=left;
-    kids.forEach(c=>{
-      const span=(right-left)*(sub[String(c._id)]/total);
-      const x=cur+span/2;
-      pos[String(c._id)]={x,y:rootY-level*levelGap};
-      place(c,cur,cur+span,level+1); cur+=span;
+    const total=kids.reduce((s,k)=>s+subtree[String(k._id)],0);
+    let cursor=left;
+    kids.forEach(k=>{
+      const ratio=subtree[String(k._id)]/total;
+      const a=cursor, b=cursor+(right-left)*ratio;
+      const x=(a+b)/2;
+      pos[String(k._id)]={x,y:rootY-level*gap};
+      layoutChildren(k,a,b,level+1);
+      cursor=b;
     });
   }
   pos[String(root._id)]={x:center,y:rootY};
-  place(root,260,W-260,1);
+  layoutChildren(root,220,W-220,1);
 
-  // Draw a thick organic branch from parent to child. Thickness decreases by generation.
+  // Any disconnected member still gets a sensible upper position.
+  const placed=new Set(Object.keys(pos));
+  people.filter(p=>!placed.has(String(p._id))).forEach((p,i)=>{
+    pos[String(p._id)]={x:320+i*190,y:topY};
+  });
+
   const ns='http://www.w3.org/2000/svg';
+  // Draw organic branch from parent to child. Parent is below child in this tree.
   function branch(parent,child,level){
     const a=pos[String(parent._id)], b=pos[String(child._id)]; if(!a||!b)return;
-    const dx=b.x-a.x, dy=b.y-a.y;
-    const c1x=a.x+dx*.08, c1y=a.y+dy*.36;
-    const c2x=b.x-dx*.08, c2y=b.y-dy*.28;
     const p=document.createElementNS(ns,'path');
-    p.setAttribute('d',`M ${a.x} ${a.y-45} C ${c1x} ${c1y} ${c2x} ${c2y} ${b.x} ${b.y+42}`);
-    p.setAttribute('fill','none'); p.setAttribute('stroke','#4b2c0d');
-    const sw=Math.max(7,42-level*6); p.setAttribute('stroke-width',sw); p.setAttribute('stroke-linecap','round'); p.setAttribute('stroke-linejoin','round'); svg.appendChild(p);
-    const hi=document.createElementNS(ns,'path'); hi.setAttribute('d',p.getAttribute('d')); hi.setAttribute('fill','none'); hi.setAttribute('stroke','#8a5a22'); hi.setAttribute('stroke-width',Math.max(2,sw*.25)); hi.setAttribute('stroke-linecap','round'); svg.appendChild(hi);
+    const dx=b.x-a.x, dy=b.y-a.y;
+    const bendY=a.y-dy*.46;
+    const curve=Math.max(70,Math.min(260,Math.abs(dx)*.18));
+    p.setAttribute('d',`M ${a.x} ${a.y} C ${a.x} ${bendY} ${b.x} ${bendY} ${b.x} ${b.y}`);
+    p.setAttribute('fill','none');
+    const sw=Math.max(9,36-level*5);
+    p.setAttribute('stroke','#543018'); p.setAttribute('stroke-width',sw); p.setAttribute('stroke-linecap','round'); p.setAttribute('stroke-linejoin','round');
+    svg.appendChild(p);
+    const hi=document.createElementNS(ns,'path');
+    hi.setAttribute('d',p.getAttribute('d')); hi.setAttribute('fill','none'); hi.setAttribute('stroke','#9b6333'); hi.setAttribute('stroke-width',Math.max(3,sw*.25)); hi.setAttribute('stroke-linecap','round'); svg.appendChild(hi);
   }
-  function drawTree(p,level){(children[String(p._id)]||[]).forEach(c=>{branch(p,c,level+1);drawTree(c,level+1);});}
-  drawTree(root,0);
+  function drawAll(p,level){
+    (children[String(p._id)]||[]).forEach(c=>{branch(p,c,level+1);drawAll(c,level+1);});
+  }
+  drawAll(root,0);
 
-  // Small natural twigs beyond the last child; they stop exactly at the last generation.
-  const last=levels[maxLevel]||[];
-  last.forEach(p=>{
+  // Natural twig tips behind the highest-generation cards.
+  const highest=levels[maxLevel]||[];
+  highest.forEach(p=>{
     const q=pos[String(p._id)]; if(!q)return;
-    const dir=q.x<center?-1:1;
     const twig=document.createElementNS(ns,'path');
-    twig.setAttribute('d',`M ${q.x} ${q.y+38} C ${q.x+dir*8} ${q.y-10} ${q.x+dir*38} ${q.y-35} ${q.x+dir*68} ${q.y-58}`);
-    twig.setAttribute('fill','none');twig.setAttribute('stroke','#644014');twig.setAttribute('stroke-width','7');twig.setAttribute('stroke-linecap','round');svg.appendChild(twig);
+    twig.setAttribute('d',`M ${q.x} ${q.y} C ${q.x} ${q.y-45} ${q.x+(q.x<center?-35:35)} ${q.y-70} ${q.x+(q.x<center?-55:55)} ${q.y-105}`);
+    twig.setAttribute('fill','none'); twig.setAttribute('stroke','#6d4222'); twig.setAttribute('stroke-width','8'); twig.setAttribute('stroke-linecap','round'); svg.appendChild(twig);
   });
 
-  // Member cards are leaves for children; only the oldest/root sits in the trunk.
-  function levelOf(id){for(let i=0;i<levels.length;i++)if(levels[i].some(x=>String(x._id)===String(id)))return i;return 0;}
   people.forEach(p=>{
     const q=pos[String(p._id)]; if(!q)return;
-    const lv=levelOf(p._id), isRoot=String(p._id)===String(root._id), isLeaf=lv===maxLevel && !(children[String(p._id)]||[]).length;
-    const d=document.createElement('div'); d.className='natural-card '+(isRoot?'trunk-card':(isLeaf?'leaf-card':'branch-card'));
-    const w=isRoot?205:(isLeaf?128:145), h=isRoot?138:(isLeaf?88:98);
+    const level=(function(){ for(let i=0;i<levels.length;i++) if(levels[i].some(x=>String(x._id)===String(p._id))) return i; return 0; })();
+    const isRoot=String(p._id)===String(root._id);
+    const isLeaf=level===maxLevel && !((children[String(p._id)]||[]).length);
+    const d=document.createElement('div');
+    d.className='natural-card '+(isRoot?'trunk-card':(isLeaf?'leaf-card':'branch-card'));
+    const w=isRoot?215:(isLeaf?148:168), h=isRoot?148:(isLeaf?98:112);
     d.style.left=(q.x-w/2)+'px'; d.style.top=(q.y-h/2)+'px';
-    d.innerHTML='<img src="'+(p.photo||avatar(p.name))+'"><b>'+esc(p.name)+'</b><small>'+(isRoot?'Grand Father / Main Person':isLeaf?'Child / Last Generation':'Father / Branch')+'</small>';
+    const label=isRoot?'👴 Grand Father / Main Person':isLeaf?'🍃 Last Generation':'🌿 Father / Branch';
+    d.innerHTML='<img src="'+(p.photo||avatar(p.name))+'"><b>'+esc(p.name)+'</b><small>'+label+'</small><button class="tree-link-btn" type="button" data-token="'+esc(p.addToken)+'">🔗 Link Copy</button>';
     cards.appendChild(d);
+    const lb=d.querySelector('.tree-link-btn');
+    if(lb) lb.onclick=()=>copyLink(addLink(p.addToken));
   });
 
+  renderMemberLinks();
   $('viewerTitle').innerHTML='🌳 Real Natural Family Tree';
+  // Focus on the trunk/base first, so Admin immediately understands the tree direction.
   setTimeout(()=>{
-    const tb=$('treebox'); tb.scrollLeft=Math.max(0,center-tb.clientWidth/2); tb.scrollTop=Math.max(0,rootY-tb.clientHeight+220);
-  },80);
+    $('treebox').scrollLeft=Math.max(0,center-$('treebox').clientWidth/2);
+    $('treebox').scrollTop=Math.max(0,rootY-$('treebox').clientHeight+260);
+  },60);
+}
+function addLink(token){ return location.origin + '/add/' + encodeURIComponent(String(token||'')); }
+function copyLink(link){
+  if(!link) return;
+  navigator.clipboard.writeText(link).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',link));
+}
+async function editName(id){
+  const p=people.find(x=>String(x._id)===String(id));
+  if(!p) return;
+  const name=prompt('નવું નામ લખો:',p.name);
+  if(name===null) return;
+  const value=name.trim();
+  if(!value) return alert('નામ ખાલી રાખી શકાતું નથી.');
+  try{
+    const r=await fetch('/api/admin/person/'+encodeURIComponent(id),{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','x-admin-key':key},
+      body:JSON.stringify({name:value})
+    });
+    const d=await r.json();
+    if(!r.ok || !d.ok) return alert(d.error||'નામ બદલી શકાયું નથી.');
+    p.name=value;
+    if($('treebox').classList.contains('natural-mode')) renderNaturalTree(); else renderTree();
+  }catch(e){ alert('Name update error: '+e.message); }
+}
+function renderMemberLinks(){
+  const box=$('memberLinks');
+  if(!box) return;
+  box.innerHTML='';
+  if(!people.length){
+    box.innerHTML='<div class="empty">કોઈ member મળ્યો નથી.</div>';
+    return;
+  }
+  people.forEach(p=>{
+    const item=document.createElement('div');
+    item.className='member-item';
+    const link=addLink(p.addToken);
+    const hasChildren=people.some(c=>String(c.parentId||'')===String(p._id));
+    item.innerHTML='<div class="name">'+esc(p.name)+'</div><small>Generation '+esc(p.generation)+(hasChildren?' • આગળના સભ્યો છે':' • છેલ્લી generation')+'</small><input class="member-link" value="'+esc(link)+'" readonly><div class="tool-row"><button class="btn" type="button">🔗 Copy Link</button><button class="btn gray" type="button">✏️ Name</button><button class="btn danger" type="button">🗑️ Delete</button></div>';
+    const btns=item.querySelectorAll('button');
+    btns[0].onclick=()=>copyLink(link);
+    btns[1].onclick=()=>editName(p._id);
+    btns[2].onclick=()=>deletePerson(p._id);
+    box.appendChild(item);
+  });
+}
+async function deletePerson(id){
+  const p=people.find(x=>String(x._id)===String(id));
+  if(!p) return;
+  if(!confirm('"'+p.name+'" અને તેની નીચેના બધા સભ્યો delete કરવા છે?')) return;
+  try{
+    const r=await fetch('/api/admin/person/'+encodeURIComponent(id),{method:'DELETE',headers:{'x-admin-key':key}});
+    const d=await r.json();
+    if(!r.ok || !d.ok) return alert(d.error||'Member delete થઈ શક્યો નથી.');
+    await viewFamily(window.currentFamilyId);
+    alert('Member અને તેની branch delete થઈ ગઈ.');
+  }catch(e){ alert('Delete error: '+e.message); }
 }
 function restoreSimpleCanvas(){ const canvas=$('canvas'); canvas.className='canvas'; canvas.innerHTML='<svg id="svg" width="8000" height="4500" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div>'; }
 function draw(svg, x1, y1, x2, y2) { let ns = 'http://www.w3.org/2000/svg', p = document.createElementNS(ns, 'path'), m = (y1 + y2) / 2; p.setAttribute('d', `M${x1} ${y1} L${x1} ${m} L${x2} ${m} L${x2} ${y2}`); p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#71849a'); p.setAttribute('stroke-width', '4'); svg.appendChild(p) } function avatar(n) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n || '?')[0].toUpperCase()}</text></svg>`) } function esc(v) { return String(v || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) } function escAttr(v) { return String(v || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'") } async function downloadPNG() { if (!people.length) return; if (!window.html2canvas) { let s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'; document.head.appendChild(s); await new Promise(r => s.onload = r) } let c = await html2canvas($('canvas'), { scale: 2, backgroundColor: '#fbfcfe', useCORS: true }), a = document.createElement('a'); a.download = 'family-tree-admin.png'; a.href = c.toDataURL('image/png'); a.click() }
