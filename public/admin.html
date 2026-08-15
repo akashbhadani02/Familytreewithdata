@@ -102,8 +102,13 @@
             overflow: auto;
             border: 1px solid #dce4ec;
             border-radius: 14px;
-            height: 680px
+            height: 680px;
+            position: relative;
+            touch-action: auto;
+            -webkit-overflow-scrolling: touch
         }
+
+        .tree-zoom-controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.tree-zoom-controls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.tree-zoom-controls button:hover{background:#f1f5f9}.tree-zoom-label{min-width:58px;text-align:center;font-weight:800;color:#315f91}.tree-layer{position:relative;transform-origin:0 0;will-change:transform}
 
         .canvas {
             position: relative;
@@ -234,11 +239,12 @@
                 <div class="row">
                     <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button class="btn" onclick="downloadPNG()">🖼️ Download PNG</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ આખી Tree Delete</button>
                 </div>
+                <div class="tree-zoom-controls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="tree-zoom-label">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div>
                 <div id="treebox" class="treebox">
-                    <div id="canvas" class="canvas"><svg id="svg" width="8000" height="4500"
+                    <div id="canvas" class="canvas"><div id="treeLayer" class="tree-layer"><svg id="svg" width="8000" height="4500"
                             style="position:absolute;left:0;top:0;z-index:1"></svg>
                         <div id="cards"></div>
-                    </div>
+                    </div></div>
                 </div>
                 <div class="links-panel">
                     <h3 style="margin:0">🔗 બધા Members ની Links</h3>
@@ -252,6 +258,7 @@
         let key = localStorage.getItem('adminKey') || '';
         let people = [];
         let currentFamilyId = '';
+        let treeZoom=1; let pinchStartDistance=0; let pinchStartZoom=1;
         const $ = id => document.getElementById(id);
 
         function showAdminApp(){ $('login').style.display='none'; $('app').style.display='block'; }
@@ -361,7 +368,7 @@
             const all=[...positions.values()];
             const maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X));
             const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
-            canvas.style.width=maxX+'px'; canvas.style.height=maxY+'px';
+            canvas.dataset.baseWidth=maxX; canvas.dataset.baseHeight=maxY; applyTreeZoom(maxX,maxY);
             svg.setAttribute('width',maxX); svg.setAttribute('height',maxY);
 
             people.forEach(p=>{
@@ -407,6 +414,15 @@
             p.setAttribute('stroke-linejoin','miter');
             svg.appendChild(p);
         }
+
+        function updateTreeZoomLabel(){const el=$('treeZoomLabel');if(el)el.textContent=Math.round(treeZoom*100)+'%'}
+        function applyTreeZoom(baseW,baseH){const canvas=$('canvas'),layer=$('treeLayer');if(!canvas||!layer)return;const w=Number(baseW||canvas.dataset.baseWidth||canvas.offsetWidth||1000),h=Number(baseH||canvas.dataset.baseHeight||canvas.offsetHeight||900);canvas.dataset.baseWidth=w;canvas.dataset.baseHeight=h;canvas.style.width=(w*treeZoom)+'px';canvas.style.height=(h*treeZoom)+'px';layer.style.width=w+'px';layer.style.height=h+'px';layer.style.transform='scale('+treeZoom+')';updateTreeZoomLabel()}
+        function setTreeZoom(z){treeZoom=Math.max(.35,Math.min(2.5,z));applyTreeZoom();requestAnimationFrame(focusTreeRoot)}
+        function treeZoomIn(){setTreeZoom(treeZoom+0.1)}
+        function treeZoomOut(){setTreeZoom(treeZoom-0.1)}
+        function treeZoomReset(){setTreeZoom(1)}
+        function treeZoomDistance(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}
+        function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomReady)return;box.dataset.zoomReady='1';box.addEventListener('wheel',e=>{if(e.ctrlKey||Math.abs(e.deltaY)>0){e.preventDefault();setTreeZoom(treeZoom+(e.deltaY<0?.08:-.08))}}, {passive:false});box.addEventListener('touchstart',e=>{if(e.touches.length===2){pinchStartDistance=treeZoomDistance(e.touches[0],e.touches[1]);pinchStartZoom=treeZoom}}, {passive:true});box.addEventListener('touchmove',e=>{if(e.touches.length===2&&pinchStartDistance){e.preventDefault();const d=treeZoomDistance(e.touches[0],e.touches[1]);setTreeZoom(pinchStartZoom*(d/pinchStartDistance))}}, {passive:false});box.addEventListener('touchend',e=>{if(e.touches.length<2)pinchStartDistance=0},{passive:true})}
 
         function focusTreeRoot(){
             const box=$('treebox'), root=people.find(p=>!p.parentId);
@@ -646,4 +662,5 @@ function adminTreeAddChild(parentId){
   if(typeof window.showAddChild==='function'){ window.showAddChild(parentId); return; }
   alert('Add Child form તૈયાર નથી.');
 }
+        initTreeZoomTouch();
 </script>
