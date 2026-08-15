@@ -32,14 +32,6 @@ const PersonSchema=new mongoose.Schema({
 const Person=mongoose.models.Person||mongoose.model("Person",PersonSchema);
 const newToken=()=>crypto.randomBytes(18).toString("hex");
 const photoData=(file)=>file?`data:${file.mimetype};base64,${file.buffer.toString("base64")}`:"";
-function adminOnly(req,res){
-  const adminKey=process.env.ADMIN_KEY || "Akashkey123";
-  if(!adminKey || req.headers["x-admin-key"]!==adminKey){
-    res.status(401).json({ok:false,error:"Unauthorized"});
-    return false;
-  }
-  return true;
-}
 
 let dbPromise=null;
 async function connectDB(){
@@ -50,7 +42,6 @@ async function connectDB(){
 }
 
 app.post("/api/family/start",upload.single("photo"),async(req,res)=>{
-  if(!adminOnly(req,res)) return;
   try{
     await connectDB();
     const name=(req.body.name||"").trim();
@@ -77,23 +68,6 @@ app.post("/api/add/:token",upload.single("photo"),async(req,res)=>{
       generation:parent.generation+1,photo:photoData(req.file),addToken:newToken()
     });
     res.json({ok:true,person:{_id:p._id,name:p.name,parentId:p.parentId,generation:p.generation,addToken:p.addToken},addLink:"/add/"+p.addToken});
-  }catch(e){res.status(400).json({ok:false,error:e.message})}
-});
-
-app.post("/api/admin/person/:id/add",upload.single("photo"),async(req,res)=>{
-  if(!adminOnly(req,res)) return;
-  try{
-    await connectDB();
-    const parent=await Person.findById(req.params.id);
-    if(!parent) return res.status(404).json({ok:false,error:"Parent member not found"});
-    if(parent.generation>=13) return res.status(400).json({ok:false,error:"This family tree has reached the maximum of 13 generations."});
-    const name=(req.body.name||"").trim();
-    if(!name) return res.status(400).json({ok:false,error:"Name is required"});
-    const p=await Person.create({
-      familyId:parent.familyId,name,parentId:parent._id,
-      generation:parent.generation+1,photo:photoData(req.file),addToken:newToken()
-    });
-    res.json({ok:true,person:{_id:p._id,name:p.name,parentId:p.parentId,generation:p.generation,addToken:p.addToken}});
   }catch(e){res.status(400).json({ok:false,error:e.message})}
 });
 
@@ -184,6 +158,9 @@ app.put("/api/admin/person/:id",async(req,res)=>{
     res.json({ok:true,person:p});
   }catch(e){res.status(400).json({ok:false,error:e.message})}
 });
+
+// Explicit member-link route so Vercel/Express always serves the add form at /add/<token>.
+app.get("/add/:token",(req,res)=>res.sendFile(path.join(__dirname,"public","index.html")));
 
 app.get("/admin",(req,res)=>res.sendFile(path.join(__dirname,"public","admin.html")));
 
