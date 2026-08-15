@@ -67,7 +67,7 @@ app.post("/api/add/:token",upload.single("photo"),async(req,res)=>{
       familyId:parent.familyId,name,parentId:parent._id,
       generation:parent.generation+1,photo:photoData(req.file),addToken:newToken()
     });
-    res.json({ok:true,person:p,addLink:"/add/"+p.addToken});
+    res.json({ok:true,person:{_id:p._id,name:p.name,parentId:p.parentId,generation:p.generation,addToken:p.addToken},addLink:"/add/"+p.addToken});
   }catch(e){res.status(400).json({ok:false,error:e.message})}
 });
 
@@ -94,8 +94,15 @@ app.delete("/api/person/:id",async(req,res)=>{
     await connectDB();
     const p=await Person.findById(req.params.id);
     if(!p)return res.status(404).json({ok:false,error:"Not found"});
-    await Person.deleteMany({familyId:p.familyId,parentId:p._id});
-    await p.deleteOne();
+    const queue=[p._id];
+    const ids=[];
+    while(queue.length){
+      const parentId=queue.shift();
+      ids.push(parentId);
+      const kids=await Person.find({familyId:p.familyId,parentId}).select('_id').lean();
+      kids.forEach(k=>queue.push(k._id));
+    }
+    await Person.deleteMany({_id:{$in:ids}});
     res.json({ok:true});
   }catch(e){res.status(400).json({ok:false,error:e.message})}
 });
