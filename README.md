@@ -37,3 +37,5 @@ The Admin 'નવી Family બનાવો' button now directly creates a Famil
 VERCEL REQUIREMENT:
 Set MONGO_URI in Vercel Project Settings > Environment Variables. Redeploy after adding/changing it. Without MONGO_URI, creating a Family cannot save data.
 ADMIN_KEY may be set to Akashkey123, but the app also has that fallback.
+
+Admin family list now shows the root/main person name above each Family ID.

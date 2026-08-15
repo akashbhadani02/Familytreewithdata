@@ -141,16 +141,7 @@ app.get("/api/admin/families",async(req,res)=>{
         _id:"$familyId",
         people:{$sum:1},
         latest:{$max:"$createdAt"},
-        roots:{$push:{$cond:[{$eq:["$parentId",null]},"$name",null]}}
-      }},
-      {$project:{
-        _id:1,
-        people:1,
-        latest:1,
-        mainPersonName:{$arrayElemAt:[
-          {$filter:{input:"$roots",as:"root",cond:{$ne:["$$root",null]}}},
-          0
-        ]}
+        mainPerson:{$max:{$cond:[{$eq:["$parentId",null]},"$name",""]}}
       }},
       {$sort:{latest:-1}}
     ])});
