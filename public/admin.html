@@ -115,7 +115,7 @@
         .card {
             position: absolute;
             width: 210px;
-            height: 190px;
+            height: 245px;
             box-sizing: border-box;
             background: #fff;
             border: 1px solid #cbd7e4;
@@ -324,7 +324,7 @@
             const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>a.generation-b.generation)[0];
             if(!root){return;}
 
-            const CARD_W=210, CARD_H=190, H_GAP=38, V_GAP=95, PAD_X=80, PAD_Y=50;
+            const CARD_W=210, CARD_H=245, H_GAP=38, V_GAP=95, PAD_X=80, PAD_Y=50;
             const widths=new Map();
             function width(id){
                 id=String(id); if(widths.has(id))return widths.get(id);
@@ -352,7 +352,7 @@
             people.forEach(p=>{
                 const q=positions.get(String(p._id)); if(!q)return;
                 const d=document.createElement('div'); d.className='card'; d.style.left=q.x+'px'; d.style.top=q.y+'px';
-                d.innerHTML=`<img src="${esc(p.photo||avatar(p.name))}" alt=""><b>${esc(p.name)}</b><small>Generation ${p.generation}</small>`;
+                d.innerHTML=`<img src="${esc(p.photo||avatar(p.name))}" alt=""><b>${esc(p.name)}</b><small>Generation ${p.generation}</small><button class="btn" style="width:100%;margin-top:10px;padding:9px 8px;font-size:12px" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}')">➕ Add Child</button>`;
                 cards.appendChild(d);
             });
 
