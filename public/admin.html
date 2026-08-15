@@ -201,6 +201,20 @@
         .real-mode #svg path { stroke:#718a73 !important; stroke-width:4 !important; }
         .real-badge { display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border-radius:999px; background:#eef7ef; color:#47664c; font-size:12px; font-weight:800; }
 
+        /* Natural tree visualization */
+        .natural-mode .canvas{background:linear-gradient(#f7fbf1,#fffdf7);overflow:hidden;}
+        .natural-mode .card{width:220px;height:170px;border:3px solid #6d8b57;border-radius:45% 55% 48% 52% / 35% 35% 65% 65%;background:linear-gradient(145deg,#fff,#f4faef);box-shadow:0 8px 22px rgba(73,91,50,.18);}
+        .natural-mode .card img{border-color:#7d9b65;width:58px;height:58px;}
+        .natural-mode .card b{font-size:15px;color:#334d2d;}
+        .natural-mode .card small{color:#607653;}
+        .natural-mode #svg path.trunk{stroke:#795548!important;stroke-width:24!important;stroke-linecap:round;}
+        .natural-mode #svg path.branch{stroke:#6f7f48!important;stroke-width:11!important;stroke-linecap:round;stroke-linejoin:round;}
+        .natural-mode #svg path.twig{stroke:#879b5d!important;stroke-width:6!important;stroke-linecap:round;}
+        .natural-mode .tree-label{position:absolute;left:50%;transform:translateX(-50%);top:18px;z-index:3;background:#fffaf0;border:2px solid #d6bf86;border-radius:999px;padding:8px 18px;font-weight:900;color:#5d4b2c;box-shadow:0 5px 14px rgba(80,60,30,.12);}
+        .natural-mode .ground{position:absolute;left:0;right:0;bottom:0;height:90px;background:linear-gradient(transparent,#e7f0df);z-index:0;}
+        .natural-mode .leaf-dot{position:absolute;width:18px;height:18px;border-radius:50% 50% 45% 55%;background:#8baa63;opacity:.55;z-index:0;}
+        @media(max-width:700px){.natural-mode .canvas{min-width:1500px;}.natural-mode .card{width:190px;height:155px}.natural-mode .card img{width:52px;height:52px;}}
+
         .status {
             margin-top: 10px;
             color: #315f91;
@@ -335,14 +349,79 @@
         }
 
         function renderRealFamilyTree(){
-            if(!people.length) return;
-            const box=$('treebox');
-            box.classList.add('real-mode');
-            renderTree(true);
-            box.classList.add('real-mode');
+            if(!people.length) return alert('આ Family માં member નથી.');
+            const box=$('treebox'), canvas=$('canvas'), cards=$('cards'), svg=$('svg');
+            box.classList.add('real-mode','natural-mode');
+            cards.innerHTML=''; svg.innerHTML=''; canvas.innerHTML='';
+            canvas.appendChild(svg); canvas.appendChild(cards);
+
+            const byId=new Map(people.map(p=>[String(p._id),p]));
+            const children=new Map();
+            people.forEach(p=>{const pid=p.parentId?String(p.parentId):'root';if(!children.has(pid))children.set(pid,[]);children.get(pid).push(p);});
+            children.forEach(a=>a.sort((x,y)=>(x.generation-y.generation)||new Date(x.createdAt)-new Date(y.createdAt)));
+            const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>a.generation-b.generation)[0];
+            if(!root)return;
+
+            const CARD_W=220,CARD_H=170,H_GAP=55,LEVEL_GAP=290,PAD=180;
+            const widths=new Map();
+            function subtree(id){
+                id=String(id); if(widths.has(id))return widths.get(id);
+                const kids=children.get(id)||[];
+                const w=kids.length?kids.reduce((sum,k)=>sum+subtree(k._id),0)+H_GAP*(kids.length-1):CARD_W;
+                widths.set(id,Math.max(CARD_W,w)); return widths.get(id);
+            }
+            const pos=new Map();
+            function place(node,cx,y){
+                const kids=children.get(String(node._id))||[], w=subtree(node._id);
+                pos.set(String(node._id),{x:cx-CARD_W/2,y});
+                if(kids.length){let total=kids.reduce((sum,k)=>sum+subtree(k._id),0)+H_GAP*(kids.length-1);let cur=cx-total/2;
+                    kids.forEach(k=>{const kw=subtree(k._id);place(k,cur+kw/2,y+LEVEL_GAP);cur+=kw+H_GAP;});}
+            }
+            place(root,Math.max(2200,subtree(root._id)/2+PAD),220);
+            const vals=[...pos.values()];
+            const maxX=Math.max(4400,...vals.map(q=>q.x+CARD_W+PAD));
+            const maxY=Math.max(1200,...vals.map(q=>q.y+CARD_H+300));
+            canvas.style.width=maxX+'px';canvas.style.height=maxY+'px';
+            svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
+            svg.style.position='absolute';svg.style.left='0';svg.style.top='0';svg.style.zIndex='1';
+
+            const label=document.createElement('div');label.className='tree-label';label.textContent='🌳 '+root.name+' નું પરિવાર વૃક્ષ';canvas.appendChild(label);
+            const ground=document.createElement('div');ground.className='ground';canvas.appendChild(ground);
+            for(let i=0;i<35;i++){const leaf=document.createElement('div');leaf.className='leaf-dot';leaf.style.left=(2+Math.random()*96)+'%';leaf.style.top=(6+Math.random()*75)+'%';canvas.appendChild(leaf);}
+
+            people.forEach(p=>{
+                const q=pos.get(String(p._id));if(!q)return;
+                const d=document.createElement('div');d.className='card';d.style.left=q.x+'px';d.style.top=q.y+'px';d.style.zIndex='3';
+                d.innerHTML=`<img src="${esc(p.photo||avatar(p.name))}" alt=""><b>${esc(p.name)}</b><small>Generation ${p.generation}</small>`;cards.appendChild(d);
+            });
+
+            // Thick central trunk under the root, then natural branches for every generation.
+            const rootPos=pos.get(String(root._id));
+            drawNatural(svg,'trunk',rootPos.x+CARD_W/2,maxY-90,rootPos.x+CARD_W/2,rootPos.y+CARD_H/2);
+            people.forEach(p=>{
+                if(!p.parentId)return;
+                const parent=pos.get(String(p.parentId)), child=pos.get(String(p._id));
+                if(!parent||!child)return;
+                const px=parent.x+CARD_W/2, py=parent.y+CARD_H;
+                const cx=child.x+CARD_W/2, cy=child.y;
+                const midY=py+(cy-py)*.48;
+                const cls=(p.generation||0)>1?'twig':'branch';
+                drawNatural(svg,cls,px,py,px,midY);
+                drawNatural(svg,cls,px,midY,cx,midY);
+                drawNatural(svg,cls,cx,midY,cx,cy);
+            });
+
             const title=document.querySelector('#viewer h2');
-            if(title) title.innerHTML='🌳 Real Family Tree <span class="real-badge">Family પ્રમાણે hierarchy</span>';
-            setTimeout(focusTreeRoot,100);
+            if(title)title.innerHTML='🌳 Real Family Tree <span class="real-badge">થડ + ડાળીઓ + દરેક સભ્ય</span>';
+            renderMemberLinks();
+            setTimeout(()=>{const rootCard=[...cards.children].find(el=>el.querySelector('b')?.textContent===root.name);if(rootCard)box.scrollTo({left:Math.max(0,rootCard.offsetLeft-box.clientWidth/2+rootCard.offsetWidth/2),top:Math.max(0,rootCard.offsetTop-40),behavior:'smooth'});},100);
+        }
+
+        function drawNatural(svg,cls,x1,y1,x2,y2){
+            const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');
+            const bend=(x2-x1)*0.18;
+            p.setAttribute('d',`M ${x1} ${y1} C ${x1+bend} ${y1+35}, ${x2-bend} ${y2-35}, ${x2} ${y2}`);
+            p.setAttribute('class',cls);p.setAttribute('fill','none');svg.appendChild(p);
         }
 
         function renderTree(keepReal=false){
