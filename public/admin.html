@@ -145,6 +145,28 @@
             margin-top: 3px
         }
 
+        /* Clear parent-child joining lines on desktop and mobile */
+        #svg { pointer-events:none; }
+        #svg path {
+            stroke: #315f91 !important;
+            stroke-width: 7 !important;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vector-effect: non-scaling-stroke;
+        }
+        .treebox { -webkit-overflow-scrolling: touch; }
+        @media (max-width: 700px) {
+            header h1 { font-size: 20px; }
+            .wrap { padding: 0 8px; margin: 10px auto; }
+            .panel { padding: 12px; border-radius: 12px; }
+            .treebox { height: 560px; }
+            .canvas { width: 8000px; height: 4500px; }
+            .card { width: 190px; }
+            #svg path { stroke-width: 8 !important; }
+            .member-list { grid-template-columns: 1fr; }
+            .row .btn { min-height: 42px; }
+        }
+
         .empty {
             padding: 30px;
             text-align: center;
@@ -211,7 +233,25 @@
         </div>
     </div>
     <script>
-        let key = '', people = []; const $ = id => document.getElementById(id); function login() { key = $('key').value.trim(); if (!key) return; sessionStorage.setItem('adminKey', key); $('login').style.display = 'none'; $('app').style.display = 'block'; loadFamilies() } function logout() { sessionStorage.removeItem('adminKey'); location.reload() } async function createFamily(){
+        let key = '', people = []; const $ = id => document.getElementById(id);
+function showAdminApp() {
+  $('login').style.display = 'none';
+  $('app').style.display = 'block';
+}
+function login() {
+  const entered = $('key').value.trim();
+  if (!entered) return;
+  key = entered;
+  sessionStorage.setItem('adminKey', key);
+  showAdminApp();
+  loadFamilies();
+}
+function logout() {
+  key = '';
+  sessionStorage.removeItem('adminKey');
+  location.reload();
+}
+async function createFamily(){
   const name=prompt('નવી Family માટે પ્રથમ સભ્યનું પૂરું નામ લખો:');
   if(!name || !name.trim()) return;
   try{
@@ -228,7 +268,7 @@
   }catch(e){
     alert('Family બનાવતી વખતે error: '+e.message);
   }
-} async function loadFamilies() { key = sessionStorage.getItem('adminKey') || key; let r = await fetch('/api/admin/families', { headers: { 'x-admin-key': key } }); let d = await r.json(); if (!r.ok || !d.ok) { alert(d.error || 'Admin password ખોટો છે'); sessionStorage.removeItem('adminKey'); $('app').style.display = 'none'; $('login').style.display = 'block'; return } let box = $('families'); box.innerHTML = ''; if (!d.families.length) { box.innerHTML = '<div class="empty">હજુ કોઈ family data નથી.<br><button class="btn" style="margin-top:12px" onclick="createFamily()">➕ પ્રથમ Family બનાવો</button></div>'; return } d.families.forEach(f => { let div = document.createElement('div'); div.className = 'family'; div.innerHTML = '<b>Family ID: ' + esc(f._id) + '</b><div>સભ્યો: ' + f.people + '</div><div style="margin-top:10px"><button class="btn" onclick="viewFamily(\'' + escAttr(f._id) + '\')">Tree જુઓ</button></div>'; box.appendChild(div) }) } async function viewFamily(id) { let r = await fetch('/api/family/' + encodeURIComponent(id)), d = await r.json(); if (!d.ok) return alert(d.error); people = d.people; $('viewer').style.display = 'block'; renderTree(); $('viewer').scrollIntoView({ behavior: 'smooth' }) } function renderTree() { let cards = $('cards'), svg = $('svg'); cards.innerHTML = ''; svg.innerHTML = ''; let by = {}; people.forEach(p => (by[p.generation] ??= []).push(p)); let pos = {}; for (let g = 1; g <= 13; g++) { let a = by[g] || []; a.forEach((p, i) => { p.x = 4000 + (i - (a.length - 1) / 2) * 240; p.y = 80 + (g - 1) * 330; pos[p._id] = p }) } people.forEach(p => { let d = document.createElement('div'); d.className = 'card'; d.style.left = p.x + 'px'; d.style.top = p.y + 'px'; let link = addLink(p.addToken); d.innerHTML = '<img src="' + (p.photo || avatar(p.name)) + '"><b>' + esc(p.name) + '</b><small>Generation ' + p.generation + '</small><div class="member-tools"><input class="member-link" value="' + esc(link) + '" readonly><div class="tool-row"><button class="btn" onclick="copyLink(\'' + escAttr(link) + '\')">🔗 Copy Link</button><button class="btn gray" onclick="editName(\'' + escAttr(p._id) + '\')">✏️ Name</button></div></div>'; cards.appendChild(d) }); people.forEach(p => { if (!p.parentId) return; let a = pos[p.parentId], b = pos[p._id]; if (a && b) draw(svg, a.x + 95, a.y + 132, b.x + 95, b.y) }); renderMemberLinks(); } 
+} async function loadFamilies() { key = sessionStorage.getItem('adminKey') || key; if (!key) { $('app').style.display='none'; $('login').style.display='block'; return; } let r = await fetch('/api/admin/families', { headers: { 'x-admin-key': key } }); let d = await r.json(); if (!r.ok || !d.ok) { alert(d.error || 'Admin password ખોટો છે'); sessionStorage.removeItem('adminKey'); $('app').style.display = 'none'; $('login').style.display = 'block'; return } let box = $('families'); box.innerHTML = ''; if (!d.families.length) { box.innerHTML = '<div class="empty">હજુ કોઈ family data નથી.<br><button class="btn" style="margin-top:12px" onclick="createFamily()">➕ પ્રથમ Family બનાવો</button></div>'; return } d.families.forEach(f => { let div = document.createElement('div'); div.className = 'family'; div.innerHTML = '<b>Family ID: ' + esc(f._id) + '</b><div>સભ્યો: ' + f.people + '</div><div style="margin-top:10px"><button class="btn" onclick="viewFamily(\'' + escAttr(f._id) + '\')">Tree જુઓ</button></div>'; box.appendChild(div) }) } async function viewFamily(id) { let r = await fetch('/api/family/' + encodeURIComponent(id)), d = await r.json(); if (!d.ok) return alert(d.error); people = d.people; $('viewer').style.display = 'block'; renderTree(); $('viewer').scrollIntoView({ behavior: 'smooth' }) } function renderTree() { let cards = $('cards'), svg = $('svg'); cards.innerHTML = ''; svg.innerHTML = ''; let by = {}; people.forEach(p => (by[p.generation] ??= []).push(p)); let pos = {}; for (let g = 1; g <= 13; g++) { let a = by[g] || []; a.forEach((p, i) => { p.x = 4000 + (i - (a.length - 1) / 2) * 240; p.y = 80 + (g - 1) * 330; pos[p._id] = p }) } people.forEach(p => { let d = document.createElement('div'); d.className = 'card'; d.style.left = p.x + 'px'; d.style.top = p.y + 'px'; let link = addLink(p.addToken); d.innerHTML = '<img src="' + (p.photo || avatar(p.name)) + '"><b>' + esc(p.name) + '</b><small>Generation ' + p.generation + '</small><div class="member-tools"><input class="member-link" value="' + esc(link) + '" readonly><div class="tool-row"><button class="btn" onclick="copyLink(\'' + escAttr(link) + '\')">🔗 Copy Link</button><button class="btn gray" onclick="editName(\'' + escAttr(p._id) + '\')">✏️ Name</button></div></div>'; cards.appendChild(d) }); people.forEach(p => { if (!p.parentId) return; let a = pos[p.parentId], b = pos[p._id]; if (a && b) draw(svg, a.x + 95, a.y + 132, b.x + 95, b.y) }); renderMemberLinks(); } 
 function addLink(token) { return location.origin + '/add/' + token; }
 function renderMemberLinks() {
   let box=$('memberLinks');
@@ -260,11 +300,21 @@ async function deleteMember(id) {
   let d=await r.json().catch(()=>({}));
   if(!r.ok || !d.ok) return alert(d.error || 'Entry delete થઈ શકી નથી');
 
-  await loadSelectedFamily();
+  const familyId = p.familyId;
+  await viewFamily(familyId);
   alert((d.deletedCount || 1)+' entry delete થઈ ગઈ.');
 }
 function draw(svg, x1, y1, x2, y2) { let ns = 'http://www.w3.org/2000/svg', p = document.createElementNS(ns, 'path'), m = (y1 + y2) / 2; p.setAttribute('d', `M${x1} ${y1} L${x1} ${m} L${x2} ${m} L${x2} ${y2}`); p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#71849a'); p.setAttribute('stroke-width', '4'); svg.appendChild(p) } function avatar(n) { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n || '?')[0].toUpperCase()}</text></svg>`) } function esc(v) { return String(v || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) } function escAttr(v) { return String(v || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'") } async function downloadPNG() { if (!people.length) return; if (!window.html2canvas) { let s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'; document.head.appendChild(s); await new Promise(r => s.onload = r) } let c = await html2canvas($('canvas'), { scale: 2, backgroundColor: '#fbfcfe', useCORS: true }), a = document.createElement('a'); a.download = 'family-tree-admin.png'; a.href = c.toDataURL('image/png'); a.click() }
-        if (sessionStorage.getItem('adminKey')) login();
+        // Keep admin logged in across browser refreshes.
+        // Logout clears this session; if the server-side admin password is changed,
+        // the next API check fails and the login screen is shown again.
+        (async function restoreAdminSession(){
+          const saved = sessionStorage.getItem('adminKey');
+          if (!saved) return;
+          key = saved;
+          showAdminApp();
+          await loadFamilies();
+        })();
     </script>
 </body>
 
