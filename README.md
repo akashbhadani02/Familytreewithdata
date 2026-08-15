@@ -29,3 +29,11 @@ The uploaded source archive contained a real MongoDB password in `.env`. This re
 
 ## Admin flow
 After logging in at `/admin`, use **➕ નવી Family બનાવો** to open the family-start page. If no families exist, the same button appears in the empty state.
+
+
+ADMIN CREATE FAMILY FIX:
+The Admin 'નવી Family બનાવો' button now directly creates a Family using /api/family/start, then refreshes and opens the tree.
+
+VERCEL REQUIREMENT:
+Set MONGO_URI in Vercel Project Settings > Environment Variables. Redeploy after adding/changing it. Without MONGO_URI, creating a Family cannot save data.
+ADMIN_KEY may be set to Akashkey123, but the app also has that fallback.
