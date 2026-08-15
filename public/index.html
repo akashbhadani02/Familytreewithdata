@@ -6,59 +6,21 @@
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#203047}header{background:#fff;border-bottom:1px solid #dce4ec;padding:16px;text-align:center}header h1{margin:0;font-size:24px}.wrap{max-width:1100px;margin:18px auto;padding:0 14px}.panel{background:#fff;border:1px solid #dce4ec;border-radius:16px;padding:20px;box-shadow:0 8px 28px #20304712}.center{text-align:center}.title{font-size:20px;font-weight:800;margin-bottom:8px}.sub{font-size:13px;color:#68778a;line-height:1.6}.form{max-width:520px;margin:18px auto}.label{font-weight:800;font-size:13px;margin:14px 0 6px;display:block}input[type=text]{width:100%;padding:14px;border:1px solid #cbd6e2;border-radius:10px;font-size:16px}input[type=file]{width:100%;padding:12px;border:1px dashed #cbd6e2;border-radius:10px}.btn{width:100%;padding:14px;border:0;border-radius:10px;background:#315f91;color:white;font-size:16px;font-weight:800;cursor:pointer;margin-top:15px}.btn.secondary{background:#e9eef4;color:#30445b}.preview{width:100px;height:100px;border-radius:50%;object-fit:cover;display:none;margin:10px auto}.success{background:#edf8f1;border:1px solid #b9e2c8;padding:15px;border-radius:10px;margin-top:16px;text-align:center;display:none}.linkbox{word-break:break-all;background:#f3f6fa;padding:10px;border-radius:8px;margin-top:8px;font-size:12px}.treebox{margin-top:18px;background:#fff;border:1px solid #dce4ec;border-radius:16px;overflow:hidden;height:650px;position:relative;touch-action:none;cursor:grab;overscroll-behavior:contain}.treebox.dragging{cursor:grabbing}.treeZoomControls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.treeZoomControls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.treeZoomControls button:hover{background:#f1f5f9}.treeZoomLabel{min-width:58px;text-align:center;font-weight:800;color:#315f91}.treeLayer{position:relative;transform-origin:0 0;will-change:transform}.canvas{position:relative;width:10000px;height:5200px;background:#fbfcfe}.card{position:absolute;width:190px;height:145px;background:#fff;border:1px solid #cbd7e4;border-radius:14px;padding:10px;text-align:center;box-shadow:0 5px 18px #24384e18;z-index:2}.card img{width:62px;height:62px;border-radius:50%;object-fit:cover;border:2px solid #e0e7ef}.card b{display:block;font-size:14px;margin-top:6px;white-space:normal;overflow-wrap:anywhere}.card small{display:block;color:#718096;font-size:10px;margin-top:3px}.card .relation{color:#718096}.card .personLink{display:block;margin-top:8px;font-size:11px;color:#315f91;cursor:pointer;text-decoration:underline}.line{position:absolute;background:#71849a;height:3px;transform-origin:0 0;z-index:1}.hidden{display:none}.copy{font-size:12px;color:#315f91;cursor:pointer;text-decoration:underline;margin-top:7px}.topActions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.topActions button{width:auto;padding:10px 14px;font-size:13px}.note{font-size:12px;background:#fff7df;border:1px solid #ead89c;border-radius:10px;padding:10px;margin-top:12px}.nextBox{margin-top:12px;background:#eef5ff;border:1px solid #c8ddf5;padding:12px;border-radius:10px}.nextBox b{display:block;margin-bottom:5px}.treeViewBtn{display:block;width:min(520px,100%);margin:18px auto 0;padding:14px 18px;border:0;border-radius:12px;background:#2e7d32;color:#fff;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 5px 14px #2e7d3230}.treeViewBtn:hover{filter:brightness(.96)}.readonly-view .siteNav{display:none}.readonly-view .viewControls,.readonly-view #currentLink,.readonly-view .personLink{display:none}.readonly-view .viewSubtitle{display:none}.readonly-view .treebox{margin-top:18px}
 
-<style id="photoChoiceCss">.photoActions{display:flex;gap:10px;margin-top:8px}.photoActions .btn{margin-top:0;flex:1}.photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center;padding:18px}.photo-choice-overlay.show{display:flex}.photo-choice-box{width:min(360px,100%);background:#fff;border-radius:18px;padding:20px;text-align:center}.photo-choice-box h3{margin:0 0 8px}.photo-choice-box p{color:#667085;margin:0 0 16px}.photo-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.photo-choice-btn{border:0;border-radius:12px;padding:14px;font-weight:800;font-size:15px}.camera-btn{background:#eaf2ff;color:#155dcc}.gallery-btn{background:#edf9f0;color:#16823b}.cancel-btn{margin-top:10px;width:100%;background:#f1f1f1;color:#555}.photo-hidden{display:none!important}.langPicker{display:inline-flex;align-items:center;gap:7px;margin-left:10px;background:#f4f7fb;border:1px solid #d7e0ea;border-radius:10px;padding:6px 9px}.langPicker select{border:0;background:transparent;font-weight:800;color:#315f91;outline:0;cursor:pointer}.nameTranslating{opacity:.65} </style></head>
+<style id="photoChoiceCss">.photoActions{display:flex;gap:10px;margin-top:8px}.photoActions .btn{margin-top:0;flex:1}.photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center;padding:18px}.photo-choice-overlay.show{display:flex}.photo-choice-box{width:min(360px,100%);background:#fff;border-radius:18px;padding:20px;text-align:center}.photo-choice-box h3{margin:0 0 8px}.photo-choice-box p{color:#667085;margin:0 0 16px}.photo-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.photo-choice-btn{border:0;border-radius:12px;padding:14px;font-weight:800;font-size:15px}.camera-btn{background:#eaf2ff;color:#155dcc}.gallery-btn{background:#edf9f0;color:#16823b}.cancel-btn{margin-top:10px;width:100%;background:#f1f1f1;color:#555}.photo-hidden{display:none!important} </style></head>
 <body>
-<header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div class="langPicker">🌐 <select id="languageSelect" onchange="setDisplayLanguage(this.value)"><option value="gu">ગુજરાતી</option><option value="en">English</option></select></div><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
+<header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
 <div id="rootBox" class="panel hidden"><div class="center title">પરિવારની શરૂઆત કરો</div><div class="center sub">સૌથી પહેલા પરિવારના સૌથી મોટા/જૂના સભ્યનું પૂરું નામ લખો. પછી તેમને મળેલી link તેમના દીકરા/આગળના સભ્યને મોકલો.</div><div class="form"><label class="label">પૂરું નામ</label><input id="rootName" type="text" placeholder="ઉદાહરણ: રમેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 50MB સુધી)</label><input id="rootPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'rootPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('rootPhoto')">📷 Photo પસંદ કરો</button></div><img id="rootPreview" class="preview"><button class="btn" onclick="createRoot()">✅ પરિવાર વૃક્ષ શરૂ કરો</button><div id="rootSuccess" class="success"></div></div></div>
 <div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 50MB સુધી)</label><input id="addPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'addPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('addPhoto')">📷 Photo પસંદ કરો</button></div><img id="addPreview" class="preview"><button id="addPersonBtn" class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div><button id="viewTreeBtn" type="button" class="treeViewBtn" onclick="showReadOnlyTree()">🌳 Family Tree જુઓ</button></div></div>
 <div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub viewSubtitle">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્ય માટે છે.</div><div class="topActions viewControls"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treeZoomControls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="treeZoomLabel">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div><div class="treebox"><div id="canvas" class="canvas"><div id="treeLayer" class="treeLayer"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div>
 </div>
 <script>
-const $=id=>document.getElementById(id);let token=null,familyId=null,people=[],focusPersonId=null;let displayLanguage=localStorage.getItem('familyTreeLanguage')||'gu';const nameLangCache=JSON.parse(localStorage.getItem('familyTreeNameCacheV2')||'{}');let treeZoom=1;let pinchStartDistance=0,pinchStartZoom=1;const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
+const $=id=>document.getElementById(id);let token=null,familyId=null,people=[],focusPersonId=null;let treeZoom=1;let pinchStartDistance=0,pinchStartZoom=1;const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
 function showPreview(input,id){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{$(id).src=e.target.result;$(id).style.display='block'};r.readAsDataURL(f)}
 function absoluteLink(path){return location.origin+path}
 function copyText(text){navigator.clipboard.writeText(text).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',text))}
 function safe(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function hasGujarati(text){return /[\u0A80-\u0AFF]/.test(String(text||''))}
-function hasLatin(text){return /[A-Za-z]/.test(String(text||''))}
-function saveNameCache(){try{localStorage.setItem('familyTreeNameCacheV2',JSON.stringify(nameLangCache))}catch(e){}}
-async function transliterateName(name,target){
- const text=String(name||'').trim(); if(!text)return text;
- if(target==='gu' && hasGujarati(text))return text;
- if(target==='en' && !hasGujarati(text))return text;
- const key=target+'|'+text;
- if(nameLangCache[key])return nameLangCache[key];
- try{
-   const itc=target==='gu'?'gu-t-i0-und':'en-t-i0-und';
-   const inputText=target==='gu'?text.toLowerCase():text;
-   const url='https://inputtools.google.com/request?itc='+itc+'&num=1&text='+encodeURIComponent(inputText);
-   const r=await fetch(url,{mode:'cors'});
-   const d=await r.json();
-   const out=d&&d[0]==='SUCCESS'&&d[1]&&d[1][0]&&d[1][0][1]&&d[1][0][1][0];
-   if(out){
-      const fixed=out;
-      nameLangCache[key]=fixed;saveNameCache();return fixed;
-    }
- }catch(e){}
- return text;
-}
-async function localizedName(name){
- return await transliterateName(name,displayLanguage);
-}
-async function localizeNames(list){
- const out={};
- await Promise.all((list||[]).map(async p=>{out[String(p._id)]=await localizedName(p.name)}));
- return out;
-}
-function setDisplayLanguage(lang){
- displayLanguage=lang==='en'?'en':'gu';
- localStorage.setItem('familyTreeLanguage',displayLanguage);
- const sel=$('languageSelect');if(sel)sel.value=displayLanguage;
- if(people.length)renderTree();
-}
 async function init(){
- const sel=$('languageSelect');if(sel)sel.value=displayLanguage;
  const m=location.pathname.match(/^\/add\/([^/]+)$/);
  if(m){
    token=m[1];
@@ -77,7 +39,7 @@ async function init(){
      }
      familyId=d.parent.familyId;
      focusPersonId=String(d.parent._id||'');
-     const parentDisplay=await localizedName(d.parent.name);
+     const parentDisplay=d.parent.name;
      $('parentText').innerHTML='આ સભ્યનું નામ <b>'+safe(parentDisplay)+'</b>ની નીચે ઉમેરાશે. નામ અને ફોટો ભરીને Add કરો.';
      loadFamily();
    }catch(e){
@@ -191,7 +153,7 @@ async function renderTree(){
  const all=Object.values(pos),maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X)),maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
  canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;applyTreeZoom(maxX,maxY);svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
  const readonly=document.body.classList.contains('readonly-view');
- const localized=await localizeNames(people);
+ const localized={}; people.forEach(p=>localized[String(p._id)]=p.name);
  people.forEach(p=>{const q=pos[String(p._id)];if(!q)return;const d=document.createElement('div');d.className='card';d.style.left=q.x+'px';d.style.top=q.y+'px';const link=absoluteLink('/add/'+p.addToken);const shown=localized[String(p._id)]||p.name;d.innerHTML='<img src="'+(p.photo||avatar(shown))+'"><b>'+safe(shown)+'</b><small class="relation">Generation '+p.generation+'</small>'+(readonly?'':'<span class="personLink" data-link="'+safe(link)+'">🔗 '+(children[String(p._id)]?'આગળનું નામ ઉમેરો':'આ સભ્યનો દીકરો ઉમેરવા link')+'</span>');if(!readonly){d.querySelector('.personLink').onclick=()=>copyText(link)}cards.appendChild(d)});
  const grouped={};
  people.forEach(p=>{if(!p.parentId)return;const pid=String(p.parentId);(grouped[pid]??=[]).push(p)});

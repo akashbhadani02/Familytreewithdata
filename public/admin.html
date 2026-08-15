@@ -220,7 +220,7 @@
 
 <body>
     <header>
-        <h1>🌳 Family Tree Admin</h1><div class="langPicker">🌐 <select id="languageSelect" onchange="setDisplayLanguage(this.value)"><option value="gu">ગુજરાતી</option><option value="en">English</option></select></div>
+        <h1>🌳 Family Tree Admin</h1>
     </header>
     <div class="wrap">
         <div id="login" class="panel">
@@ -258,32 +258,10 @@
         let key = localStorage.getItem('adminKey') || '';
         let people = [];
         let currentFamilyId = '';
-        let treeZoom=1; let pinchStartDistance=0; let pinchStartZoom=1; let displayLanguage=localStorage.getItem('familyTreeLanguage')||'gu'; const nameLangCache=JSON.parse(localStorage.getItem('familyTreeNameCacheV2')||'{}');
+        let treeZoom=1; let pinchStartDistance=0; let pinchStartZoom=1;
         const $ = id => document.getElementById(id);
 
-        function hasGujarati(text){return /[\u0A80-\u0AFF]/.test(String(text||''))}
-function saveNameCache(){try{localStorage.setItem('familyTreeNameCacheV2',JSON.stringify(nameLangCache))}catch(e){}}
-async function transliterateName(name,target){
- const text=String(name||'').trim();if(!text)return text;
- if(target==='gu'&&hasGujarati(text))return text;
- if(target==='en'&&!hasGujarati(text))return text;
- const key=target+'|'+text;if(nameLangCache[key])return nameLangCache[key];
- try{
-  const itc=target==='gu'?'gu-t-i0-und':'en-t-i0-und';
-   const inputText=target==='gu'?text.toLowerCase():text;
-  const r=await fetch('https://inputtools.google.com/request?itc='+itc+'&num=1&text='+encodeURIComponent(inputText),{mode:'cors'});
-  const d=await r.json();const out=d&&d[0]==='SUCCESS'&&d[1]&&d[1][0]&&d[1][0][1]&&d[1][0][1][0];
-  if(out){
-      const fixed=out;
-      nameLangCache[key]=fixed;saveNameCache();return fixed;
-    }
- }catch(e){}
- return text;
-}
-async function localizedName(name){return transliterateName(name,displayLanguage)}
-function setDisplayLanguage(lang){displayLanguage=lang==='en'?'en':'gu';localStorage.setItem('familyTreeLanguage',displayLanguage);const s=$('languageSelect');if(s)s.value=displayLanguage;loadFamilies().then(()=>{if(people.length)renderTree();});}
-function showAdminApp(){ const s=$('languageSelect');if(s)s.value=displayLanguage; $('login').style.display='none'; $('app').style.display='block'; }
-function _oldShowAdminApp(){ $('login').style.display='none'; $('app').style.display='block'; }
+        function showAdminApp(){ $('login').style.display='none'; $('app').style.display='block'; }
         function showLogin(){ $('app').style.display='none'; $('login').style.display='block'; }
 
         async function login(){
@@ -318,7 +296,7 @@ function _oldShowAdminApp(){ $('login').style.display='none'; $('app').style.dis
                 for(const f of d.families){
                     const div=document.createElement('div'); div.className='family';
                     const mainPerson = f.mainPerson || 'Main Person';
-                    const displayMain=await localizedName(mainPerson);
+                    const displayMain=mainPerson;
                     div.innerHTML=`<div style="font-size:18px;font-weight:900;color:#1f2937;margin-bottom:5px">👤 ${esc(displayMain)}</div><b>Family ID: ${esc(f._id)}</b><div>સભ્યો: ${f.people}</div><div class="family-actions"><button class="btn" onclick="viewFamily('${escAttr(f._id)}')">🌳 Tree જુઓ</button><button class="btn danger" onclick="deleteFamily('${escAttr(f._id)}')">🗑️ Delete Tree</button></div>`;
                     box.appendChild(div);
                 }
@@ -420,7 +398,7 @@ async function createFamily(){
             svg.setAttribute('width',maxX); svg.setAttribute('height',maxY);
 
             const localized={};
-            await Promise.all(people.map(async p=>{localized[String(p._id)]=await localizedName(p.name)}));
+            people.forEach(p=>{localized[String(p._id)]=p.name});
             people.forEach(p=>{
                 const q=positions.get(String(p._id)); if(!q)return;
                 const d=document.createElement('div'); d.className='card'; d.style.left=q.x+'px'; d.style.top=q.y+'px';
@@ -488,7 +466,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
 
         async function renderMemberLinks(){
             const box=$('memberLinks'); box.innerHTML='';
-            const localized={}; await Promise.all(people.map(async p=>{localized[String(p._id)]=await localizedName(p.name)}));
+            const localized={}; people.forEach(p=>{localized[String(p._id)]=p.name});
             people.forEach(p=>{
                 const link=addLink(p.addToken), item=document.createElement('div'); item.className='member-item';
                 item.innerHTML=`<div class="name">${esc(localized[String(p._id)]||p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
