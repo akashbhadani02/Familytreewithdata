@@ -16,8 +16,8 @@ app.use(express.static(path.join(__dirname,"public")));
 const storage=multer.memoryStorage();
 const upload=multer({
   storage,
-  limits:{fileSize:2*1024*1024},
-  fileFilter:(req,file,cb)=>cb(null,/^image\/(jpeg|png|webp)$/.test(file.mimetype))
+  limits:{fileSize:5*1024*1024},
+  fileFilter:(req,file,cb)=>{ if(/^image\/(jpeg|png|webp)$/.test(file.mimetype)) cb(null,true); else cb(new Error('Only JPG, PNG or WEBP images are allowed.')); }
 });
 
 const PersonSchema=new mongoose.Schema({
@@ -52,7 +52,7 @@ app.post("/api/family/start",upload.single("photo"),async(req,res)=>{
       photo:photoData(req.file),addToken:newToken()
     });
     res.json({ok:true,familyId,person:p,addLink:"/add/"+p.addToken});
-  }catch(e){res.status(400).json({ok:false,error:e.message})}
+  }catch(e){res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 5MB allowed.":e.message})}
 });
 
 app.post("/api/add/:token",upload.single("photo"),async(req,res)=>{
@@ -68,7 +68,7 @@ app.post("/api/add/:token",upload.single("photo"),async(req,res)=>{
       generation:parent.generation+1,photo:photoData(req.file),addToken:newToken()
     });
     res.json({ok:true,person:{_id:p._id,name:p.name,parentId:p.parentId,generation:p.generation,addToken:p.addToken},addLink:"/add/"+p.addToken});
-  }catch(e){res.status(400).json({ok:false,error:e.message})}
+  }catch(e){res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 5MB allowed.":e.message})}
 });
 
 app.get("/api/add/:token",async(req,res)=>{
