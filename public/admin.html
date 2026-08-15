@@ -203,7 +203,7 @@
         <h1>🌳 Family Tree Admin</h1>
     </header>
     <div class="wrap">
-        <div id="login" class="panel"> 
+        <div id="login" class="panel">
             <h2>Admin Login</h2>
             <div class="row"><input id="key" type="password" placeholder="Admin password"><button class="btn"
                     onclick="login()">Login</button></div>
@@ -421,7 +421,7 @@
                 let file=null;
                 if(wantPhoto){
                     const input=document.createElement('input');
-                    input.type='file'; input.accept='image/jpeg,image/png,image/webp';
+                    input.type='file'; input.accept='image/*'; input.setAttribute('capture','environment');
                     input.style.position='fixed';input.style.left='-9999px';document.body.appendChild(input);
                     input.click();
                     await new Promise(resolve=>{input.onchange=resolve;});
