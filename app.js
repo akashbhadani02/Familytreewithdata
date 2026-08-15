@@ -119,6 +119,18 @@ app.delete("/api/admin/person/:id",async(req,res)=>{
   }
 });
 
+app.delete("/api/admin/family/:familyId",async(req,res)=>{
+  try{
+    const adminKey=process.env.ADMIN_KEY || "Akashkey123";
+    if(!adminKey || req.headers["x-admin-key"]!==adminKey) return res.status(401).json({ok:false,error:"Unauthorized"});
+    await connectDB();
+    const familyId=String(req.params.familyId||"").trim();
+    if(!familyId) return res.status(400).json({ok:false,error:"Family ID is required"});
+    const result=await Person.deleteMany({familyId});
+    res.json({ok:true,deletedCount:result.deletedCount||0});
+  }catch(e){res.status(400).json({ok:false,error:e.message})}
+});
+
 app.get("/api/admin/families",async(req,res)=>{
   try{
     const adminKey=process.env.ADMIN_KEY || "Akashkey123";

@@ -93,7 +93,7 @@
             padding: 14px
         }
 
-        .family b {
+        .family-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.family-actions .btn{flex:1;min-width:120px}.family b {
             display: block;
             margin-bottom: 6px
         }
@@ -215,8 +215,7 @@
             </div>
             <div id="viewer" class="panel" style="display:none">
                 <div class="row">
-                    <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button class="btn" onclick="downloadPNG()">🖼️
-                        Download PNG</button>
+                    <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button class="btn" onclick="downloadPNG()">🖼️ Download PNG</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ આખી Tree Delete</button>
                 </div>
                 <div id="treebox" class="treebox">
                     <div id="canvas" class="canvas"><svg id="svg" width="8000" height="4500"
@@ -276,9 +275,22 @@ async function createFamily(){
   if (!r.ok || !d.ok) { alert(d.error || 'Admin password ખોટો છે'); sessionStorage.removeItem('adminKey'); key=''; $('app').style.display='none'; $('login').style.display='block'; return; }
   let box=$('families'); box.innerHTML='';
   if(!d.families.length){ box.innerHTML='<div class="empty">હજુ કોઈ family data નથી.<br><button class="btn" style="margin-top:12px" onclick="createFamily()">➕ પ્રથમ Family બનાવો</button></div>'; return; }
-  d.families.forEach(f=>{ let div=document.createElement('div'); div.className='family'; div.innerHTML='<b>Family ID: '+esc(f._id)+'</b><div>સભ્યો: '+f.people+'</div><div style="margin-top:10px"><button class="btn" onclick="viewFamily(\''+escAttr(f._id)+'\')">Tree જુઓ</button></div>'; box.appendChild(div); });
+  d.families.forEach(f=>{ let div=document.createElement('div'); div.className='family'; div.innerHTML='<b>Family ID: '+esc(f._id)+'</b><div>સભ્યો: '+f.people+'</div><div class="family-actions"><button class="btn" onclick="viewFamily(\''+escAttr(f._id)+'\')">🌳 Tree જુઓ</button><button class="btn danger" onclick="deleteFamily(\''+escAttr(f._id)+'\')">🗑️ Delete Tree</button></div>'; box.appendChild(div); });
 }
+async function deleteFamily(id){
+  if(!confirm('આ Family ની આખી tree અને તેના બધા members કાયમ માટે delete કરવી છે?')) return;
+  try{
+    const r=await fetch('/api/admin/family/'+encodeURIComponent(id),{method:'DELETE',headers:{'x-admin-key':key}});
+    const d=await r.json();
+    if(!r.ok || !d.ok) return alert(d.error||'Tree delete થઈ નથી');
+    if(window.currentFamilyId===id){ $('viewer').style.display='none'; people=[]; }
+    alert('આખી Family Tree delete થઈ ગઈ.');
+    await loadFamilies();
+  }catch(e){ alert('Delete error: '+e.message); }
+}
+async function deleteCurrentFamily(){ if(window.currentFamilyId) await deleteFamily(window.currentFamilyId); }
 async function viewFamily(id){
+  window.currentFamilyId=id;
   let r=await fetch('/api/family/'+encodeURIComponent(id)),d=await r.json();
   if(!d.ok)return alert(d.error);
   people=d.people;
