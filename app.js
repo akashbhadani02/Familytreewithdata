@@ -119,6 +119,22 @@ app.get("/api/admin/families",async(req,res)=>{
   }catch(e){res.status(400).json({ok:false,error:e.message})}
 });
 
+
+
+// Admin: update a member name without changing that member's add-link/token.
+app.put("/api/admin/person/:id",async(req,res)=>{
+  try{
+    const adminKey=process.env.ADMIN_KEY || "Akashkey123";
+    if(!adminKey || req.headers["x-admin-key"]!==adminKey) return res.status(401).json({ok:false,error:"Unauthorized"});
+    await connectDB();
+    const name=(req.body.name||"").trim();
+    if(!name) return res.status(400).json({ok:false,error:"Name is required"});
+    const p=await Person.findByIdAndUpdate(req.params.id,{name},{new:true}).lean();
+    if(!p) return res.status(404).json({ok:false,error:"Member not found"});
+    res.json({ok:true,person:p});
+  }catch(e){res.status(400).json({ok:false,error:e.message})}
+});
+
 app.get("/admin",(req,res)=>res.sendFile(path.join(__dirname,"public","admin.html")));
 
 app.get("/{*splat}",(req,res)=>res.sendFile(path.join(__dirname,"public","index.html")));
