@@ -295,7 +295,7 @@
                 if(!d.families.length){box.innerHTML='<div class="empty">હજુ કોઈ Family નથી.<br><button class="btn" style="margin-top:12px" onclick="createFamily()">➕ પ્રથમ Family બનાવો</button></div>';return;}
                 d.families.forEach(f=>{
                     const div=document.createElement('div'); div.className='family';
-                    div.innerHTML=`<b>Family ID: ${esc(f._id)}</b><div>સભ્યો: ${f.people}</div><div class="family-actions"><button class="btn" onclick="viewFamily('${escAttr(f._id)}')">🌳 Tree જુઓ</button><button class="btn danger" onclick="deleteFamily('${escAttr(f._id)}')">🗑️ Delete Tree</button></div>`;
+                    div.innerHTML=`<b style="font-size:18px;display:block;margin-bottom:5px;">👤 ${esc(f.mainPersonName||'Main Person')}</b><div style="font-size:13px;opacity:.85;margin-bottom:4px;">Family ID: ${esc(f._id)}</div><div>સભ્યો: ${f.people}</div><div class="family-actions"><button class="btn" onclick="viewFamily('${escAttr(f._id)}')">🌳 Tree જુઓ</button><button class="btn danger" onclick="deleteFamily('${escAttr(f._id)}')">🗑️ Delete Tree</button></div>`;
                     box.appendChild(div);
                 });
             }catch(e){alert('Families load error: '+e.message);}

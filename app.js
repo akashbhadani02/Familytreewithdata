@@ -137,7 +137,21 @@ app.get("/api/admin/families",async(req,res)=>{
     if(!adminKey || req.headers["x-admin-key"]!==adminKey) return res.status(401).json({ok:false,error:"Unauthorized"});
     await connectDB();
     res.json({ok:true,families:await Person.aggregate([
-      {$group:{_id:"$familyId",people:{$sum:1},latest:{$max:"$createdAt"}}},
+      {$group:{
+        _id:"$familyId",
+        people:{$sum:1},
+        latest:{$max:"$createdAt"},
+        roots:{$push:{$cond:[{$eq:["$parentId",null]},"$name",null]}}
+      }},
+      {$project:{
+        _id:1,
+        people:1,
+        latest:1,
+        mainPersonName:{$arrayElemAt:[
+          {$filter:{input:"$roots",as:"root",cond:{$ne:["$$root",null]}}},
+          0
+        ]}
+      }},
       {$sort:{latest:-1}}
     ])});
   }catch(e){res.status(400).json({ok:false,error:e.message})}
