@@ -403,7 +403,7 @@ async function createFamily(){
                 const q=positions.get(String(p._id)); if(!q)return;
                 const d=document.createElement('div'); d.className='card'; d.style.left=q.x+'px'; d.style.top=q.y+'px';
                 const shown=localized[String(p._id)]||p.name;
-                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><button class="btn" style="width:100%;margin-top:10px;padding:9px 8px;font-size:12px" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button>`;
+                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div style="display:flex;gap:7px;margin-top:10px"><button class="btn" style="flex:1;padding:9px 6px;font-size:11px" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn gray" style="flex:1;padding:9px 6px;font-size:11px" onclick="openMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button></div><button class="btn danger" style="width:100%;margin-top:7px;padding:9px 8px;font-size:11px" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete Member</button>`;
                 cards.appendChild(d);
             });
 
@@ -474,6 +474,11 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             });
         }
         function addLink(token){return location.origin+'/add/'+token;}
+        function openMemberLink(token){
+            if(!token) return alert('Member link ઉપલબ્ધ નથી.');
+            const link=addLink(token);
+            window.open(link,'_blank','noopener,noreferrer');
+        }
         async function copyLink(link){try{await navigator.clipboard.writeText(link);alert('Link copy થઈ ગઈ.');}catch(e){prompt('Link copy કરો:',link);}}
 
         async function adminAddChild(parentId,parentName,btn){
