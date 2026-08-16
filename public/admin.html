@@ -231,6 +231,40 @@
             fill: none !important;
         }
         .treebox { -webkit-overflow-scrolling: touch; }
+        @media (max-width: 1100px) {
+            .member-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
+        }
+        @media (max-width: 820px) {
+            .member-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+            #viewer > .row:first-child {
+                display:flex!important;
+                flex-wrap:wrap!important;
+                align-items:center!important;
+                gap:8px!important;
+            }
+            #viewer > .row:first-child h2 {
+                width:100%!important;
+                flex:0 0 100%!important;
+            }
+            .tree-search {
+                display:flex!important;
+                flex-wrap:wrap!important;
+                gap:7px!important;
+            }
+            .tree-search input { flex:1 1 220px!important; min-width:0!important; }
+            .tree-zoom-controls {
+                display:flex!important;
+                flex-wrap:wrap!important;
+                justify-content:center!important;
+                gap:7px!important;
+            }
+            .search-hint {
+                display:block!important;
+                width:100%!important;
+                text-align:center!important;
+                margin:7px 0!important;
+            }
+        }
         @media (max-width: 700px) {
             header h1 { font-size: 20px; }
             .wrap { padding: 0 8px; margin: 10px auto; }
@@ -239,7 +273,8 @@
             .canvas { width: 7000px; height: 5000px; }
             .card { width: 190px; }
             #svg path { stroke-width: 5 !important; }
-            .member-list { grid-template-columns: 1fr; }
+            .member-list { grid-template-columns:1fr!important; }
+            .member-item { padding:11px; }
             .row .btn { min-height: 42px; }
         }
 
@@ -259,11 +294,58 @@
         .member-link { width:100%; font-size:11px; padding:8px; border:1px solid #d8e1eb; border-radius:8px; background:#f7f9fc; }
         .tool-row { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
         .tool-row .btn { padding:7px 9px; font-size:11px; }
-        .links-panel { margin-top:16px; border-top:1px solid #e2e8f0; padding-top:14px; }
-        .member-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:10px; margin-top:10px; }
-        .member-item { border:1px solid #dce4ec; border-radius:12px; padding:12px; background:#fbfcfe; }
-        .member-item .name { font-weight:800; }
+        /* Member links always stay BELOW the tree/close button in a clean grid. */
+        .links-panel {
+            margin-top:16px;
+            border-top:1px solid #e2e8f0;
+            padding:16px 0 8px;
+            width:100%;
+            display:block!important;
+            clear:both;
+        }
+        .links-panel h3 {
+            display:block!important;
+            width:100%;
+            margin:0 0 6px!important;
+        }
+        .links-panel > div:first-of-type {
+            display:block!important;
+            width:100%;
+            clear:both;
+            line-height:1.5;
+        }
+        .member-list {
+            display:grid!important;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:12px;
+            width:100%;
+            margin:14px 0 0!important;
+            align-items:stretch;
+        }
+        .member-item {
+            min-width:0;
+            box-sizing:border-box;
+            border:1px solid #dce4ec;
+            border-radius:12px;
+            padding:12px;
+            background:#fbfcfe;
+            overflow:hidden;
+        }
+        .member-item .name {
+            font-weight:800;
+            display:block;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
         .member-item small { color:#718096; display:block; margin:3px 0 8px; }
+        .member-item .member-link {
+            box-sizing:border-box;
+            display:block;
+            max-width:100%;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
 
         .status {
             margin-top: 10px;
