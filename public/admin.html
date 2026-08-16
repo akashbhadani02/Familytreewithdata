@@ -118,6 +118,7 @@
         }
 
         .card {
+            pointer-events:auto;
             position: absolute;
             width: 210px;
             height: 245px;
@@ -454,7 +455,7 @@ async function createFamily(){
 function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2}}
 function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomReady)return;box.dataset.zoomReady='1';let pinchStartDistance=0,pinchStartZoom=1,pinchWorldX=0,pinchWorldY=0,drag=false,lastX=0,lastY=0;
  box.addEventListener('wheel',e=>{e.preventDefault();const r=box.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;setTreeZoom(treeZoom+(e.deltaY<0?.08:-.08),x,y)},{passive:false});
- box.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button!==0)return;drag=true;lastX=e.clientX;lastY=e.clientY;box.classList.add('dragging');box.setPointerCapture?.(e.pointerId)});box.addEventListener('pointermove',e=>{if(!drag)return;box.scrollLeft-=e.clientX-lastX;box.scrollTop-=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY});['pointerup','pointercancel'].forEach(t=>box.addEventListener(t,()=>{drag=false;box.classList.remove('dragging')}));
+ box.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button!==0)return; if(e.target.closest && e.target.closest('button,a,input,textarea,select')) return; drag=true;lastX=e.clientX;lastY=e.clientY;box.classList.add('dragging');box.setPointerCapture?.(e.pointerId)});box.addEventListener('pointermove',e=>{if(!drag)return;box.scrollLeft-=e.clientX-lastX;box.scrollTop-=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY});['pointerup','pointercancel'].forEach(t=>box.addEventListener(t,()=>{drag=false;box.classList.remove('dragging')}));
  box.addEventListener('touchstart',e=>{if(e.touches.length===2){e.preventDefault();const c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();pinchStartDistance=treeZoomDistance(e.touches[0],e.touches[1]);pinchStartZoom=treeZoom;pinchWorldX=(box.scrollLeft+c.x-r.left)/treeZoom;pinchWorldY=(box.scrollTop+c.y-r.top)/treeZoom}},{passive:false});box.addEventListener('touchmove',e=>{if(e.touches.length!==2||!pinchStartDistance)return;e.preventDefault();const d=treeZoomDistance(e.touches[0],e.touches[1]),c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();treeZoom=Math.max(.35,Math.min(2.5,pinchStartZoom*(d/pinchStartDistance)));applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,pinchWorldX*treeZoom-(c.x-r.left));box.scrollTop=Math.max(0,pinchWorldY*treeZoom-(c.y-r.top))})},{passive:false});box.addEventListener('touchend',e=>{if(e.touches.length<2)pinchStartDistance=0},{passive:false})}
 
         function focusTreeRoot(){
