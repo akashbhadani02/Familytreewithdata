@@ -663,7 +663,7 @@ async function createFamily(){
 }
 function clearAdminTreeSearch(){const i=$('treeSearchInput');if(i)i.value='';document.querySelectorAll('#cards .card.selfFound').forEach(c=>c.classList.remove('selfFound'));$('treeSearchHint').textContent='તમારું નામ લખો — તમારું card light green થશે.'}
 function focusAdminTreePerson(id){const box=$('treebox'),p=people.find(x=>String(x._id)===String(id));if(!box||!p)return;const card=[...$('cards').children].find(c=>c.dataset.personId===String(id));if(card){box.scrollLeft=Math.max(0,card.offsetLeft*treeZoom+card.offsetWidth*treeZoom/2-box.clientWidth/2);box.scrollTop=Math.max(0,card.offsetTop*treeZoom+card.offsetHeight*treeZoom/2-box.clientHeight/2)}}
-function setTreeZoom(z,anchorX=null,anchorY=null){const box=$('treebox');if(!box)return;const old=treeZoom;treeZoom=Math.max(.35,Math.min(2.5,z));if(anchorX==null)anchorX=box.clientWidth/2;if(anchorY==null)anchorY=box.clientHeight/2;const worldX=(box.scrollLeft+anchorX)/old,worldY=(box.scrollTop+anchorY)/old;applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,worldX*treeZoom-anchorX);box.scrollTop=Math.max(0,worldY*treeZoom-anchorY)})}
+function setTreeZoom(z,anchorX=null,anchorY=null){const box=$('treebox');if(!box)return;const old=treeZoom;treeZoom=Math.max(.05,Math.min(2.5,z));if(anchorX==null)anchorX=box.clientWidth/2;if(anchorY==null)anchorY=box.clientHeight/2;const worldX=(box.scrollLeft+anchorX)/old,worldY=(box.scrollTop+anchorY)/old;applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,worldX*treeZoom-anchorX);box.scrollTop=Math.max(0,worldY*treeZoom-anchorY)})}
         function treeZoomIn(){setTreeZoom(treeZoom+0.1)}
         function treeZoomOut(){setTreeZoom(treeZoom-0.1)}
         function treeZoomReset(){setTreeZoom(1)}
@@ -672,7 +672,7 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
 function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomReady)return;box.dataset.zoomReady='1';let pinchStartDistance=0,pinchStartZoom=1,pinchWorldX=0,pinchWorldY=0,drag=false,lastX=0,lastY=0;
  box.addEventListener('wheel',e=>{e.preventDefault();const r=box.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;setTreeZoom(treeZoom+(e.deltaY<0?.08:-.08),x,y)},{passive:false});
  box.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button!==0)return;drag=true;lastX=e.clientX;lastY=e.clientY;box.classList.add('dragging');box.setPointerCapture?.(e.pointerId)});box.addEventListener('pointermove',e=>{if(!drag)return;box.scrollLeft-=e.clientX-lastX;box.scrollTop-=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY});['pointerup','pointercancel'].forEach(t=>box.addEventListener(t,()=>{drag=false;box.classList.remove('dragging')}));
- box.addEventListener('touchstart',e=>{if(e.touches.length===2){e.preventDefault();const c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();pinchStartDistance=treeZoomDistance(e.touches[0],e.touches[1]);pinchStartZoom=treeZoom;pinchWorldX=(box.scrollLeft+c.x-r.left)/treeZoom;pinchWorldY=(box.scrollTop+c.y-r.top)/treeZoom}},{passive:false});box.addEventListener('touchmove',e=>{if(e.touches.length!==2||!pinchStartDistance)return;e.preventDefault();const d=treeZoomDistance(e.touches[0],e.touches[1]),c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();treeZoom=Math.max(.35,Math.min(2.5,pinchStartZoom*(d/pinchStartDistance)));applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,pinchWorldX*treeZoom-(c.x-r.left));box.scrollTop=Math.max(0,pinchWorldY*treeZoom-(c.y-r.top))})},{passive:false});box.addEventListener('touchend',e=>{if(e.touches.length<2)pinchStartDistance=0},{passive:false})}
+ box.addEventListener('touchstart',e=>{if(e.touches.length===2){e.preventDefault();const c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();pinchStartDistance=treeZoomDistance(e.touches[0],e.touches[1]);pinchStartZoom=treeZoom;pinchWorldX=(box.scrollLeft+c.x-r.left)/treeZoom;pinchWorldY=(box.scrollTop+c.y-r.top)/treeZoom}},{passive:false});box.addEventListener('touchmove',e=>{if(e.touches.length!==2||!pinchStartDistance)return;e.preventDefault();const d=treeZoomDistance(e.touches[0],e.touches[1]),c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();treeZoom=Math.max(.05,Math.min(2.5,pinchStartZoom*(d/pinchStartDistance)));applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,pinchWorldX*treeZoom-(c.x-r.left));box.scrollTop=Math.max(0,pinchWorldY*treeZoom-(c.y-r.top))})},{passive:false});box.addEventListener('touchend',e=>{if(e.touches.length<2)pinchStartDistance=0},{passive:false})}
 
         function focusTreeRoot(){
             const box=$('treebox'), root=people.find(p=>!p.parentId);
@@ -1090,7 +1090,34 @@ async function editName(id){
     // Leaves are shown ONLY on the final (last) generation. No leaves on the trunk/top.
 }
 
-        async function toggleRealTreeView(){
+        function fitRealTreeToViewport(){
+ const box=document.querySelector('#treebox');
+ const layer=document.querySelector('#treeLayer.real-natural-tree');
+ const canvas=document.querySelector('#realTreeCanvas');
+ if(!box||!layer||!canvas)return;
+ const w=Number(layer.style.width||canvas.style.width||canvas.width||0);
+ const h=Number(layer.style.height||canvas.style.height||canvas.height||0);
+ if(!w||!h)return;
+ const availW=Math.max(80,box.clientWidth-24);
+ const availH=Math.max(80,box.clientHeight-24);
+ // Always fit the complete real tree inside the visible viewport.
+ // It is intentionally allowed to become very small for large families.
+ const fit=Math.max(0.05,Math.min(1,availW/w,availH/h));
+ treeZoom=fit;
+ layer.style.transformOrigin='0 0';
+ layer.style.transform='scale('+fit+')';
+ layer.style.width=(w*fit)+'px';
+ layer.style.height=(h*fit)+'px';
+ canvas.style.width=w+'px';
+ canvas.style.height=h+'px';
+ updateTreeZoomLabel();
+ requestAnimationFrame(()=>{
+   box.scrollLeft=Math.max(0,(box.scrollWidth-box.clientWidth)/2);
+   box.scrollTop=Math.max(0,(box.scrollHeight-box.clientHeight)/2);
+ });
+}
+
+async function toggleRealTreeView(){
     const viewer=$('viewer'), btn=$('realTreeBtn');
     if(!viewer) return;
 
@@ -1107,8 +1134,10 @@ async function editName(id){
         document.body.style.overflow='hidden';
         treeZoom=1;
 
+        document.body.style.overflow='hidden';
         setTimeout(()=>{
             drawRealTreeStructure();
+            fitRealTreeToViewport();
         },80);
 
     }else{

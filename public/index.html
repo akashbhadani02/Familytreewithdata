@@ -207,7 +207,7 @@ function searchTreePerson(value,focus=false){
 function clearTreeSearch(){const i=$('treeSearchInput');if(i)i.value='';document.querySelectorAll('#cards .card.selfFound').forEach(c=>c.classList.remove('selfFound'));const h=$('treeSearchHint');if(h)h.textContent='તમારું નામ લખો — તમારું card light green થશે.'}
 function updateTreeZoomLabel(){const el=$('treeZoomLabel');if(el)el.textContent=Math.round(treeZoom*100)+'%'}
 function applyTreeZoom(baseW,baseH){const canvas=$('canvas'),layer=$('treeLayer');if(!canvas||!layer)return;const w=Number(baseW||canvas.dataset.baseWidth||canvas.offsetWidth||1000),h=Number(baseH||canvas.dataset.baseHeight||canvas.offsetHeight||900);canvas.dataset.baseWidth=w;canvas.dataset.baseHeight=h;canvas.style.width=(w*treeZoom)+'px';canvas.style.height=(h*treeZoom)+'px';layer.style.width=w+'px';layer.style.height=h+'px';layer.style.transform='scale('+treeZoom+')';updateTreeZoomLabel()}
-function setTreeZoom(z, anchorX=null, anchorY=null){const box=document.querySelector('.treebox');if(!box)return;const old=treeZoom;treeZoom=Math.max(.35,Math.min(2.5,z));if(anchorX==null)anchorX=box.clientWidth/2;if(anchorY==null)anchorY=box.clientHeight/2;const worldX=(box.scrollLeft+anchorX)/old,worldY=(box.scrollTop+anchorY)/old;applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,worldX*treeZoom-anchorX);box.scrollTop=Math.max(0,worldY*treeZoom-anchorY);})}
+function setTreeZoom(z, anchorX=null, anchorY=null){const box=document.querySelector('.treebox');if(!box)return;const old=treeZoom;treeZoom=Math.max(.05,Math.min(2.5,z));if(anchorX==null)anchorX=box.clientWidth/2;if(anchorY==null)anchorY=box.clientHeight/2;const worldX=(box.scrollLeft+anchorX)/old,worldY=(box.scrollTop+anchorY)/old;applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,worldX*treeZoom-anchorX);box.scrollTop=Math.max(0,worldY*treeZoom-anchorY);})}
 function treeZoomIn(){setTreeZoom(treeZoom+0.1)}
 function treeZoomOut(){setTreeZoom(treeZoom-0.1)}
 function treeZoomReset(){setTreeZoom(1)}
@@ -433,6 +433,33 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     // Leaves are shown ONLY on the final (last) generation. No leaves on the trunk/top.
 }
 
+function fitRealTreeToViewport(){
+ const box=document.querySelector('#treebox');
+ const layer=document.querySelector('#treeLayer.real-natural-tree');
+ const canvas=document.querySelector('#realTreeCanvas');
+ if(!box||!layer||!canvas)return;
+ const w=Number(layer.style.width||canvas.style.width||canvas.width||0);
+ const h=Number(layer.style.height||canvas.style.height||canvas.height||0);
+ if(!w||!h)return;
+ const availW=Math.max(80,box.clientWidth-24);
+ const availH=Math.max(80,box.clientHeight-24);
+ // Always fit the complete real tree inside the visible viewport.
+ // It is intentionally allowed to become very small for large families.
+ const fit=Math.max(0.05,Math.min(1,availW/w,availH/h));
+ treeZoom=fit;
+ layer.style.transformOrigin='0 0';
+ layer.style.transform='scale('+fit+')';
+ layer.style.width=(w*fit)+'px';
+ layer.style.height=(h*fit)+'px';
+ canvas.style.width=w+'px';
+ canvas.style.height=h+'px';
+ updateTreeZoomLabel();
+ requestAnimationFrame(()=>{
+   box.scrollLeft=Math.max(0,(box.scrollWidth-box.clientWidth)/2);
+   box.scrollTop=Math.max(0,(box.scrollHeight-box.clientHeight)/2);
+ });
+}
+
 function toggleUserRealTree(){
  const view=$('viewBox'), btn=$('userRealTreeBtn');
  if(!view)return;
@@ -442,8 +469,9 @@ function toggleUserRealTree(){
    view.classList.add('real-tree-open');
    if(btn) btn.textContent='✕ Close Real Tree';
    treeZoom=1;
+   document.body.style.overflow='hidden';
    requestAnimationFrame(()=>{
-     try{ drawUserRealTreeStructure(); }
+     try{ drawUserRealTreeStructure(); fitRealTreeToViewport(); }
      catch(e){ console.error('Real Tree render error:',e); }
    });
  }else{
@@ -455,6 +483,7 @@ function toggleUserRealTree(){
    const cards=$('cards'); if(cards)cards.style.display='';
    const layer=$('treeLayer'); if(layer){layer.classList.remove('real-natural-tree');layer.style.width='';layer.style.height='';layer.style.minWidth='';layer.style.minHeight='';layer.style.transform='scale('+treeZoom+')';}
    const canvas=$('canvas'); if(canvas){canvas.style.width='';canvas.style.height='';}
+   document.body.style.overflow='';
    renderTree();
  }
 }
@@ -478,7 +507,7 @@ function initTreeZoomTouch(){
    if(e.touches.length===2&&pinchStartDistance){
      e.preventDefault();
      const d=treeZoomDistance(e.touches[0],e.touches[1]),c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();
-     treeZoom=Math.max(.35,Math.min(2.5,pinchStartZoom*(d/pinchStartDistance)));applyTreeZoom();
+     treeZoom=Math.max(.05,Math.min(2.5,pinchStartZoom*(d/pinchStartDistance)));applyTreeZoom();
      requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,pinchWorldX*treeZoom-(c.x-r.left));box.scrollTop=Math.max(0,pinchWorldY*treeZoom-(c.y-r.top))});
    }else if(e.touches.length===1&&touchMode==='pan'){
      e.preventDefault();const x=e.touches[0].clientX,y=e.touches[0].clientY;box.scrollLeft-=x-lastX;box.scrollTop-=y-lastY;lastX=x;lastY=y;
