@@ -549,15 +549,30 @@ async function createFamily(){
         }
         async function deleteCurrentFamily(){if(currentFamilyId)await deleteFamily(currentFamilyId);}
 
-        async function viewFamily(id){
+        async function viewFamily(id, keepPosition=false, savedPageY=null, savedTreeLeft=null, savedTreeTop=null){
             currentFamilyId=id;
             try{
                 const r=await fetch('/api/family/'+encodeURIComponent(id)); const d=await r.json();
                 if(!r.ok||!d.ok)return alert(d.error||'Tree load થઈ નથી');
                 people=Array.isArray(d.people)?d.people:[];
-                $('viewer').style.display='block'; renderTree();
-                $('viewer').scrollIntoView({behavior:'smooth',block:'start'});
-                setTimeout(focusTreeRoot,150);
+                $('viewer').style.display='block';
+                await renderTree();
+
+                // IMPORTANT: when adding/editing a member from the Admin Tree,
+                // never jump the page back to the top. Restore the exact position.
+                if(keepPosition){
+                    requestAnimationFrame(()=>{
+                        window.scrollTo(0, Number(savedPageY ?? window.scrollY));
+                        const box=$('treebox');
+                        if(box){
+                            box.scrollLeft=Math.max(0, Number(savedTreeLeft ?? box.scrollLeft));
+                            box.scrollTop=Math.max(0, Number(savedTreeTop ?? box.scrollTop));
+                        }
+                    });
+                }else{
+                    // Only initial tree opening may focus the tree.
+                    setTimeout(focusTreeRoot,150);
+                }
             }catch(e){alert('Tree load error: '+e.message);}
         }
 
@@ -700,6 +715,13 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
 
         async function adminAddChild(parentId,parentName,btn){
             if(btn && btn.disabled) return;
+
+            // Remember the exact Admin Tree position before the save.
+            // This prevents the page from jumping to the top after adding a name.
+            const savedPageY=window.scrollY || window.pageYOffset || 0;
+            const savedTreeBox=$('treebox');
+            const savedTreeLeft=savedTreeBox ? savedTreeBox.scrollLeft : 0;
+            const savedTreeTop=savedTreeBox ? savedTreeBox.scrollTop : 0;
             if(btn){
                 btn.disabled=true;
                 btn.dataset.oldText=btn.textContent;
@@ -766,8 +788,19 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 const raw=await r.text(); let d; try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}
                 if(!r.ok || !d.ok) throw new Error(d.error||'Member add થયો નથી');
 
-                await viewFamily(currentFamilyId);
+                await viewFamily(currentFamilyId, true, savedPageY, savedTreeLeft, savedTreeTop);
                 await loadFamilies();
+
+                // loadFamilies can redraw the family list, so restore once more
+                // after the list refresh completes.
+                requestAnimationFrame(()=>{
+                    window.scrollTo(0, savedPageY);
+                    const box=$('treebox');
+                    if(box){
+                        box.scrollLeft=Math.max(0, savedTreeLeft);
+                        box.scrollTop=Math.max(0, savedTreeTop);
+                    }
+                });
 
                 const link=location.origin+d.addLink;
                 alert('✅ '+name.trim()+' સફળતાપૂર્વક Family Tree માં add થઈ ગયો!'+(file?'\\n📷 Photo પણ save થઈ ગયો.':''));
