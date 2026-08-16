@@ -679,7 +679,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             const localized={}; people.forEach(p=>{localized[String(p._id)]=p.name});
             people.forEach(p=>{
                 const link=addLink(p.addToken), item=document.createElement('div'); item.className='member-item';
-                item.innerHTML=`<div class="name">${esc(localized[String(p._id)]||p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
+                item.innerHTML=`<div class="name">${esc(localized[String(p._id)]||p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn gray" onclick="updatePhoto('${escAttr(p._id)}')">📷 Update Image</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
                 box.appendChild(item);
             });
         }
@@ -787,6 +787,52 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 const d=await r.json(); if(!r.ok||!d.ok)return alert(d.error||'Name update થઈ નથી');
                 await viewFamily(currentFamilyId);
             }catch(e){alert('Name update error: '+e.message);}
+        }
+
+        async function updatePhoto(id){
+            const p=people.find(x=>String(x._id)===String(id));
+            if(!p) return;
+
+            const input=document.createElement('input');
+            input.type='file';
+            input.accept='image/jpeg,image/png,image/webp';
+            input.style.display='none';
+            document.body.appendChild(input);
+
+            input.onchange=async()=>{
+                const file=input.files && input.files[0];
+                input.remove();
+                if(!file) return;
+
+                try{
+                    const prepared=await prepareAdminPhoto(file);
+                    if(!prepared) return;
+
+                    const fd=new FormData();
+                    fd.append('photo',prepared);
+
+                    const r=await fetch('/api/admin/person/'+encodeURIComponent(id),{
+                        method:'PUT',
+                        headers:{'x-admin-key':key},
+                        body:fd
+                    });
+
+                    const raw=await r.text();
+                    let d;
+                    try{ d=JSON.parse(raw); }
+                    catch(_){ throw new Error('Server upload error ('+r.status+'). Please try again.'); }
+
+                    if(!r.ok || !d.ok) throw new Error(d.error||'Image update થઈ નથી');
+
+                    await viewFamily(currentFamilyId);
+                    await loadFamilies();
+                    alert('✅ '+(p.name||'Member')+' નો photo successfully update થઈ ગયો.');
+                }catch(e){
+                    alert('❌ '+e.message);
+                }
+            };
+
+            input.click();
         }
 
         async function deleteMember(id){
