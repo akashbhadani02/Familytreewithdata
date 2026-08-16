@@ -1198,11 +1198,11 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
 
         ctx.restore();
 
-        /* Photo is always directly above the member name plaque. */
+        /* Photo has its own protected area below the branch. */
         drawMemberPhoto(
             p,
             x,
-            y - h/2 - 48,
+            y - h/2 - 80,
             small ? 28 : 34
         );
     }
@@ -1294,7 +1294,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         /* Every person owns exactly one plaque.
            Root is handled separately below, so skip it here. */
         if(String(parent._id)!==String(root._id)){
-            plaque(parent,pp.x,pp.y+72,false);
+            plaque(parent,pp.x,pp.y+112,false);
         }
 
         /* leaf generation: branch + foliage + name */
@@ -1302,12 +1302,12 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             const side=(pp.x>=treeWidth/2?1:-1);
             twig(
                 pp.x,
-                pp.y+5,
+                pp.y-55,
                 pp.x+side*70,
-                pp.y-90,
+                pp.y-145,
                 7
             );
-            foliage(pp.x+side*78,pp.y-105,.85);
+            foliage(pp.x+side*78,pp.y-165,.78);
             return;
         }
 
@@ -1344,7 +1344,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 cp.x-side*curve*.55,
                 endY+90,
                 cp.x,
-                endY,
+                endY-105,
                 width
             );
 
@@ -1354,17 +1354,17 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             */
             const twigSide=index%2===0?-1:1;
             const tx=cp.x+twigSide*55;
-            const ty=cp.y-55;
+            const ty=cp.y-135;
 
             twig(
                 cp.x,
-                cp.y,
+                cp.y-80,
                 tx,
                 ty,
                 Math.max(5,width*.28)
             );
 
-            foliage(tx,ty-18,.65);
+            foliage(tx,ty-18,.55);
 
             /* The recursive call owns the child plaque.
                Drawing it here would create a duplicate card for
@@ -1392,7 +1392,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             cp.x-side*Math.min(300,distance*.28),
             cp.y+150,
             cp.x,
-            cp.y+30,
+            cp.y-90,
             50
         );
 
@@ -1411,7 +1411,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
     plaque(
         root,
         trunkBaseX,
-        trunkTopY+115,
+        trunkTopY+145,
         false
     );
 
