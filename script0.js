@@ -1008,3 +1008,4 @@ async function loadHtml2Canvas(){
             const ok=await checkAdmin();
             if(ok){showAdminApp();await loadFamilies();}else{localStorage.removeItem('adminKey');key='';showLogin();}
         })();
+    
