@@ -1177,13 +1177,8 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             1
         );
 
-        plaque(
-            child,
-            cp.x,
-            cp.y+72,
-            false
-        );
-
+        /* The recursive renderer below draws the child plaque once.
+           Do not draw it here again, otherwise the child gets a double card. */
         drawPersonBranch(child);
     });
 
