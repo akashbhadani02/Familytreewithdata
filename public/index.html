@@ -308,17 +308,18 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     }
     gen1.forEach(placeDescendants);
 
-    // Tight-fit the real tree to the actual data. Descendants can extend above
-    // the first Gen-1 card, so shift the whole layout down just enough to keep
-    // the highest card inside the canvas. The Gen-1 trunk remains near the bottom.
+    // Fit the tree tightly to the actual data: move the complete tree down
+    // only enough to keep the highest generation inside the canvas. This
+    // removes the large empty area above/below the tree while preserving the
+    // bottom-up Gen-1 trunk layout.
     const placed=[...pos.values()];
     const minPlacedY=Math.min(...placed.map(q=>q.y));
     const shiftY=Math.max(0, topPad-minPlacedY);
-    if(shiftY) pos.forEach(q=>{q.y+=shiftY;});
+    if(shiftY){ pos.forEach(q=>{q.y+=shiftY;}); }
     const shiftedGen1Bottom=Math.max(...gen1.map(p=>pos.get(String(p._id)).y));
     const shiftedMaxY=Math.max(...[...pos.values()].map(q=>q.y));
     const groundYTarget=shiftedGen1Bottom+190;
-    const treeHeight=Math.max(900,Math.ceil(Math.max(groundYTarget+bottomPad,shiftedMaxY+bottomPad)));
+    const treeHeight=Math.max(900, Math.ceil(Math.max(groundYTarget+bottomPad, shiftedMaxY+bottomPad)));
 
     const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
     tc.width=Math.round(treeWidth*dpr);
