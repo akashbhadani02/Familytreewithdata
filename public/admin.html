@@ -1289,13 +1289,21 @@ async function loadHtml2Canvas(){
                 throw new Error('Real Tree તૈયાર નથી. પહેલા Real Tree View ખોલો.');
         }
 
-        // Render the tree at a safe print resolution. The full source canvas is
-        // preserved, but oversized browser canvases are reduced before PDF export.
+        // Wait briefly for asynchronous member photos to finish loading, then
+        // redraw once so the PDF contains the real photos instead of placeholders.
+        if(typeof drawRealTreeStructure==='function') drawRealTreeStructure();
+        await new Promise(resolve=>setTimeout(resolve,450));
+        if(typeof drawRealTreeStructure==='function') drawRealTreeStructure();
+
+        // Preserve a high-resolution source for printing. Do NOT reduce it to
+        // 3600px because that makes Gujarati names and photos soft when printed.
         const sw=Number(sourceCanvas.width), sh=Number(sourceCanvas.height);
         if(!Number.isFinite(sw)||!Number.isFinite(sh)||sw<2||sh<2)
             throw new Error('Tree image size invalid છે.');
 
-        const MAX_W=3600, MAX_H=2600;
+        // Keep enough pixels for A3/A2/A1 printing while preventing an unsafe
+        // browser canvas from becoming enormous.
+        const MAX_W=6200, MAX_H=5200;
         const scale=Math.min(1,MAX_W/sw,MAX_H/sh);
         const ew=Math.max(2,Math.round(sw*scale));
         const eh=Math.max(2,Math.round(sh*scale));
@@ -1308,7 +1316,9 @@ async function loadHtml2Canvas(){
         ctx.imageSmoothingQuality='high';
         ctx.drawImage(sourceCanvas,0,0,sw,sh,0,0,ew,eh);
 
-        const dataUrl=tempCanvas.toDataURL('image/jpeg',0.94);
+        // PNG keeps letters, Gujarati text, borders and photos much sharper than
+        // JPEG compression. Use the lossless image for the printable PDF.
+        const dataUrl=tempCanvas.toDataURL('image/png');
         if(!dataUrl || dataUrl.length<100) throw new Error('Tree image export થઈ નથી.');
 
         const {jsPDF}=window.jspdf;
