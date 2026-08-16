@@ -1028,26 +1028,32 @@ async function editName(id){
     strokeCurve(trunkX,trunkBottomY+55,trunkX-18,trunkBottomY-20,trunkX+18,trunkTopY+90,trunkX,trunkTopY-20,92);
     for(let i=-6;i<=6;i++){ctx.beginPath();ctx.moveTo(trunkX+i*12,groundY-10);ctx.quadraticCurveTo(trunkX+i*15,(groundY+trunkTopY)/2,trunkX+i*7,trunkTopY+35);ctx.strokeStyle='rgba(46,21,8,.25)';ctx.lineWidth=3;ctx.stroke();}
 
-    // Gen-1 cards are painted bottom -> top exactly once.
-    gen1.forEach(p=>{const pp=pos.get(String(p._id)); if(pp) plaque(p,pp.x,pp.y,false);});
-
-    // Draw each descendant branch from its actual parent.
-    function drawDescendants(parent){
+    // IMPORTANT: draw every branch/twig BEFORE any member plaque.
+    // This keeps branches physically behind the cards, so no branch/wood line
+    // can ever appear across a name card. The branch becomes visible only
+    // outside the card and visually joins the trunk/parent edge.
+    function drawDescendantBranches(parent){
         const pp=pos.get(String(parent._id)); if(!pp)return;
         const kids=generationChildren.get(String(parent._id))||[];
-        kids.forEach((child,index)=>{
+        kids.forEach(child=>{
             const cp=pos.get(String(child._id)); if(!cp)return;
             const dx=cp.x-pp.x, side=dx>=0?1:-1, distance=Math.abs(dx);
             const width=Math.max(10,34-(generation(parent)-1)*4);
             strokeCurve(pp.x,pp.y-5,pp.x+side*Math.max(80,Math.min(260,distance*.42)),pp.y-90,cp.x-side*Math.max(70,Math.min(240,distance*.30)),cp.y+95,cp.x,cp.y+35,width);
-            plaque(child,cp.x,cp.y,false);
             if(!generationChildren.get(String(child._id))?.length){
                 twig(cp.x,cp.y+20,cp.x+side*65,cp.y-65,6); foliage(cp.x+side*78,cp.y-85,.72);
             }
-            drawDescendants(child);
+            drawDescendantBranches(child);
         });
     }
-    gen1.forEach(p=>drawDescendants(p));
+    gen1.forEach(p=>drawDescendantBranches(p));
+
+    // Paint ALL plaques last. Cards therefore sit cleanly on top of the trunk/branches.
+    // No branch, twig or wood stroke can cover any card or name.
+    people.forEach(p=>{
+        const pp=pos.get(String(p._id));
+        if(pp) plaque(p,pp.x,pp.y,false);
+    });
 
     // Small foliage at the top and side of the real tree.
     foliage(trunkX,trunkTopY-95,1.15);
