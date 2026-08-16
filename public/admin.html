@@ -604,7 +604,7 @@ async function createFamily(){
                 const d=document.createElement('div'); d.className='card'; d.dataset.personId=String(p._id); d.dataset.personName=(p.name||'').toLowerCase(); d.style.left=q.x+'px'; d.style.top=q.y+'px';
                 const shown=localized[String(p._id)]||p.name;
                 d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tree-card-actions">
-<button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add</button>
+<button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Son</button>
 <button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button>
 <button type="button" class="btn" onclick="updateMemberPhoto('${escAttr(p._id)}')">📷 Photo</button>
 <button type="button" class="btn" onclick="deleteMemberPhoto('${escAttr(p._id)}')">📷 remove</button>
@@ -685,7 +685,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             const localized={}; people.forEach(p=>{localized[String(p._id)]=p.name});
             people.forEach(p=>{
                 const link=addLink(p.addToken), item=document.createElement('div'); item.className='member-item';
-                item.innerHTML=`<div class="name">${esc(localized[String(p._id)]||p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn" onclick="updateMemberPhoto('${escAttr(p._id)}')">📷 Update Photo</button><button class="btn danger" onclick="deleteMemberPhoto('${escAttr(p._id)}')">🗑️ Delete Photo</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete Member</button></div>`;
+                item.innerHTML=`<div class="name">${esc(localized[String(p._id)]||p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Son</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn" onclick="updateMemberPhoto('${escAttr(p._id)}')">📷 Update Photo</button><button class="btn danger" onclick="deleteMemberPhoto('${escAttr(p._id)}')">🗑️ Delete Photo</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete Member</button></div>`;
                 box.appendChild(item);
             });
         }

@@ -98,6 +98,7 @@ async function addPerson(){
  if(!token)return alert('આ add link મળતી નથી');
  if(btn.disabled)return;
  btn.disabled=true;btn.textContent='⏳ Upload થઈ રહ્યું છે...';btn.style.opacity='.6';btn.style.cursor='not-allowed';
+ const parentAddToken=token;
  const fd=new FormData();fd.append('name',name);
  try{
    const photo=await preparePhoto($('addPhoto').files[0]);
@@ -105,9 +106,11 @@ async function addPerson(){
    const r=await fetch('/api/add/'+token,{method:'POST',body:fd});
    const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}
    if(!d.ok)throw new Error(d.error||'નામ add થયું નથી');
-   const link=absoluteLink(d.addLink);token=d.person.addToken;
+   const link=absoluteLink(d.addLink);
+   token=d.person.addToken;
+   const parentLink=absoluteLink('/add/'+parentAddToken);
    $('addSuccess').style.display='block';
-   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે આગળનું નામ ઉમેરવા માટે:</b><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">🔗 નવી link copy કરો</div><button type="button" class="btn" onclick="showFamilyTree()">🌳 Family Tree જુઓ</button></div>';
+   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે શું કરવું છે?</b><div style="display:grid;gap:8px;margin-top:10px"><button type="button" class="btn" onclick="copyText('+JSON.stringify(parentLink)+')">👦 આ જ Father માટે બીજો Son ઉમેરો</button><button type="button" class="btn" onclick="copyText('+JSON.stringify(link)+')">➡️ '+safe(name)+'નો Son ઉમેરો</button><button type="button" class="btn" onclick="showFamilyTree()">🌳 Family Tree જુઓ</button></div><div class="linkbox" style="margin-top:8px">બીજો Son ઉમેરવા માટેની link: '+safe(parentLink)+'</div><div class="copy" onclick="copyText('+JSON.stringify(parentLink)+')">🔗 Parent Link Copy કરો</div></div>';
    $('addName').value='';$('addPhoto').value='';$('addPreview').style.display='none';
    $('parentText').innerHTML='હવે આગળનું નામ <b>'+safe(name)+'</b>ની નીચે ઉમેરાશે.';
    await loadFamily();
