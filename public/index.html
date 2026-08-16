@@ -222,19 +222,13 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
 
     const generation = p => Number(p.generation) || 1;
 
-    /*
-      Generation-1 can contain multiple people without a parent.
-      Treat ALL parentless people as generation-1 roots instead of
-      dropping every root except the first one.
-    */
-    const roots = people
-        .filter(p => !p.parentId)
-        .sort((a,b) =>
-            (generation(a)-generation(b)) ||
-            String(a.name||'').localeCompare(String(b.name||''), 'gu')
-        );
+    /* Find the real root. If several generation-1 people exist,
+       use the first parentless person as the trunk owner. */
+    const root =
+        people.find(p => !p.parentId) ||
+        people.slice().sort((a,b)=>generation(a)-generation(b))[0];
 
-    if(!roots.length) return;
+    if(!root) return;
 
     children.forEach(list=>{
         list.sort((a,b)=>
@@ -246,15 +240,13 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
 
     /*
       Natural tree layout:
-      - every generation-1 person gets a real position
-      - all generation-1 people share one enlarged main trunk
-      - each root keeps its own complete descendant branches
-      - root/name spacing grows with the number of generation-1 names
+      - root at the bottom
+      - every generation moves upward
+      - every child gets its own branch
+      - subtree widths keep siblings separated
     */
     const levelGap = Math.max(245, Math.min(310, 275 + maxGen*4));
     const leafGap = 250;
-    const rootGap = 95;
-    const rootPlaqueWidth = 205;
 
     const subtree = new Map();
 
@@ -279,15 +271,11 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
         return total;
     }
 
-    roots.forEach(measure);
-
-    const rootsWidth =
-        roots.reduce((sum,r)=>sum + Math.max(rootPlaqueWidth, measure(r)),0) +
-        Math.max(0, roots.length-1)*rootGap;
+    measure(root);
 
     const treeWidth = Math.max(
         1800,
-        Math.min(14000, rootsWidth + 700)
+        Math.min(10000, subtree.get(String(root._id)) + 700)
     );
 
     const treeHeight = Math.max(
@@ -321,20 +309,7 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
         });
     }
 
-    /*
-      Place all generation-1 roots across the enlarged trunk.
-      Their descendants are then laid out independently above them.
-    */
-    let rootTotal = roots.reduce(
-        (sum,r)=>sum + Math.max(rootPlaqueWidth, measure(r)), 0
-    ) + Math.max(0, roots.length-1)*rootGap;
-
-    let rootCursor = treeWidth/2 - rootTotal/2;
-    roots.forEach(root=>{
-        const w = Math.max(rootPlaqueWidth, measure(root));
-        place(root, rootCursor + w/2);
-        rootCursor += w + rootGap;
-    });
+    place(root, treeWidth/2);
 
     /* Canvas sizing */
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -579,7 +554,7 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
         ctx.restore();
     }
 
-    function plaque(p,x,y,small=false,rootMode=false){
+    function plaque(p,x,y,small=false){
         const pid=String(p._id||'');
         if(pid && drawnPlaques.has(pid)) return;
         if(pid) drawnPlaques.add(pid);
@@ -587,16 +562,12 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
         const name=String(p.name||'').trim();
         if(!name) return;
 
-        /*
-          Root plaques are slightly wider/taller so several generation-1
-          names can sit clearly on the enlarged trunk without overlap.
-        */
-        const cardW=rootMode ? 220 : 190;
-        const cardH=rootMode ? 165 : 150;
+        const cardW=190;
+        const cardH=150;
         const top=y-cardH/2;
         const photoX=x;
-        const photoY=top+(rootMode ? 48 : 45);
-        const photoR=rootMode ? 36 : 34;
+        const photoY=top+45;
+        const photoR=34;
 
         ctx.save();
         ctx.shadowColor='rgba(30,15,5,.32)';
@@ -611,117 +582,92 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
         ctx.stroke();
         ctx.restore();
 
+        /* Photo is INSIDE the same name card. */
         drawMemberPhoto(p,photoX,photoY,photoR);
 
         ctx.save();
         ctx.fillStyle='#2d1609';
         ctx.textAlign='center';
         ctx.textBaseline='middle';
-        ctx.font='800 '+(rootMode?15:(small?14:16))+'px Arial, "Noto Sans Gujarati", sans-serif';
-
-        /*
-          Do not cut generation-1 names aggressively. Split long names
-          into two centered lines so the complete name remains readable.
-        */
-        const maxChars = rootMode ? 27 : 21;
-        let label=name;
-        let lines=[label];
-
-        if(label.length>maxChars){
-            const words=label.split(/\s+/).filter(Boolean);
-            if(words.length>1){
-                let a='',b='';
-                words.forEach(word=>{
-                    if((a+' '+word).trim().length <= Math.ceil(label.length/2) || !a){
-                        a=(a+' '+word).trim();
-                    }else{
-                        b=(b+' '+word).trim();
-                    }
-                });
-                lines=b ? [a,b] : [label.slice(0,maxChars-1)+'…'];
-            }else{
-                lines=[label.slice(0,maxChars-1)+'…'];
-            }
-        }
-
-        if(lines.length===1){
-            ctx.fillText(lines[0],x,top+(rootMode?102:94));
-        }else{
-            ctx.fillText(lines[0],x,top+96);
-            ctx.fillText(lines[1],x,top+116);
-        }
-
+        ctx.font='800 '+(small?14:16)+'px Arial, "Noto Sans Gujarati", sans-serif';
+        const label=name.length>21?name.slice(0,20)+'…':name;
+        ctx.fillText(label,x,top+94);
         ctx.font='700 11px Arial';
         ctx.fillStyle='#5b3218';
-        ctx.fillText('Generation '+generation(p),x,top+(rootMode?142:119));
+        ctx.fillText('Generation '+generation(p),x,top+119);
         ctx.restore();
     }
 
-    /* ---------- enlarged shared generation-1 trunk ---------- */
-    const firstRootPos=pos.get(String(roots[0]._id));
-    const trunkBaseX=treeWidth/2;
-    const trunkTopY=firstRootPos ? firstRootPos.y+75 : treeHeight-175;
+    /* ---------- roots ---------- */
+    const rootPos=pos.get(String(root._id));
+    const trunkBaseX=rootPos.x;
+    const trunkTopY=rootPos.y+75;
 
-    /*
-      The more generation-1 names there are, the wider the trunk becomes.
-      This keeps every root plaque readable and prevents names from
-      visually colliding with one another.
-    */
-    const rootSpan =
-        roots.reduce((sum,r)=>sum + Math.max(rootPlaqueWidth,measure(r)),0) +
-        Math.max(0,roots.length-1)*rootGap;
-    const trunkWidth=Math.max(
-        260,
-        Math.min(1500, rootSpan + 120)
+    for(let i=0;i<9;i++){
+        const dir=i<4?-1:(i>4?1:0);
+        if(!dir) continue;
+
+        const n=Math.abs(i-4);
+        const endX=trunkBaseX+dir*(130+n*48);
+
+        strokeCurve(
+            trunkBaseX+dir*20,
+            groundY+10,
+            trunkBaseX+dir*60,
+            groundY+20,
+            endX-30*dir,
+            groundY+40,
+            endX,
+            groundY+55,
+            Math.max(7,18-n*2)
+        );
+    }
+
+    /* ---------- main trunk ---------- */
+    strokeCurve(
+        trunkBaseX-105,
+        groundY+10,
+        trunkBaseX-155,
+        groundY-180,
+        trunkBaseX-125,
+        trunkTopY+150,
+        trunkBaseX-42,
+        trunkTopY,
+        95
     );
 
-    /* broad shared trunk */
+    strokeCurve(
+        trunkBaseX+105,
+        groundY+10,
+        trunkBaseX+155,
+        groundY-180,
+        trunkBaseX+125,
+        trunkTopY+150,
+        trunkBaseX+42,
+        trunkTopY,
+        95
+    );
+
     strokeCurve(
         trunkBaseX,
-        groundY+20,
+        groundY,
         trunkBaseX-35,
-        groundY-230,
-        trunkBaseX+35,
-        trunkTopY+170,
+        groundY-260,
+        trunkBaseX-28,
+        trunkTopY+80,
         trunkBaseX,
-        trunkTopY,
-        trunkWidth
+        trunkTopY-5,
+        105
     );
 
-    /* extra root-support curves make the wide trunk look natural */
-    roots.forEach((root,index)=>{
-        const rp=pos.get(String(root._id));
-        if(!rp) return;
-
-        const dx=rp.x-trunkBaseX;
-        const side=dx>=0?1:-1;
-        const distance=Math.abs(dx);
-
-        if(distance>12){
-            strokeCurve(
-                trunkBaseX,
-                trunkTopY+35,
-                trunkBaseX+side*Math.min(300,distance*.45),
-                trunkTopY-70,
-                rp.x-side*Math.min(220,distance*.25),
-                rp.y+125,
-                rp.x,
-                rp.y+75,
-                Math.max(45,Math.min(110,trunkWidth*.18))
-            );
-        }
-    });
-
-    /* bark texture across the complete enlarged trunk */
-    const barkLines=Math.max(7,Math.min(22,Math.round(trunkWidth/70)));
-    for(let i=0;i<barkLines;i++){
-        const offset = -trunkWidth*.42 + (trunkWidth*.84)*(i/Math.max(1,barkLines-1));
+    /* bark texture */
+    for(let i=-5;i<=5;i++){
         ctx.beginPath();
-        ctx.moveTo(trunkBaseX+offset,groundY-10);
+        ctx.moveTo(trunkBaseX+i*12,groundY-10);
         ctx.quadraticCurveTo(
-            trunkBaseX+offset*1.05,
+            trunkBaseX+i*15,
             (groundY+trunkTopY)/2,
-            trunkBaseX+offset*.72,
+            trunkBaseX+i*7,
             trunkTopY+35
         );
         ctx.strokeStyle='rgba(46,21,8,.25)';
@@ -738,7 +684,9 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
 
         /* Every person owns exactly one plaque.
            Root is handled separately below, so skip it here. */
-        plaque(parent,pp.x,pp.y+72,false,roots.some(r=>String(r._id)===String(parent._id)));
+        if(String(parent._id)!==String(root._id)){
+            plaque(parent,pp.x,pp.y+72,false);
+        }
 
         /* leaf generation: branch + foliage + name */
         if(!kids.length){
@@ -816,31 +764,47 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
         });
     }
 
-    /* ---------- generation-1 branches ---------- */
-    roots.forEach((root,index)=>{
-        const rp=pos.get(String(root._id));
-        if(!rp) return;
+    /* ---------- root generation branches ---------- */
+    const rootKids=children.get(String(root._id))||[];
 
-        const dx=rp.x-trunkBaseX;
+    rootKids.forEach((child,index)=>{
+        const cp=pos.get(String(child._id));
+        if(!cp) return;
+
+        const dx=cp.x-trunkBaseX;
         const side=dx>=0?1:-1;
         const distance=Math.abs(dx);
 
-        /* connect the shared trunk to each generation-1 root */
         strokeCurve(
             trunkBaseX,
             trunkTopY+25,
-            trunkBaseX+side*Math.min(260,distance*.40),
-            trunkTopY-120,
-            rp.x-side*Math.min(260,distance*.25),
-            rp.y+135,
-            rp.x,
-            rp.y+45,
-            Math.max(42,Math.min(80,trunkWidth*.12))
+            trunkBaseX+side*Math.min(240,distance*.35),
+            trunkTopY-150,
+            cp.x-side*Math.min(300,distance*.28),
+            cp.y+150,
+            cp.x,
+            cp.y+30,
+            50
         );
 
-        /* root plaque is drawn by drawPersonBranch() exactly once */
-        drawPersonBranch(root);
+        foliage(
+            cp.x-side*30,
+            cp.y-40,
+            1
+        );
+
+        /* The recursive renderer below draws the child plaque once.
+           Do not draw it here again, otherwise the child gets a double card. */
+        drawPersonBranch(child);
     });
+
+    /* Root's own name is placed inside the trunk area. */
+    plaque(
+        root,
+        trunkBaseX,
+        trunkTopY+115,
+        false
+    );
 
     /* top canopy */
     const topNodes=people.filter(p=>generation(p)===maxGen);
