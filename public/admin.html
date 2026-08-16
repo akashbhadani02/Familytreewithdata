@@ -108,7 +108,7 @@
             -webkit-overflow-scrolling: touch
         }
 
-        .tree-zoom-controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.tree-zoom-controls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.tree-zoom-controls button:hover{background:#f1f5f9}.tree-zoom-label{min-width:58px;text-align:center;font-weight:800;color:#315f91}.tree-layer{position:relative;transform-origin:0 0;will-change:transform}
+        .tree-search{display:flex;gap:8px;max-width:620px;margin:0 auto 12px}.tree-search input{flex:1;padding:12px 14px;border:1px solid #cbd6e2;border-radius:10px;font-size:15px;outline:none}.tree-search input:focus{border-color:#315f91;box-shadow:0 0 0 3px #315f9118}.tree-search button{border:0;border-radius:10px;padding:12px 16px;background:#315f91;color:#fff;font-weight:800;cursor:pointer}.card.selfFound{background:#dff7e5!important;border-color:#69b77b!important;box-shadow:0 0 0 3px #9ad7a7,0 8px 24px #2e7d3230!important}.search-hint{text-align:center;font-size:12px;color:#718096;margin:-4px 0 10px}.tree-zoom-controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.tree-zoom-controls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.tree-zoom-controls button:hover{background:#f1f5f9}.tree-zoom-label{min-width:58px;text-align:center;font-weight:800;color:#315f91}.tree-layer{position:relative;transform-origin:0 0;will-change:transform}
 
         .canvas {
             position: relative;
@@ -118,7 +118,6 @@
         }
 
         .card {
-            pointer-events:auto;
             position: absolute;
             width: 210px;
             height: 245px;
@@ -240,7 +239,7 @@
                 <div class="row">
                     <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button class="btn" onclick="downloadPNG()">🖼️ Download PNG</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ આખી Tree Delete</button>
                 </div>
-                <div class="tree-zoom-controls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="tree-zoom-label">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div>
+                <div class="tree-search"><input id="treeSearchInput" type="text" placeholder="🔎 તમારું નામ શોધો..." autocomplete="off" oninput="searchAdminTree(this.value)" onkeydown="if(event.key==='Enter')searchAdminTree(this.value,true)"><button type="button" onclick="clearAdminTreeSearch()">Clear</button></div><div id="treeSearchHint" class="search-hint">તમારું નામ લખો — તમારું card light green થશે.</div><div class="tree-zoom-controls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="tree-zoom-label">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div>
                 <div id="treebox" class="treebox">
                     <div id="canvas" class="canvas"><div id="treeLayer" class="tree-layer"><svg id="svg" width="8000" height="4500"
                             style="position:absolute;left:0;top:0;z-index:1"></svg>
@@ -402,10 +401,10 @@ async function createFamily(){
             people.forEach(p=>{localized[String(p._id)]=p.name});
             people.forEach(p=>{
                 const q=positions.get(String(p._id)); if(!q)return;
-                const d=document.createElement('div'); d.className='card'; d.style.left=q.x+'px'; d.style.top=q.y+'px';
+                const d=document.createElement('div'); d.className='card'; d.dataset.personId=String(p._id); d.dataset.personName=(p.name||'').toLowerCase(); d.style.left=q.x+'px'; d.style.top=q.y+'px';
                 const shown=localized[String(p._id)]||p.name;
-                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tool-row" style="margin-top:10px"><button class="btn" style="flex:1;padding:9px 6px;font-size:11px" onclick="event.stopPropagation();adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn" style="flex:1;padding:9px 6px;font-size:11px" onclick="event.stopPropagation();openMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button><button class="btn danger" style="flex:1;padding:9px 6px;font-size:11px" onclick="event.stopPropagation();deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
-                cards.appendChild(d);
+                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><button class="btn" style="width:100%;margin-top:10px;padding:9px 8px;font-size:12px" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button>`;
+                d.onpointerdown=e=>{if(e.target.closest('button,input,a'))e.stopPropagation()};cards.appendChild(d);
             });
 
             // Card-to-card joined connectors: every line touches the exact bottom/top edge.
@@ -447,7 +446,17 @@ async function createFamily(){
 
         function updateTreeZoomLabel(){const el=$('treeZoomLabel');if(el)el.textContent=Math.round(treeZoom*100)+'%'}
         function applyTreeZoom(baseW,baseH){const canvas=$('canvas'),layer=$('treeLayer');if(!canvas||!layer)return;const w=Number(baseW||canvas.dataset.baseWidth||canvas.offsetWidth||1000),h=Number(baseH||canvas.dataset.baseHeight||canvas.offsetHeight||900);canvas.dataset.baseWidth=w;canvas.dataset.baseHeight=h;canvas.style.width=(w*treeZoom)+'px';canvas.style.height=(h*treeZoom)+'px';layer.style.width=w+'px';layer.style.height=h+'px';layer.style.transform='scale('+treeZoom+')';updateTreeZoomLabel()}
-        function setTreeZoom(z,anchorX=null,anchorY=null){const box=$('treebox');if(!box)return;const old=treeZoom;treeZoom=Math.max(.35,Math.min(2.5,z));if(anchorX==null)anchorX=box.clientWidth/2;if(anchorY==null)anchorY=box.clientHeight/2;const worldX=(box.scrollLeft+anchorX)/old,worldY=(box.scrollTop+anchorY)/old;applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,worldX*treeZoom-anchorX);box.scrollTop=Math.max(0,worldY*treeZoom-anchorY)})}
+        function searchAdminTree(value,focus=false){
+ const term=(value||'').trim().toLowerCase();
+ const cards=[...document.querySelectorAll('#cards .card')]; cards.forEach(c=>c.classList.remove('selfFound'));
+ if(!term){$('treeSearchHint').textContent='તમારું નામ લખો — તમારું card light green થશે.';return;}
+ const matches=cards.filter(c=>(c.dataset.personName||'').includes(term)); matches.forEach(c=>c.classList.add('selfFound'));
+ $('treeSearchHint').textContent=matches.length?`${matches.length} member મળ્યા.`:'આ નામ મળ્યું નથી.';
+ if(matches.length&&(focus||matches.length===1)) focusAdminTreePerson(matches[0].dataset.personId);
+}
+function clearAdminTreeSearch(){const i=$('treeSearchInput');if(i)i.value='';document.querySelectorAll('#cards .card.selfFound').forEach(c=>c.classList.remove('selfFound'));$('treeSearchHint').textContent='તમારું નામ લખો — તમારું card light green થશે.'}
+function focusAdminTreePerson(id){const box=$('treebox'),p=people.find(x=>String(x._id)===String(id));if(!box||!p)return;const card=[...$('cards').children].find(c=>c.dataset.personId===String(id));if(card){box.scrollLeft=Math.max(0,card.offsetLeft*treeZoom+card.offsetWidth*treeZoom/2-box.clientWidth/2);box.scrollTop=Math.max(0,card.offsetTop*treeZoom+card.offsetHeight*treeZoom/2-box.clientHeight/2)}}
+function setTreeZoom(z,anchorX=null,anchorY=null){const box=$('treebox');if(!box)return;const old=treeZoom;treeZoom=Math.max(.35,Math.min(2.5,z));if(anchorX==null)anchorX=box.clientWidth/2;if(anchorY==null)anchorY=box.clientHeight/2;const worldX=(box.scrollLeft+anchorX)/old,worldY=(box.scrollTop+anchorY)/old;applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,worldX*treeZoom-anchorX);box.scrollTop=Math.max(0,worldY*treeZoom-anchorY)})}
         function treeZoomIn(){setTreeZoom(treeZoom+0.1)}
         function treeZoomOut(){setTreeZoom(treeZoom-0.1)}
         function treeZoomReset(){setTreeZoom(1)}
@@ -455,7 +464,7 @@ async function createFamily(){
 function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2}}
 function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomReady)return;box.dataset.zoomReady='1';let pinchStartDistance=0,pinchStartZoom=1,pinchWorldX=0,pinchWorldY=0,drag=false,lastX=0,lastY=0;
  box.addEventListener('wheel',e=>{e.preventDefault();const r=box.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;setTreeZoom(treeZoom+(e.deltaY<0?.08:-.08),x,y)},{passive:false});
- box.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button!==0)return; if(e.target.closest && e.target.closest('button,a,input,textarea,select')) return; drag=true;lastX=e.clientX;lastY=e.clientY;box.classList.add('dragging');box.setPointerCapture?.(e.pointerId)});box.addEventListener('pointermove',e=>{if(!drag)return;box.scrollLeft-=e.clientX-lastX;box.scrollTop-=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY});['pointerup','pointercancel'].forEach(t=>box.addEventListener(t,()=>{drag=false;box.classList.remove('dragging')}));
+ box.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button!==0)return;drag=true;lastX=e.clientX;lastY=e.clientY;box.classList.add('dragging');box.setPointerCapture?.(e.pointerId)});box.addEventListener('pointermove',e=>{if(!drag)return;box.scrollLeft-=e.clientX-lastX;box.scrollTop-=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY});['pointerup','pointercancel'].forEach(t=>box.addEventListener(t,()=>{drag=false;box.classList.remove('dragging')}));
  box.addEventListener('touchstart',e=>{if(e.touches.length===2){e.preventDefault();const c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();pinchStartDistance=treeZoomDistance(e.touches[0],e.touches[1]);pinchStartZoom=treeZoom;pinchWorldX=(box.scrollLeft+c.x-r.left)/treeZoom;pinchWorldY=(box.scrollTop+c.y-r.top)/treeZoom}},{passive:false});box.addEventListener('touchmove',e=>{if(e.touches.length!==2||!pinchStartDistance)return;e.preventDefault();const d=treeZoomDistance(e.touches[0],e.touches[1]),c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();treeZoom=Math.max(.35,Math.min(2.5,pinchStartZoom*(d/pinchStartDistance)));applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,pinchWorldX*treeZoom-(c.x-r.left));box.scrollTop=Math.max(0,pinchWorldY*treeZoom-(c.y-r.top))})},{passive:false});box.addEventListener('touchend',e=>{if(e.touches.length<2)pinchStartDistance=0},{passive:false})}
 
         function focusTreeRoot(){
@@ -470,16 +479,11 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             const localized={}; people.forEach(p=>{localized[String(p._id)]=p.name});
             people.forEach(p=>{
                 const link=addLink(p.addToken), item=document.createElement('div'); item.className='member-item';
-                item.innerHTML=`<div class="name">${esc(localized[String(p._id)]||p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="openMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
+                item.innerHTML=`<div class="name">${esc(localized[String(p._id)]||p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
                 box.appendChild(item);
             });
         }
         function addLink(token){return location.origin+'/add/'+token;}
-        function openMemberLink(token){
-            const link=addLink(token);
-            const w=window.open(link,'_blank');
-            if(!w){ alert('Browser એ નવી tab block કરી છે. આ link copy કરીને ખોલો: '+link); }
-        }
         async function copyLink(link){try{await navigator.clipboard.writeText(link);alert('Link copy થઈ ગઈ.');}catch(e){prompt('Link copy કરો:',link);}}
 
         async function adminAddChild(parentId,parentName,btn){
