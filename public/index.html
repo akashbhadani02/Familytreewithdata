@@ -164,7 +164,7 @@ function renderChildStatus(){
   box.innerHTML=kids.map(k=>{
     const link=memberAddLink(k);
     const safeJson=JSON.stringify(k).replace(/</g,'\u003c');
-    return '<div class="child-row"><div class="child-name">'+safe(k.name)+'</div><div class="child-link-box"><a class="child-add-link" href="'+safe(link)+'" target="_blank" rel="noopener">'+safe(link)+'</a><button type="button" class="btn mini-copy" onclick="copyMemberLink('+safeJson+',this)">📋 Copy</button></div></div>'
+    return '<div class="child-row"><div class="child-name">'+safe(k.name)+'</div><div class="child-link-box"><a class="child-add-link" href="'+safe(link)+'" target="_blank" rel="noopener">'+safe(link)+'</a></div></div>'
   }).join('');
 }
 function prepareLineageFields(){
