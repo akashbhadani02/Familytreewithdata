@@ -4,272 +4,13 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>અમારું પરિવાર વૃક્ષ</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#203047}header{background:#fff;border-bottom:1px solid #dce4ec;padding:16px;text-align:center}header h1{margin:0;font-size:24px}.wrap{max-width:1100px;margin:18px auto;padding:0 14px}.panel{background:#fff;border:1px solid #dce4ec;border-radius:16px;padding:20px;box-shadow:0 8px 28px #20304712}.center{text-align:center}.title{font-size:20px;font-weight:800;margin-bottom:8px}.sub{font-size:13px;color:#68778a;line-height:1.6}.form{max-width:520px;margin:18px auto}.label{font-weight:800;font-size:13px;margin:14px 0 6px;display:block}input[type=text]{width:100%;padding:14px;border:1px solid #cbd6e2;border-radius:10px;font-size:16px}input[type=file]{width:100%;padding:12px;border:1px dashed #cbd6e2;border-radius:10px}.btn{width:100%;padding:14px;border:0;border-radius:10px;background:#315f91;color:white;font-size:16px;font-weight:800;cursor:pointer;margin-top:15px}.btn.secondary{background:#e9eef4;color:#30445b}.preview{width:100px;height:100px;border-radius:50%;object-fit:cover;display:none;margin:10px auto}.success{background:#edf8f1;border:1px solid #b9e2c8;padding:15px;border-radius:10px;margin-top:16px;text-align:center;display:none}.linkbox{word-break:break-all;background:#f3f6fa;padding:10px;border-radius:8px;margin-top:8px;font-size:12px}.treebox{margin-top:18px;background:#fff;border:1px solid #dce4ec;border-radius:16px;overflow:auto;height:650px;position:relative;touch-action:none;cursor:grab;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.treebox.dragging{cursor:grabbing}.treeZoomControls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.treeZoomControls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.treeZoomControls button:hover{background:#f1f5f9}.treeZoomLabel{min-width:58px;text-align:center;font-weight:800;color:#315f91}.treeSearch{display:flex;gap:8px;max-width:620px;margin:0 auto 12px}.treeSearch input{flex:1;padding:12px 14px;border:1px solid #cbd6e2;border-radius:10px;font-size:15px;outline:none}.treeSearch input:focus{border-color:#315f91;box-shadow:0 0 0 3px #315f9118}.treeSearch button{border:0;border-radius:10px;padding:12px 16px;background:#315f91;color:#fff;font-weight:800;cursor:pointer}.card.selfFound{background:#dff7e5!important;border-color:#69b77b!important;box-shadow:0 0 0 3px #9ad7a7,0 8px 24px #2e7d3230!important}.searchHint{text-align:center;font-size:12px;color:#718096;margin:-4px 0 10px}.treeLayer{position:relative;transform-origin:0 0;will-change:transform}.canvas{position:relative;width:10000px;height:5200px;background:#fbfcfe}.card{position:absolute;width:190px;height:145px;background:#fff;border:1px solid #cbd7e4;border-radius:14px;padding:10px;text-align:center;box-shadow:0 5px 18px #24384e18;z-index:2}.card img{width:62px;height:62px;border-radius:50%;object-fit:cover;border:2px solid #e0e7ef}.card b{display:block;font-size:14px;margin-top:6px;white-space:normal;overflow-wrap:anywhere}.card small{display:block;color:#718096;font-size:10px;margin-top:3px}.card .relation{color:#718096}.card .personLink{display:block;margin-top:8px;font-size:11px;color:#315f91;cursor:pointer;text-decoration:underline}.line{position:absolute;background:#71849a;height:3px;transform-origin:0 0;z-index:1}.hidden{display:none}.copy{font-size:12px;color:#315f91;cursor:pointer;text-decoration:underline;margin-top:7px}.topActions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.topActions button{width:auto;padding:10px 14px;font-size:13px}.note{font-size:12px;background:#fff7df;border:1px solid #ead89c;border-radius:10px;padding:10px;margin-top:12px}.nextBox{margin-top:12px;background:#eef5ff;border:1px solid #c8ddf5;padding:12px;border-radius:10px}.nextBox b{display:block;margin-bottom:5px}.treeViewBtn{display:block;width:min(520px,100%);margin:18px auto 0;padding:14px 18px;border:0;border-radius:12px;background:#2e7d32;color:#fff;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 5px 14px #2e7d3230}.treeViewBtn:hover{filter:brightness(.96)}.readonly-view .siteNav{display:none}.readonly-view .viewControls,.readonly-view #currentLink,.readonly-view .personLink{display:none}.readonly-view .viewSubtitle{display:none}.readonly-view .treebox{margin-top:18px}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#203047}header{background:#fff;border-bottom:1px solid #dce4ec;padding:16px;text-align:center}header h1{margin:0;font-size:24px}.wrap{max-width:1100px;margin:18px auto;padding:0 14px}.panel{background:#fff;border:1px solid #dce4ec;border-radius:16px;padding:20px;box-shadow:0 8px 28px #20304712}.center{text-align:center}.title{font-size:20px;font-weight:800;margin-bottom:8px}.sub{font-size:13px;color:#68778a;line-height:1.6}.form{max-width:520px;margin:18px auto}.label{font-weight:800;font-size:13px;margin:14px 0 6px;display:block}input[type=text]{width:100%;padding:14px;border:1px solid #cbd6e2;border-radius:10px;font-size:16px}input[type=file]{width:100%;padding:12px;border:1px dashed #cbd6e2;border-radius:10px}.btn{width:100%;padding:14px;border:0;border-radius:10px;background:#315f91;color:white;font-size:16px;font-weight:800;cursor:pointer;margin-top:15px}.btn.secondary{background:#e9eef4;color:#30445b}.preview{width:100px;height:100px;border-radius:50%;object-fit:cover;display:none;margin:10px auto}.success{background:#edf8f1;border:1px solid #b9e2c8;padding:15px;border-radius:10px;margin-top:16px;text-align:center;display:none}.linkbox{word-break:break-all;background:#f3f6fa;padding:10px;border-radius:8px;margin-top:8px;font-size:12px}.treebox{margin-top:18px;background:#fff;border:1px solid #dce4ec;border-radius:16px;overflow:auto;height:650px;position:relative;touch-action:none;cursor:grab;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.treebox.dragging{cursor:grabbing}.treebox.dragging{cursor:grabbing}.treeZoomControls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.treeZoomControls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.treeZoomControls button:hover{background:#f1f5f9}.treeZoomLabel{min-width:58px;text-align:center;font-weight:800;color:#315f91}.treeSearch{display:flex;gap:8px;max-width:620px;margin:0 auto 12px}.treeSearch input{flex:1;padding:12px 14px;border:1px solid #cbd6e2;border-radius:10px;font-size:15px;outline:none}.treeSearch input:focus{border-color:#315f91;box-shadow:0 0 0 3px #315f9118}.treeSearch button{border:0;border-radius:10px;padding:12px 16px;background:#315f91;color:#fff;font-weight:800;cursor:pointer}.card.selfFound{background:#dff7e5!important;border-color:#69b77b!important;box-shadow:0 0 0 3px #9ad7a7,0 8px 24px #2e7d3230!important}.searchHint{text-align:center;font-size:12px;color:#718096;margin:-4px 0 10px}.treeLayer{position:relative;transform-origin:0 0;will-change:transform}.canvas{position:relative;width:10000px;height:5200px;background:#fbfcfe}.card{position:absolute;width:190px;height:145px;background:#fff;border:1px solid #cbd7e4;border-radius:14px;padding:10px;text-align:center;box-shadow:0 5px 18px #24384e18;z-index:2}.card img{width:62px;height:62px;border-radius:50%;object-fit:cover;border:2px solid #e0e7ef}.card b{display:block;font-size:14px;margin-top:6px;white-space:normal;overflow-wrap:anywhere}.card small{display:block;color:#718096;font-size:10px;margin-top:3px}.card .relation{color:#718096}.card .personLink{display:block;margin-top:8px;font-size:11px;color:#315f91;cursor:pointer;text-decoration:underline}.line{position:absolute;background:#71849a;height:3px;transform-origin:0 0;z-index:1}.hidden{display:none}.copy{font-size:12px;color:#315f91;cursor:pointer;text-decoration:underline;margin-top:7px}.topActions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.topActions button{width:auto;padding:10px 14px;font-size:13px}.note{font-size:12px;background:#fff7df;border:1px solid #ead89c;border-radius:10px;padding:10px;margin-top:12px}.nextBox{margin-top:12px;background:#eef5ff;border:1px solid #c8ddf5;padding:12px;border-radius:10px}.nextBox b{display:block;margin-bottom:5px}.treeViewBtn{display:block;width:min(520px,100%);margin:18px auto 0;padding:14px 18px;border:0;border-radius:12px;background:#2e7d32;color:#fff;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 5px 14px #2e7d3230}.treeViewBtn:hover{filter:brightness(.96)}.readonly-view .siteNav{display:none}.readonly-view .viewControls,.readonly-view #currentLink,.readonly-view .personLink{display:none}.readonly-view .viewSubtitle{display:none}.readonly-view .treebox{margin-top:18px}
 
 <style id="photoChoiceCss">.photoActions{display:flex;gap:10px;margin-top:8px}.photoActions .btn{margin-top:0;flex:1}.photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center;padding:18px}.photo-choice-overlay.show{display:flex}.photo-choice-box{width:min(360px,100%);background:#fff;border-radius:18px;padding:20px;text-align:center}.photo-choice-box h3{margin:0 0 8px}.photo-choice-box p{color:#667085;margin:0 0 16px}.photo-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.photo-choice-btn{border:0;border-radius:12px;padding:14px;font-weight:800;font-size:15px}.camera-btn{background:#eaf2ff;color:#155dcc}.gallery-btn{background:#edf9f0;color:#16823b}.cancel-btn{margin-top:10px;width:100%;background:#f1f1f1;color:#555}.photo-hidden{display:none!important} 
 /* ===== USER REAL TREE VIEW (same as Admin) ===== */
 .real-tree-tools{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}.real-tree-tools .btn{width:auto;margin:0}.real-tree-open .treebox{height:650px;overflow:auto!important;position:relative;touch-action:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.real-tree-open #realTreeCanvas{display:block!important;position:absolute!important;left:0!important;top:0!important;z-index:20!important;pointer-events:none!important}.real-tree-open #cards{display:none!important}.real-tree-bottom-close{display:none;text-align:center;padding:18px 10px 6px}.real-tree-open .real-tree-bottom-close{display:block}.real-tree-open #userRealTreeBtn{display:none}.real-tree-open .treeSearch,.real-tree-open .treeZoomControls{display:none}.real-tree-open #currentLink{display:none}.real-tree-open .viewSubtitle{display:none}.real-tree-open .viewControls{display:none}
 @media(max-width:600px){.real-tree-open .treebox{height:72vh;min-height:420px}.real-tree-bottom-close .btn{width:min(92vw,320px)!important}}
-
-/* FINAL FULL TREE FIT FIX */
-.real-tree-open #treebox{
-  position:relative!important;
-  width:100%!important;
-  height:calc(100vh - 150px)!important;
-  min-height:320px!important;
-  max-height:none!important;
-  overflow:hidden!important;
-  background:#eaf4e4!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  padding:0!important;
-}
-.real-tree-open #treebox > #canvas{
-  position:absolute!important;
-  left:0!important;top:0!important;
-  margin:0!important;padding:0!important;
-  background:transparent!important;
-  overflow:visible!important;
-}
-.real-tree-open #treebox #treeLayer.real-natural-tree{
-  position:absolute!important;
-  left:0!important;top:0!important;
-  margin:0!important;padding:0!important;
-  transform-origin:0 0!important;
-  overflow:visible!important;
-  background:transparent!important;
-}
-.real-tree-open #treebox #realTreeCanvas{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  position:absolute!important;
-  left:0!important;top:0!important;
-  margin:0!important;padding:0!important;
-  max-width:none!important;max-height:none!important;
-  background:transparent!important;
-  z-index:100!important;
-}
-@media(max-width:700px){
- .real-tree-open #treebox{height:calc(100vh - 105px)!important;min-height:280px!important}
-}
-
-</style><style>
-/* ===== REAL TREE PAN + ZOOM + SCROLL FIX ===== */
-.real-tree-open #treebox{
-  overflow:auto !important;
-  overflow-x:auto !important;
-  overflow-y:auto !important;
-  touch-action:none !important;
-  -webkit-overflow-scrolling:touch !important;
-  overscroll-behavior:contain !important;
-  cursor:grab !important;
-}
-.real-tree-open #treebox.dragging{cursor:grabbing !important;}
-.real-tree-open #treebox > #canvas{
-  overflow:visible !important;
-}
-.real-tree-open .tree-zoom-controls,
-.real-tree-open .treeZoomControls{
-  display:flex !important;
-  position:sticky !important;
-  top:0 !important;
-  z-index:100000 !important;
-  justify-content:center !important;
-  align-items:center !important;
-  gap:8px !important;
-  padding:8px !important;
-  margin:0 0 8px 0 !important;
-  background:rgba(255,255,255,.96) !important;
-  border-radius:12px !important;
-  box-shadow:0 3px 14px rgba(0,0,0,.12) !important;
-}
-.real-tree-open .tree-zoom-controls button,
-.real-tree-open .treeZoomControls button{
-  min-width:42px !important;
-  min-height:40px !important;
-  cursor:pointer !important;
-  touch-action:manipulation !important;
-}
-</style><style>
-/* ===== MANUAL TREE ZOOM / PAN ===== */
-.tree-zoom-viewport, .real-tree-viewport, #realTreeViewport, #treeViewport {
-  position:relative !important;
-  overflow:auto !important;
-  touch-action:none !important;
-  -webkit-overflow-scrolling:touch;
-}
-.tree-zoom-content, #realTreeCanvas, canvas.real-tree-canvas {
-  transform-origin: 0 0 !important;
-  will-change: transform;
-}
-.tree-zoom-controls {
-  position:sticky; top:8px; z-index:9999;
-  display:flex; gap:6px; justify-content:center;
-  padding:6px; pointer-events:none;
-}
-.tree-zoom-controls button { pointer-events:auto; min-width:42px; min-height:38px; }
-</style><style>
-.mobile-zoom-buttons{
- display:flex!important;justify-content:center;align-items:center;gap:8px;
- position:relative;z-index:10000;margin:6px auto;padding:4px;
-}
-.mobile-zoom-buttons button{
- width:46px;height:40px;border:1px solid #ccc;border-radius:9px;
- background:#fff;font-size:22px;font-weight:700;cursor:pointer;
-}
-@media(max-width:768px){
- .mobile-zoom-buttons{display:flex!important;position:sticky;top:0}
-}
-</style><style>
-/* ===== TREE-ONLY VIEWPORT: PAGE MUST NOT ZOOM/SCROLL ===== */
-html,body{overflow-x:hidden;}
-.tree-only-viewport,.real-tree-viewport,#realTreeViewport,#treeViewport{
-  position:relative!important;
-  width:100%!important;
-  height:min(72vh,760px)!important;
-  min-height:420px!important;
-  max-height:calc(100dvh - 210px)!important;
-  overflow:auto!important;
-  overscroll-behavior:contain!important;
-  touch-action:none!important;
-  -webkit-overflow-scrolling:touch!important;
-  border-radius:12px;
-}
-.tree-only-viewport::-webkit-scrollbar,.real-tree-viewport::-webkit-scrollbar,
-#realTreeViewport::-webkit-scrollbar,#treeViewport::-webkit-scrollbar{width:10px;height:10px;}
-.tree-only-zoom-controls{
-  display:flex!important;gap:8px;justify-content:center;align-items:center;
-  margin:8px auto;position:relative;z-index:99999;
-}
-.tree-only-zoom-controls button{
-  min-width:46px;height:40px;border:1px solid #bbb;border-radius:9px;
-  background:#fff;font-size:20px;font-weight:700;cursor:pointer;
-}
-@media(max-width:768px){
- .tree-only-viewport,.real-tree-viewport,#realTreeViewport,#treeViewport{
-   height:calc(100dvh - 250px)!important;
-   min-height:320px!important;
- }
-}
-</style><style>
-/* ===== ACTUAL REAL TREE FULLSCREEN POPUP ===== */
-body.real-tree-popup-active{overflow:hidden!important;}
-
-#viewer.real-tree-open,
-#viewBox.real-tree-open{
-  position:fixed!important;
-  inset:0!important;
-  z-index:2147483000!important;
-  display:flex!important;
-  flex-direction:column!important;
-  width:100vw!important;
-  height:100dvh!important;
-  max-width:none!important;
-  max-height:none!important;
-  margin:0!important;
-  padding:0!important;
-  border-radius:0!important;
-  overflow:hidden!important;
-  background:#fff!important;
-}
-
-/* Hide the normal page UI while Real Tree is open. */
-#viewer.real-tree-open > .row,
-#viewer.real-tree-open > .tree-search,
-#viewer.real-tree-open > .search-hint,
-#viewer.real-tree-open > .tree-search-hint,
-#viewer.real-tree-open > .links-panel,
-#viewer.real-tree-open > .tree-actions,
-#viewer.real-tree-open > .real-tree-tools,
-#viewBox.real-tree-open > .center.title,
-#viewBox.real-tree-open > .center.sub,
-#viewBox.real-tree-open > .viewControls,
-#viewBox.real-tree-open > #currentLink,
-#viewBox.real-tree-open > .treeSearch,
-#viewBox.real-tree-open > .searchHint,
-#viewBox.real-tree-open > .real-tree-tools{
-  display:none!important;
-}
-
-/* Tree controls stay inside the popup. */
-#viewer.real-tree-open > .tree-zoom-controls,
-#viewer.real-tree-open > .treeZoomControls,
-#viewBox.real-tree-open > .treeZoomControls,
-#viewBox.real-tree-open > .tree-zoom-controls{
-  flex:0 0 auto!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:7px!important;
-  padding:7px!important;
-  margin:0!important;
-  z-index:20!important;
-  background:#fff!important;
-  border-bottom:1px solid #ddd!important;
-}
-
-/* Actual tree surface fills the rest of the popup. */
-#viewer.real-tree-open > #treebox,
-#viewBox.real-tree-open > #treebox{
-  position:relative!important;
-  display:block!important;
-  flex:1 1 auto!important;
-  width:100%!important;
-  height:auto!important;
-  min-height:0!important;
-  max-height:none!important;
-  overflow:auto!important;
-  overscroll-behavior:contain!important;
-  touch-action:none!important;
-  border-radius:0!important;
-  background:#f8fafc!important;
-}
-
-/* X button is always top-right. */
-#viewer.real-tree-open > #realTreeBottomClose,
-#viewBox.real-tree-open > #userRealTreeClose{
-  display:block!important;
-  position:fixed!important;
-  top:9px!important;
-  right:10px!important;
-  z-index:2147483647!important;
-  margin:0!important;
-}
-#viewer.real-tree-open > #realTreeBottomClose button,
-#viewBox.real-tree-open > #userRealTreeClose button{
-  width:42px!important;
-  height:42px!important;
-  padding:0!important;
-  border-radius:50%!important;
-  font-size:0!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  box-shadow:0 3px 14px rgba(0,0,0,.25)!important;
-}
-#viewer.real-tree-open > #realTreeBottomClose button::after,
-#viewBox.real-tree-open > #userRealTreeClose button::after{
-  content:"×"!important;
-  font-size:30px!important;
-  line-height:1!important;
-  font-weight:700!important;
-}
-
-/* Tree itself must remain independently scrollable. */
-#viewer.real-tree-open #treebox,
-#viewBox.real-tree-open #treebox{
-  -webkit-overflow-scrolling:touch!important;
-}
-@media(max-width:768px){
-  #viewer.real-tree-open > #treebox,
-  #viewBox.real-tree-open > #treebox{
-    height:calc(100dvh - 58px)!important;
-  }
-}
-</style>
-</head>
+</style></head>
 <body>
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
@@ -281,7 +22,7 @@ body.real-tree-popup-active{overflow:hidden!important;}
 const $=id=>document.getElementById(id);let token=null,familyId=null,people=[],focusPersonId=null;let treeZoom=1;let pinchStartDistance=0,pinchStartZoom=1;const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
 function showPreview(input,id){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{$(id).src=e.target.result;$(id).style.display='block'};r.readAsDataURL(f)}
 function absoluteLink(path){return location.origin+path}
-async function copyText(text){try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(String(text));alert('Link copy થઈ ગઈ');return}}catch(e){};try{const ta=document.createElement('textarea');ta.value=String(text);ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();alert('Link copy થઈ ગઈ')}catch(e){prompt('આ link copy કરો:',String(text))}}
+function copyText(text){navigator.clipboard.writeText(text).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',text))}
 function safe(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 async function init(){
  const m=location.pathname.match(/^\/add\/([^/]+)$/);
@@ -466,7 +207,7 @@ function searchTreePerson(value,focus=false){
 function clearTreeSearch(){const i=$('treeSearchInput');if(i)i.value='';document.querySelectorAll('#cards .card.selfFound').forEach(c=>c.classList.remove('selfFound'));const h=$('treeSearchHint');if(h)h.textContent='તમારું નામ લખો — તમારું card light green થશે.'}
 function updateTreeZoomLabel(){const el=$('treeZoomLabel');if(el)el.textContent=Math.round(treeZoom*100)+'%'}
 function applyTreeZoom(baseW,baseH){const canvas=$('canvas'),layer=$('treeLayer');if(!canvas||!layer)return;const w=Number(baseW||canvas.dataset.baseWidth||canvas.offsetWidth||1000),h=Number(baseH||canvas.dataset.baseHeight||canvas.offsetHeight||900);canvas.dataset.baseWidth=w;canvas.dataset.baseHeight=h;canvas.style.width=(w*treeZoom)+'px';canvas.style.height=(h*treeZoom)+'px';layer.style.width=w+'px';layer.style.height=h+'px';layer.style.transform='scale('+treeZoom+')';updateTreeZoomLabel()}
-function setTreeZoom(z, anchorX=null, anchorY=null){const box=document.querySelector('.treebox');if(!box)return;const old=treeZoom;treeZoom=Math.max(.05,Math.min(2.5,z));if(anchorX==null)anchorX=box.clientWidth/2;if(anchorY==null)anchorY=box.clientHeight/2;const worldX=(box.scrollLeft+anchorX)/old,worldY=(box.scrollTop+anchorY)/old;applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,worldX*treeZoom-anchorX);box.scrollTop=Math.max(0,worldY*treeZoom-anchorY);})}
+function setTreeZoom(z, anchorX=null, anchorY=null){const box=document.querySelector('.treebox');if(!box)return;const old=treeZoom;treeZoom=Math.max(.35,Math.min(2.5,z));if(anchorX==null)anchorX=box.clientWidth/2;if(anchorY==null)anchorY=box.clientHeight/2;const worldX=(box.scrollLeft+anchorX)/old,worldY=(box.scrollTop+anchorY)/old;applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,worldX*treeZoom-anchorX);box.scrollTop=Math.max(0,worldY*treeZoom-anchorY);})}
 function treeZoomIn(){setTreeZoom(treeZoom+0.1)}
 function treeZoomOut(){setTreeZoom(treeZoom-0.1)}
 function treeZoomReset(){setTreeZoom(1)}
@@ -517,7 +258,7 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     const plaqueH = 158;
     const gen1Gap = 190;
     const levelGap = 245;
-    const sideGap = 190;
+    const sideGap = 300;
     const topPad = 150;
     const bottomPad = 120;
 
@@ -537,9 +278,7 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     gen1.forEach(measureBranch);
 
     const maxBranchWidth=Math.max(...gen1.map(p=>branchWidth.get(String(p._id))||plaqueW+80), plaqueW+80);
-    const treeWidth=Math.max(2200, Math.min(9000, Math.max(maxBranchWidth+600, 2200)));
-    // Gen-1 members are vertically stacked, so their count does not widen the tree.
-    // Curved descendant branches handle horizontal spread more naturally.
+    const treeWidth=Math.max(2200, Math.min(14000, Math.max(maxBranchWidth+800, gen1.length*260+1200)));
     const trunkTopY=topPad;
     const trunkBottomY=topPad + (gen1.length-1)*gen1Gap;
     const trunkX=treeWidth/2;
@@ -589,7 +328,7 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     tc.style.position='absolute'; tc.style.left='0'; tc.style.top='0';
     tc.style.zIndex='2'; tc.style.display='block'; tc.style.visibility='visible';
     tc.style.opacity='1'; tc.style.pointerEvents='none'; tc.style.maxWidth='none'; tc.style.maxHeight='none';
-    layer.style.width=treeWidth+'px'; layer.style.minWidth=treeWidth+'px'; layer.dataset.realWidth=String(treeWidth); layer.dataset.realHeight=String(treeHeight);
+    layer.style.width=treeWidth+'px'; layer.style.minWidth=treeWidth+'px';
     layer.style.minHeight=treeHeight+'px'; layer.style.height=treeHeight+'px';
     baseCanvas.style.width=treeWidth+'px'; baseCanvas.style.height=treeHeight+'px';
     baseCanvas.dataset.baseWidth=treeWidth; baseCanvas.dataset.baseHeight=treeHeight;
@@ -694,98 +433,31 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     // Leaves are shown ONLY on the final (last) generation. No leaves on the trunk/top.
 }
 
-function fitRealTreeToViewport(){
- const box=document.querySelector('#treebox');
- const layer=document.querySelector('#treeLayer.real-natural-tree');
- const canvas=document.querySelector('#realTreeCanvas');
- if(!box||!layer||!canvas)return;
- const w=parseFloat(layer.dataset.realWidth||canvas.style.width||canvas.width||0);
- const h=parseFloat(layer.dataset.realHeight||canvas.style.height||canvas.height||0);
- if(!(w>0&&h>0))return;
- const availW=Math.max(1,box.clientWidth-8);
- const availH=Math.max(1,box.clientHeight-8);
- const fit=Math.max(.02,Math.min(1,availW/w,availH/h));
- treeZoom=fit;
- layer.style.transformOrigin='0 0';
- layer.style.transform='scale('+fit+')';
- layer.style.width=w+'px';
- layer.style.height=h+'px';
- canvas.style.width=w+'px';
- canvas.style.height=h+'px';
- canvas.dataset.baseWidth=String(w);
- canvas.dataset.baseHeight=String(h);
- const base=box.querySelector('#canvas');
- if(base){
-   base.style.width=Math.max(box.clientWidth,w*fit)+'px';
-   base.style.height=Math.max(box.clientHeight,h*fit)+'px';
-   base.dataset.baseWidth=String(w);
-   base.dataset.baseHeight=String(h);
- }
- const sw=w*fit, sh=h*fit;
- layer.style.left=Math.max(0,(box.clientWidth-sw)/2)+'px';
- layer.style.top=Math.max(0,(box.clientHeight-sh)/2)+'px';
- updateTreeZoomLabel();
- box.scrollLeft=0;
- box.scrollTop=0;
-}
-
-function __rerenderFullRealTree(){
- if(!document.body.classList.contains('real-tree-open'))return;
- try{
-   if(typeof drawRealTreeStructure==='function')drawRealTreeStructure();
-   else if(typeof drawUserRealTreeStructure==='function')drawUserRealTreeStructure();
-   requestAnimationFrame(fitRealTreeToViewport);
- }catch(e){console.error('Full Real Tree render error:',e);}
-}
-
-window.addEventListener('resize',()=>{
- clearTimeout(window.__realTreeResizeTimer);
- window.__realTreeResizeTimer=setTimeout(()=>{try{__rerenderFullRealTree()}catch(e){console.error('Tree resize error:',e)}},120);
-});
-
-
 function toggleUserRealTree(){
  const view=$('viewBox'), btn=$('userRealTreeBtn');
  if(!view)return;
- const opening=!view.classList.contains('real-tree-open');
-
+ const opening=!document.body.classList.contains('real-tree-open');
  if(opening){
+   document.body.classList.add('real-tree-open');
    view.classList.add('real-tree-open');
-   document.body.classList.add('real-tree-popup-active');
-   document.body.style.overflow='hidden';
+   if(btn) btn.textContent='✕ Close Real Tree';
    treeZoom=1;
-   if(btn) btn.textContent='🌳 Real Tree View';
-
    requestAnimationFrame(()=>{
-     try{
-       drawUserRealTreeStructure();
-       fitRealTreeToViewport();
-     }catch(e){ console.error('Real Tree render error:',e); }
+     try{ drawUserRealTreeStructure(); }
+     catch(e){ console.error('Real Tree render error:',e); }
    });
  }else{
+   document.body.classList.remove('real-tree-open');
    view.classList.remove('real-tree-open');
-   document.body.classList.remove('real-tree-popup-active');
-
    if(btn) btn.textContent='🌳 Real Tree View';
    const rc=$('realTreeCanvas'); if(rc)rc.remove();
    const svg=$('svg'); if(svg)svg.style.display='';
    const cards=$('cards'); if(cards)cards.style.display='';
-   const layer=$('treeLayer');
-   if(layer){
-     layer.classList.remove('real-natural-tree');
-     layer.style.width='';
-     layer.style.height='';
-     layer.style.minWidth='';
-     layer.style.minHeight='';
-     layer.style.transform='scale('+treeZoom+')';
-   }
-   const canvas=$('canvas');
-   if(canvas){canvas.style.width='';canvas.style.height='';}
-   document.body.style.overflow='';
+   const layer=$('treeLayer'); if(layer){layer.classList.remove('real-natural-tree');layer.style.width='';layer.style.height='';layer.style.minWidth='';layer.style.minHeight='';layer.style.transform='scale('+treeZoom+')';}
+   const canvas=$('canvas'); if(canvas){canvas.style.width='';canvas.style.height='';}
    renderTree();
  }
 }
-
 
 function initTreeZoomTouch(){
  const box=document.querySelector('.treebox');if(!box||box.dataset.zoomReady)return;box.dataset.zoomReady='1';
@@ -806,7 +478,7 @@ function initTreeZoomTouch(){
    if(e.touches.length===2&&pinchStartDistance){
      e.preventDefault();
      const d=treeZoomDistance(e.touches[0],e.touches[1]),c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();
-     treeZoom=Math.max(.05,Math.min(2.5,pinchStartZoom*(d/pinchStartDistance)));applyTreeZoom();
+     treeZoom=Math.max(.35,Math.min(2.5,pinchStartZoom*(d/pinchStartDistance)));applyTreeZoom();
      requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,pinchWorldX*treeZoom-(c.x-r.left));box.scrollTop=Math.max(0,pinchWorldY*treeZoom-(c.y-r.top))});
    }else if(e.touches.length===1&&touchMode==='pan'){
      e.preventDefault();const x=e.touches[0].clientX,y=e.touches[0].clientY;box.scrollLeft-=x-lastX;box.scrollTop-=y-lastY;lastX=x;lastY=y;
@@ -836,251 +508,6 @@ function draw(svg,x1,y1,x2,y2){const ns='http://www.w3.org/2000/svg',p=document.
 function avatar(n){return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n||'?')[0].toUpperCase()}</text></svg>`)}
 function copyCurrentLink(){copyText(location.href)}
 async function downloadPNG(){if(!people.length)return alert('Tree ખાલી છે');if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r)}const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe'}),a=document.createElement('a');a.download='family-tree.png';a.href=c.toDataURL('image/png');a.click()}
-init().catch(e=>{console.error('Family Tree initialization error:',e);const box=document.getElementById('rootSuccess');if(box){box.style.display='block';box.textContent='Family Tree load કરવામાં સમસ્યા આવી. Page refresh કરીને ફરી પ્રયાસ કરો.'}});
+init();
 initTreeZoomTouch();
-</script><div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()"><div class="photo-choice-box"><h3>📷 Photo પસંદ કરો</h3><p>Photo ક્યાંથી લેવી છે?</p><div class="photo-choice-actions"><button type="button" class="photo-choice-btn camera-btn" onclick="chooseCamera()">📷 Camera</button><button type="button" class="photo-choice-btn gallery-btn" onclick="chooseGallery()">🖼️ Gallery</button></div><button type="button" class="photo-choice-btn cancel-btn" onclick="closePhotoChoice()">Cancel</button><input id="cameraPicker" class="photo-hidden" type="file" accept="image/*" capture="environment"><input id="galleryPicker" class="photo-hidden" type="file" accept="image/*"></div></div><script>let photoTargetId=null;function openPhotoChoice(id){photoTargetId=id;document.getElementById('photoChoiceOverlay').classList.add('show')}function closePhotoChoice(){document.getElementById('photoChoiceOverlay').classList.remove('show');photoTargetId=null}function setPhoto(file){if(!file||!photoTargetId){closePhotoChoice();return}const target=document.getElementById(photoTargetId);const dt=new DataTransfer();dt.items.add(file);target.files=dt.files;target.dispatchEvent(new Event('change',{bubbles:true}));closePhotoChoice()}function chooseCamera(){const i=document.getElementById('cameraPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}function chooseGallery(){const i=document.getElementById('galleryPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}</script><script>
-/* ===== MANUAL TREE ZOOM / PAN (wheel + pinch + buttons + drag) ===== */
-(function(){
-  function setupTreeZoom(){
-    const vp = document.querySelector('.tree-zoom-viewport,#realTreeViewport,#treeViewport,.real-tree-viewport,.tree-scroll,.tree-viewport');
-    const content = document.querySelector('#realTreeCanvas,.tree-zoom-content,canvas.real-tree-canvas,.tree-canvas,#treeCanvas');
-    if(!vp || !content || content.__manualZoomReady) return;
-    content.__manualZoomReady = true;
-
-    let scale = 1, minScale = .15, maxScale = 4;
-    let dragging = false, startX=0, startY=0, startL=0, startT=0;
-    let pinchStart = 0, pinchScale = 1;
-
-    function apply(){
-      content.style.transformOrigin='0 0';
-      content.style.transform='scale('+scale+')';
-      // Make scrolling area match the transformed content.
-      const w = Math.max(content.scrollWidth || content.width || 1, 1);
-      const h = Math.max(content.scrollHeight || content.height || 1, 1);
-      content.style.width = (w * scale) + 'px';
-      content.style.height = (h * scale) + 'px';
-    }
-    function zoomAt(factor, cx, cy){
-      const old=scale;
-      scale=Math.max(minScale,Math.min(maxScale,scale*factor));
-      if(scale===old) return;
-      apply();
-      if(cx!=null && cy!=null){
-        vp.scrollLeft = Math.max(0, (vp.scrollLeft+cx)*(scale/old)-cx);
-        vp.scrollTop  = Math.max(0, (vp.scrollTop+cy)*(scale/old)-cy);
-      }
-    }
-    function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
-    function addControls(){
-      if(vp.querySelector('.tree-zoom-controls')) return;
-      const bar=document.createElement('div');
-      bar.className='tree-zoom-controls';
-      bar.innerHTML='<button type="button" data-z="-">−</button><button type="button" data-z="r">100%</button><button type="button" data-z="+">+</button>';
-      vp.parentNode.insertBefore(bar,vp);
-      bar.querySelector('[data-z="-"]').onclick=()=>zoomAt(.8);
-      bar.querySelector('[data-z="+"]').onclick=()=>zoomAt(1.25);
-      bar.querySelector('[data-z="r"]').onclick=()=>{scale=1;apply();};
-    }
-    vp.addEventListener('wheel',e=>{
-      if(!e.ctrlKey && !e.metaKey) return;
-      e.preventDefault();
-      const r=vp.getBoundingClientRect();
-      zoomAt(e.deltaY<0?1.12:.89,e.clientX-r.left,e.clientY-r.top);
-    },{passive:false});
-
-    vp.addEventListener('pointerdown',e=>{
-      if(e.pointerType==='touch') return;
-      dragging=true; vp.setPointerCapture(e.pointerId);
-      startX=e.clientX; startY=e.clientY; startL=vp.scrollLeft; startT=vp.scrollTop;
-    });
-    vp.addEventListener('pointermove',e=>{
-      if(!dragging) return;
-      vp.scrollLeft=startL-(e.clientX-startX);
-      vp.scrollTop=startT-(e.clientY-startY);
-    });
-    vp.addEventListener('pointerup',()=>dragging=false);
-    vp.addEventListener('pointercancel',()=>dragging=false);
-
-    let touches=[];
-    vp.addEventListener('touchstart',e=>{
-      touches=[...e.touches];
-      if(touches.length===2) pinchStart=dist(touches[0],touches[1]),pinchScale=scale;
-    },{passive:false});
-    vp.addEventListener('touchmove',e=>{
-      if(e.touches.length!==2) return;
-      e.preventDefault();
-      const d=dist(e.touches[0],e.touches[1]);
-      if(pinchStart) {
-        scale=Math.max(minScale,Math.min(maxScale,pinchScale*(d/pinchStart)));
-        apply();
-      }
-    },{passive:false});
-    vp.addEventListener('touchend',()=>{touches=[];pinchStart=0;});
-    addControls(); apply();
-  }
-  window.setupTreeZoom=setupTreeZoom;
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(setupTreeZoom,300));
-  window.addEventListener('load',()=>setTimeout(setupTreeZoom,500));
-})();
-</script><script>
-/* ===== MOBILE PINCH ZOOM FINAL FIX ===== */
-(function(){
-  function initMobilePinch(){
-    const vp=document.querySelector('#realTreeViewport,#treeViewport,.real-tree-viewport,.tree-zoom-viewport,.tree-scroll,.tree-viewport');
-    const target=document.querySelector('#realTreeCanvas,#treeCanvas,.real-tree-canvas,.tree-canvas,.tree-zoom-content');
-    if(!vp || !target || vp.dataset.pinchReady) return;
-    vp.dataset.pinchReady='1';
-
-    let scale=1, startScale=1, startDist=0, lastX=0, lastY=0;
-    let panX=0, panY=0, dragging=false, twoFinger=false;
-
-    const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-    function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
-    function apply(){
-      target.style.transformOrigin='0 0';
-      target.style.transform=`translate(${panX}px,${panY}px) scale(${scale})`;
-    }
-    function setScale(v){
-      scale=clamp(v,.15,5);
-      apply();
-    }
-
-    vp.style.touchAction='none';
-    vp.style.overflow='auto';
-
-    vp.addEventListener('touchstart',e=>{
-      if(e.touches.length===2){
-        e.preventDefault();
-        twoFinger=true;
-        dragging=false;
-        startDist=dist(e.touches[0],e.touches[1]);
-        startScale=scale;
-      } else if(e.touches.length===1){
-        lastX=e.touches[0].clientX;
-        lastY=e.touches[0].clientY;
-        dragging=true;
-      }
-    },{passive:false});
-
-    vp.addEventListener('touchmove',e=>{
-      if(e.touches.length===2){
-        e.preventDefault();
-        const d=dist(e.touches[0],e.touches[1]);
-        if(startDist>0) setScale(startScale*(d/startDist));
-      } else if(e.touches.length===1 && dragging && !twoFinger){
-        e.preventDefault();
-        const t=e.touches[0];
-        const dx=t.clientX-lastX,dy=t.clientY-lastY;
-        vp.scrollLeft-=dx;
-        vp.scrollTop-=dy;
-        lastX=t.clientX; lastY=t.clientY;
-      }
-    },{passive:false});
-
-    vp.addEventListener('touchend',e=>{
-      if(e.touches.length<2) startDist=0;
-      if(e.touches.length===0){twoFinger=false;dragging=false;}
-    },{passive:false});
-
-    // Visible touch controls; guaranteed to work even if pinch is blocked by browser.
-    const box=document.createElement('div');
-    box.className='mobile-zoom-buttons';
-    box.innerHTML='<button type="button" aria-label="Zoom out">−</button><button type="button" aria-label="Reset zoom">100%</button><button type="button" aria-label="Zoom in">+</button>';
-    vp.parentElement.insertBefore(box,vp);
-    box.children[0].onclick=()=>setScale(scale*.8);
-    box.children[1].onclick=()=>{scale=1;panX=0;panY=0;apply();};
-    box.children[2].onclick=()=>setScale(scale*1.25);
-    apply();
-  }
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(initMobilePinch,400));
-  window.addEventListener('load',()=>setTimeout(initMobilePinch,700));
-  window.initMobilePinch=initMobilePinch;
-})();
-</script><script>
-/* ===== TREE-ONLY ZOOM CONTROLLER ===== */
-(function(){
-  function bootTreeOnlyZoom(){
-    const vp=document.querySelector('#realTreeViewport,#treeViewport,.real-tree-viewport,.tree-only-viewport,.tree-scroll,.tree-viewport');
-    const target=document.querySelector('#realTreeCanvas,#treeCanvas,.real-tree-canvas,.tree-canvas,.tree-zoom-content');
-    if(!vp||!target||vp.dataset.treeOnlyZoom==='1') return;
-    vp.dataset.treeOnlyZoom='1';
-
-    // Disable page-level gestures while pointer is over the tree.
-    vp.style.overflow='auto';
-    vp.style.touchAction='none';
-
-    let scale=1, sx=1, dist0=0, drag=false, x0=0,y0=0,l0=0,t0=0;
-
-    function baseSize(){
-      const w=target.dataset.baseW ? +target.dataset.baseW : (target.offsetWidth||target.width||1200);
-      const h=target.dataset.baseH ? +target.dataset.baseH : (target.offsetHeight||target.height||800);
-      target.dataset.baseW=w; target.dataset.baseH=h;
-      return [w,h];
-    }
-    function render(){
-      const [w,h]=baseSize();
-      target.style.transformOrigin='0 0';
-      target.style.transform='scale('+scale+')';
-      target.style.width=w+'px'; target.style.height=h+'px';
-      target.style.margin= '0';
-      // The wrapper itself becomes the scrollable surface.
-      const spacer=vp.querySelector('.tree-zoom-spacer') || (function(){
-        const d=document.createElement('div'); d.className='tree-zoom-spacer';
-        d.style.position='absolute'; d.style.left='0'; d.style.top='0'; d.style.pointerEvents='none';
-        vp.appendChild(d); return d;
-      })();
-      spacer.style.width=(w*scale+30)+'px';
-      spacer.style.height=(h*scale+30)+'px';
-    }
-    function zoom(f){
-      const old=scale; scale=Math.max(.2,Math.min(5,scale*f));
-      const cx=vp.clientWidth/2,cy=vp.clientHeight/2;
-      render();
-      vp.scrollLeft=(vp.scrollLeft+cx)*(scale/old)-cx;
-      vp.scrollTop=(vp.scrollTop+cy)*(scale/old)-cy;
-    }
-
-    let bar=document.createElement('div');
-    bar.className='tree-only-zoom-controls';
-    bar.innerHTML='<button type="button">−</button><button type="button">100%</button><button type="button">+</button>';
-    vp.parentNode.insertBefore(bar,vp);
-    bar.children[0].onclick=()=>zoom(.8);
-    bar.children[2].onclick=()=>zoom(1.25);
-    bar.children[1].onclick=()=>{scale=1;render();vp.scrollLeft=0;vp.scrollTop=0;};
-
-    vp.addEventListener('wheel',e=>{
-      if(e.ctrlKey||e.metaKey){
-        e.preventDefault(); zoom(e.deltaY<0?1.12:.89);
-      }
-    },{passive:false});
-
-    vp.addEventListener('pointerdown',e=>{
-      if(e.pointerType==='touch') return;
-      drag=true; vp.setPointerCapture(e.pointerId);
-      x0=e.clientX;y0=e.clientY;l0=vp.scrollLeft;t0=vp.scrollTop;
-    });
-    vp.addEventListener('pointermove',e=>{
-      if(!drag)return;
-      vp.scrollLeft=l0-(e.clientX-x0);vp.scrollTop=t0-(e.clientY-y0);
-    });
-    vp.addEventListener('pointerup',()=>drag=false);
-    vp.addEventListener('pointercancel',()=>drag=false);
-
-    function td(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
-    vp.addEventListener('touchstart',e=>{
-      if(e.touches.length===2){e.preventDefault();dist0=td(e.touches[0],e.touches[1]);sx=scale;}
-    },{passive:false});
-    vp.addEventListener('touchmove',e=>{
-      if(e.touches.length===2&&dist0){
-        e.preventDefault(); scale=Math.max(.2,Math.min(5,sx*(td(e.touches[0],e.touches[1])/dist0)));render();
-      }
-    },{passive:false});
-    vp.addEventListener('touchend',()=>{if(!event.touches||event.touches.length<2)dist0=0;},{passive:false});
-
-    render();
-  }
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(bootTreeOnlyZoom,500));
-  window.addEventListener('load',()=>setTimeout(bootTreeOnlyZoom,800));
-  window.bootTreeOnlyZoom=bootTreeOnlyZoom;
-})();
-</script></body></html>
+</script><div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()"><div class="photo-choice-box"><h3>📷 Photo પસંદ કરો</h3><p>Photo ક્યાંથી લેવી છે?</p><div class="photo-choice-actions"><button type="button" class="photo-choice-btn camera-btn" onclick="chooseCamera()">📷 Camera</button><button type="button" class="photo-choice-btn gallery-btn" onclick="chooseGallery()">🖼️ Gallery</button></div><button type="button" class="photo-choice-btn cancel-btn" onclick="closePhotoChoice()">Cancel</button><input id="cameraPicker" class="photo-hidden" type="file" accept="image/*" capture="environment"><input id="galleryPicker" class="photo-hidden" type="file" accept="image/*"></div></div><script>let photoTargetId=null;function openPhotoChoice(id){photoTargetId=id;document.getElementById('photoChoiceOverlay').classList.add('show')}function closePhotoChoice(){document.getElementById('photoChoiceOverlay').classList.remove('show');photoTargetId=null}function setPhoto(file){if(!file||!photoTargetId){closePhotoChoice();return}const target=document.getElementById(photoTargetId);const dt=new DataTransfer();dt.items.add(file);target.files=dt.files;target.dispatchEvent(new Event('change',{bubbles:true}));closePhotoChoice()}function chooseCamera(){const i=document.getElementById('cameraPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}function chooseGallery(){const i=document.getElementById('galleryPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}</script></body></html>

@@ -971,119 +971,31 @@ async function loadHtml2Canvas(){
         }
 
         async function downloadTreePDF(){
-    if(!people.length) return alert('પહેલા Family Tree ખોલો.');
-    const oldZoom=(typeof treeZoom==='number')?treeZoom:1;
-    const btns=[...document.querySelectorAll('.tree-card-actions,.links-panel')];
-    const oldDisplay=btns.map(el=>el.style.display);
-    let tempCanvas=null;
-    try{
-        await loadJsPDF();
-        btns.forEach(el=>el.style.display='none');
-
-        // Always export the REAL tree when it is open. This avoids html2canvas
-        // clipping the large treebox and gives PDF a stable source image.
-        const realCanvas=document.querySelector('#realTreeCanvas');
-        const realOpen=document.body.classList.contains('real-tree-open');
-        let sourceCanvas=realOpen ? realCanvas : null;
-
-        if(!sourceCanvas || !(sourceCanvas.width>0 && sourceCanvas.height>0)){
-            if(typeof drawRealTreeStructure==='function') drawRealTreeStructure();
-            sourceCanvas=document.querySelector('#realTreeCanvas');
-            if(!sourceCanvas || !(sourceCanvas.width>0 && sourceCanvas.height>0))
-                throw new Error('Real Tree તૈયાર નથી. પહેલા Real Tree View ખોલો.');
+            if(!people.length) return alert('પહેલા Family Tree ખોલો.');
+            const btns=[...document.querySelectorAll('.tree-card-actions,.links-panel')];
+            const oldDisplay=btns.map(el=>el.style.display);
+            try{
+                await loadHtml2Canvas();
+                await loadJsPDF();
+                btns.forEach(el=>el.style.display='none');
+                const oldZoom=treeZoom;
+                treeZoom=1; applyTreeZoom();
+                await new Promise(r=>setTimeout(r,150));
+                const node=$('canvas');
+                const imageCanvas=await html2canvas(node,{scale:1.5,backgroundColor:'#fbfcfe',useCORS:true,allowTaint:true,logging:false});
+                const {jsPDF}=window.jspdf;
+                const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+                const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
+                const margin=8, maxW=pageW-margin*2, maxH=pageH-margin*2;
+                const ratio=Math.min(maxW/imageCanvas.width,maxH/imageCanvas.height);
+                const w=imageCanvas.width*ratio, h=imageCanvas.height*ratio;
+                pdf.addImage(imageCanvas.toDataURL('image/jpeg',0.92),'JPEG',(pageW-w)/2,(pageH-h)/2,w,h);
+                pdf.save('family-tree.pdf');
+                treeZoom=oldZoom; applyTreeZoom();
+            }catch(e){alert('PDF download error: '+e.message);}
+            finally{btns.forEach((el,i)=>el.style.display=oldDisplay[i]);}
         }
 
-        // Wait briefly for asynchronous member photos to finish loading, then
-        // redraw once so the PDF contains the real photos instead of placeholders.
-        if(typeof drawRealTreeStructure==='function') drawRealTreeStructure();
-        await new Promise(resolve=>setTimeout(resolve,450));
-        if(typeof drawRealTreeStructure==='function') drawRealTreeStructure();
-
-        // Preserve a high-resolution source for printing. Do NOT reduce it to
-        // 3600px because that makes Gujarati names and photos soft when printed.
-        const sw=Number(sourceCanvas.width), sh=Number(sourceCanvas.height);
-        if(!Number.isFinite(sw)||!Number.isFinite(sh)||sw<2||sh<2)
-            throw new Error('Tree image size invalid છે.');
-
-        // Keep enough pixels for A3/A2/A1 printing while preventing an unsafe
-        // browser canvas from becoming enormous.
-        const MAX_W=6200, MAX_H=5200;
-        const scale=Math.min(1,MAX_W/sw,MAX_H/sh);
-        const ew=Math.max(2,Math.round(sw*scale));
-        const eh=Math.max(2,Math.round(sh*scale));
-        tempCanvas=document.createElement('canvas');
-        tempCanvas.width=ew; tempCanvas.height=eh;
-        const ctx=tempCanvas.getContext('2d',{alpha:false});
-        if(!ctx) throw new Error('PDF canvas બની શક્યું નથી.');
-        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,ew,eh);
-        ctx.imageSmoothingEnabled=true;
-        ctx.imageSmoothingQuality='high';
-        ctx.drawImage(sourceCanvas,0,0,sw,sh,0,0,ew,eh);
-
-        // PNG keeps letters, Gujarati text, borders and photos much sharper than
-        // JPEG compression. Use the lossless image for the printable PDF.
-        const dataUrl=tempCanvas.toDataURL('image/png');
-        if(!dataUrl || dataUrl.length<100) throw new Error('Tree image export થઈ નથી.');
-
-        const {jsPDF}=window.jspdf;
-        // Create a large print sheet with the SAME aspect ratio as the tree.
-        // This is intentional: the whole tree is kept on one PDF page and the
-        // printer can scale the sheet to A3/A2/A1 without cutting branches.
-        const MAX_PAGE_MM=1100;
-        const MIN_PAGE_MM=250;
-        const aspect=ew/eh;
-        let pageW,pageH;
-        if(aspect>=1){
-            pageW=MAX_PAGE_MM;
-            pageH=pageW/aspect;
-            if(pageH<MIN_PAGE_MM){pageH=MIN_PAGE_MM; pageW=pageH*aspect;}
-        }else{
-            pageH=MAX_PAGE_MM;
-            pageW=pageH*aspect;
-            if(pageW<MIN_PAGE_MM){pageW=MIN_PAGE_MM; pageH=pageW/aspect;}
-        }
-        pageW=Math.min(MAX_PAGE_MM,Math.max(MIN_PAGE_MM,pageW));
-        pageH=Math.min(MAX_PAGE_MM,Math.max(MIN_PAGE_MM,pageH));
-
-        const pdf=new jsPDF({
-            orientation:pageW>=pageH?'landscape':'portrait',
-            unit:'mm',
-            format:[pageW,pageH],
-            compress:true,
-            putOnlyUsedFonts:true
-        });
-
-        const margin=8;
-        const maxW=Math.max(1,pageW-margin*2);
-        const maxH=Math.max(1,pageH-margin*2);
-        const fit=Math.min(maxW/ew,maxH/eh);
-        const w=ew*fit, h=eh*fit;
-        const x=(pageW-w)/2, y=(pageH-h)/2;
-        if(![pageW,pageH,x,y,w,h].every(Number.isFinite)||
-           pageW<=0||pageH<=0||w<=0||h<=0||
-           x<0||y<0||x+w>pageW+0.01||y+h>pageH+0.01){
-            throw new Error('PDF page coordinates invalid છે.');
-        }
-
-        pdf.setProperties({
-            title:'Family Tree',
-            subject:'Printable Family Tree',
-            creator:'Family Tree'
-        });
-        pdf.addImage(dataUrl,'JPEG',x,y,w,h,undefined,'FAST');
-        pdf.save('family-tree-print.pdf');
-    }catch(e){
-        console.error('PDF download error:',e);
-        alert('PDF download error: '+(e&&e.message?e.message:e));
-    }finally{
-        btns.forEach((el,i)=>el.style.display=oldDisplay[i]);
-        if(tempCanvas) tempCanvas.width=tempCanvas.height=1;
-        if(typeof treeZoom==='number'){
-            treeZoom=oldZoom;
-            if(typeof applyTreeZoom==='function') applyTreeZoom();
-        }
-    }
-}
         async function downloadPNG(){
             if(!people.length)return;
             await loadHtml2Canvas();
