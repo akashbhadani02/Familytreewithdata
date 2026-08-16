@@ -1086,6 +1086,69 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
     }
 
     const drawnPlaques = new Set();
+    const realPhotoCache = window.__realTreePhotoCache || (window.__realTreePhotoCache = new Map());
+    let realPhotoRedrawQueued = false;
+
+    function queueRealTreePhotoRedraw(){
+        if(realPhotoRedrawQueued) return;
+        realPhotoRedrawQueued = true;
+        requestAnimationFrame(()=>{
+            realPhotoRedrawQueued = false;
+            if(document.body.classList.contains('real-tree-open') || document.getElementById('viewer')?.classList.contains('real-tree-open')){
+                drawRealTreeStructure();
+            }
+        });
+    }
+
+    function drawMemberPhoto(person, x, y, radius=34){
+        const src = String(person.photo || '').trim();
+        if(!src) return;
+
+        let entry = realPhotoCache.get(src);
+        if(!entry){
+            const img = new Image();
+            entry = {img, loaded:false, failed:false};
+            realPhotoCache.set(src, entry);
+            img.onload = ()=>{ entry.loaded=true; queueRealTreePhotoRedraw(); };
+            img.onerror = ()=>{ entry.failed=true; };
+            img.src = src;
+        }
+
+        if(!entry.loaded || entry.failed) return;
+
+        const img = entry.img;
+        ctx.save();
+
+        /* soft shadow */
+        ctx.beginPath();
+        ctx.arc(x, y+4, radius+5, 0, Math.PI*2);
+        ctx.fillStyle='rgba(34,18,8,.28)';
+        ctx.fill();
+
+        /* circular clip */
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI*2);
+        ctx.clip();
+
+        const iw=img.naturalWidth || img.width || 1;
+        const ih=img.naturalHeight || img.height || 1;
+        const ratio=Math.max((radius*2)/iw,(radius*2)/ih);
+        const dw=iw*ratio, dh=ih*ratio;
+        ctx.drawImage(img, x-dw/2, y-dh/2, dw, dh);
+        ctx.restore();
+
+        /* wooden/gold photo border */
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI*2);
+        ctx.strokeStyle='#f1c47a';
+        ctx.lineWidth=6;
+        ctx.stroke();
+        ctx.strokeStyle='#5b3218';
+        ctx.lineWidth=2;
+        ctx.stroke();
+        ctx.restore();
+    }
 
     function plaque(p,x,y,small=false){
         const pid=String(p._id||'');
@@ -1134,6 +1197,14 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         ctx.fillText('Generation '+generation(p),x,y+17);
 
         ctx.restore();
+
+        /* Photo is always directly above the member name plaque. */
+        drawMemberPhoto(
+            p,
+            x,
+            y - h/2 - 48,
+            small ? 28 : 34
+        );
     }
 
     /* ---------- roots ---------- */
