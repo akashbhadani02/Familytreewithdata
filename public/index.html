@@ -42,7 +42,10 @@ function memberAddLink(person){
   return absoluteLink('/add/'+encodeURIComponent(String(person.addToken)));
 }
 async function copyMemberLink(person,button){
-  const link=memberAddLink(person);
+  return copyMemberLinkValue(memberAddLink(person),button);
+}
+async function copyMemberLinkValue(link,button){
+  link=String(link||'').trim();
   if(!link) return alert('આ Childની link હજી generate થઈ નથી.');
   const ok=await copyText(link);
   if(ok && button){
@@ -51,6 +54,7 @@ async function copyMemberLink(person,button){
     button.disabled=true;
     setTimeout(()=>{button.textContent=old;button.disabled=false},1800);
   }
+  return ok;
 }
 async function copyText(text){
   if(!text) return false;
@@ -163,8 +167,8 @@ function renderChildStatus(){
   box.style.display='block';
   box.innerHTML=kids.map(k=>{
     const link=memberAddLink(k);
-    const safeJson=JSON.stringify(k).replace(/</g,'\u003c');
-    return '<div class="child-row"><div class="child-name">'+safe(k.name)+'</div><div class="child-link-box"><a class="child-add-link" href="'+safe(link)+'">'+safe(link)+'</a><button type="button" class="btn mini-copy" onclick="copyMemberLink('+safeJson+',this)">📋 Copy</button></div></div>'
+    const safeLink=String(link||'').replace(/\/g,'\\').replace(/'/g,\"\\'\");
+    return '<div class="child-row"><div class="child-name">'+safe(k.name)+'</div><div class="child-link-box"><a class="child-add-link" href="'+safe(link)+'">'+safe(link)+'</a><button type="button" class="btn mini-copy" onclick="copyMemberLinkValue(\''+safeLink+'\',this)">📋 Copy</button></div></div>'
   }).join('');
 }
 function prepareLineageFields(){
