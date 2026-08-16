@@ -888,18 +888,27 @@ async function editName(id){
 
     const generation = p => Number(p.generation) || 1;
 
-    /* Find the real root. If several generation-1 people exist,
-       use the first parentless person as the trunk owner. */
-    const root =
-        people.find(p => !p.parentId) ||
-        people.slice().sort((a,b)=>generation(a)-generation(b))[0];
+    /* Generation 1 can contain MANY parentless members.
+       They all belong to ONE main trunk.
+       Oldest/first-added stays at the bottom; every newer name is
+       placed one position ABOVE it. Generation 2+ starts branching
+       from the matching Generation 1 member. */
+    const roots = people
+        .filter(p => !p.parentId && generation(p) === 1)
+        .sort((a,b)=>new Date(a.createdAt||0)-new Date(b.createdAt||0));
 
-    if(!root) return;
+    if(!roots.length){
+        const fallback = people.slice().sort((a,b)=>generation(a)-generation(b));
+        if(fallback.length) roots.push(fallback[0]);
+    }
+    if(!roots.length) return;
+
+    const root = roots[0];
 
     children.forEach(list=>{
-        list.sort((a,b)=>
-            String(a.name||'').localeCompare(String(b.name||''), 'gu')
-        );
+        /* Preserve insertion order so the tree follows the order in
+           which members were added, not alphabetical order. */
+        list.sort((a,b)=>new Date(a.createdAt||0)-new Date(b.createdAt||0));
     });
 
     const maxGen = Math.max(...people.map(generation), 1);
@@ -911,8 +920,10 @@ async function editName(id){
       - every child gets its own branch
       - subtree widths keep siblings separated
     */
-    const levelGap = Math.max(245, Math.min(310, 275 + maxGen*4));
+    const levelGap = Math.max(280, Math.min(330, 300 + maxGen*3));
     const leafGap = 250;
+    /* Vertical spacing between Generation 1 names on the SAME trunk. */
+    const rootGap = 225;
 
     const subtree = new Map();
 
@@ -946,14 +957,21 @@ async function editName(id){
 
     const treeHeight = Math.max(
         1900,
-        620 + maxGen * levelGap
+        700 + maxGen * levelGap + Math.max(0, roots.length-1) * rootGap
     );
 
     const pos = new Map();
+    const rootY = new Map();
+    const firstRootY = treeHeight - 300;
 
-    function place(p, x){
+    /* First-added Generation 1 = bottom. Newer Generation 1 = above. */
+    roots.forEach((r,index)=>{
+        rootY.set(String(r._id), firstRootY - index*rootGap);
+    });
+
+    function place(p, x, baseRootY){
         const g = generation(p);
-        const y = treeHeight - 250 - (g-1)*levelGap;
+        const y = baseRootY - (g-1)*levelGap;
 
         pos.set(String(p._id), {x,y});
 
@@ -967,15 +985,15 @@ async function editName(id){
         });
 
         let cursor = x - total/2;
-
         kids.forEach(c=>{
             const w = measure(c);
-            place(c, cursor + w/2);
+            place(c, cursor + w/2, baseRootY);
             cursor += w + 75;
         });
     }
 
-    place(root, treeWidth/2);
+    /* All Generation 1 cards share the exact same X coordinate/trunk. */
+    roots.forEach(r=>place(r, treeWidth/2, rootY.get(String(r._id))));
 
     /* Canvas sizing */
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -1264,77 +1282,56 @@ async function editName(id){
         ctx.restore();
     }
 
-    /* ---------- roots ---------- */
-    const rootPos=pos.get(String(root._id));
-    const trunkBaseX=rootPos.x;
-    const trunkTopY=rootPos.y+75;
+    /* ---------- ONE MAIN TRUNK FOR ALL GENERATION 1 MEMBERS ---------- */
+    const trunkBaseX=treeWidth/2;
+    const lowestRootY=rootY.get(String(roots[0]._id));
+    const highestRootY=rootY.get(String(roots[roots.length-1]._id));
+    const trunkTopY=highestRootY+15;
 
     for(let i=0;i<9;i++){
         const dir=i<4?-1:(i>4?1:0);
         if(!dir) continue;
-
         const n=Math.abs(i-4);
         const endX=trunkBaseX+dir*(130+n*48);
-
         strokeCurve(
-            trunkBaseX+dir*20,
-            groundY+10,
-            trunkBaseX+dir*60,
-            groundY+20,
-            endX-30*dir,
-            groundY+40,
-            endX,
-            groundY+55,
+            trunkBaseX+dir*20, groundY+10,
+            trunkBaseX+dir*60, groundY+20,
+            endX-30*dir, groundY+40,
+            endX, groundY+55,
             Math.max(7,18-n*2)
         );
     }
 
-    /* ---------- main trunk ---------- */
+    /* Main trunk is deliberately tall enough to pass EVERY Generation 1 plaque. */
     strokeCurve(
-        trunkBaseX-105,
-        groundY+10,
-        trunkBaseX-155,
-        groundY-180,
-        trunkBaseX-125,
-        trunkTopY+150,
-        trunkBaseX-42,
-        trunkTopY,
+        trunkBaseX-105, groundY+10,
+        trunkBaseX-155, groundY-180,
+        trunkBaseX-125, trunkTopY+260,
+        trunkBaseX-42, trunkTopY,
         95
     );
-
     strokeCurve(
-        trunkBaseX+105,
-        groundY+10,
-        trunkBaseX+155,
-        groundY-180,
-        trunkBaseX+125,
-        trunkTopY+150,
-        trunkBaseX+42,
-        trunkTopY,
+        trunkBaseX+105, groundY+10,
+        trunkBaseX+155, groundY-180,
+        trunkBaseX+125, trunkTopY+260,
+        trunkBaseX+42, trunkTopY,
         95
     );
-
     strokeCurve(
-        trunkBaseX,
-        groundY,
-        trunkBaseX-35,
-        groundY-260,
-        trunkBaseX-28,
-        trunkTopY+80,
-        trunkBaseX,
-        trunkTopY-5,
+        trunkBaseX, groundY,
+        trunkBaseX-35, groundY-260,
+        trunkBaseX-28, trunkTopY+140,
+        trunkBaseX, trunkTopY-5,
         105
     );
 
-    /* bark texture */
+    /* bark texture along the full shared trunk */
     for(let i=-5;i<=5;i++){
         ctx.beginPath();
         ctx.moveTo(trunkBaseX+i*12,groundY-10);
         ctx.quadraticCurveTo(
-            trunkBaseX+i*15,
-            (groundY+trunkTopY)/2,
-            trunkBaseX+i*7,
-            trunkTopY+35
+            trunkBaseX+i*15, (groundY+trunkTopY)/2,
+            trunkBaseX+i*7, trunkTopY+35
         );
         ctx.strokeStyle='rgba(46,21,8,.25)';
         ctx.lineWidth=3;
@@ -1345,25 +1342,14 @@ async function editName(id){
     function drawPersonBranch(parent){
         const pp=pos.get(String(parent._id));
         if(!pp) return;
-
         const kids=children.get(String(parent._id))||[];
 
-        /* Every person owns exactly one plaque.
-           Root is handled separately below, so skip it here. */
-        if(String(parent._id)!==String(root._id)){
-            plaque(parent,pp.x,pp.y+72,false);
-        }
+        /* Generation 1 plaques sit directly on the shared trunk. */
+        plaque(parent,pp.x,pp.y+72,false);
 
-        /* leaf generation: branch + foliage + name */
         if(!kids.length){
             const side=(pp.x>=treeWidth/2?1:-1);
-            twig(
-                pp.x,
-                pp.y+5,
-                pp.x+side*70,
-                pp.y-90,
-                7
-            );
+            twig(pp.x,pp.y+5,pp.x+side*70,pp.y-90,7);
             foliage(pp.x+side*78,pp.y-105,.85);
             return;
         }
@@ -1371,106 +1357,36 @@ async function editName(id){
         kids.forEach((child,index)=>{
             const cp=pos.get(String(child._id));
             if(!cp) return;
-
             const dx=cp.x-pp.x;
             const side=dx>=0?1:-1;
             const distance=Math.abs(dx);
-
             const startY=pp.y-15;
             const endY=cp.y+28;
+            const curve=Math.max(100,Math.min(300,distance*.42));
+            const width=Math.max(10,34-(generation(parent)-1)*4);
 
-            const curve=Math.max(
-                100,
-                Math.min(300,distance*.42)
-            );
-
-            const width=Math.max(
-                10,
-                34-(generation(parent)-1)*4
-            );
-
-            /*
-              Branch starts from parent and bends naturally
-              toward the child, not as a straight line.
-            */
             strokeCurve(
-                pp.x,
-                startY,
-                pp.x+side*curve,
-                startY-80,
-                cp.x-side*curve*.55,
-                endY+90,
-                cp.x,
-                endY,
-                width
+                pp.x,startY,
+                pp.x+side*curve,startY-80,
+                cp.x-side*curve*.55,endY+90,
+                cp.x,endY,width
             );
 
-            /*
-              Side twig with leaves makes every branch
-              look like a real tree rather than a diagram.
-            */
             const twigSide=index%2===0?-1:1;
             const tx=cp.x+twigSide*55;
             const ty=cp.y-55;
-
-            twig(
-                cp.x,
-                cp.y,
-                tx,
-                ty,
-                Math.max(5,width*.28)
-            );
-
+            twig(cp.x,cp.y,tx,ty,Math.max(5,width*.28));
             foliage(tx,ty-18,.65);
-
-            /* The recursive call owns the child plaque.
-               Drawing it here would create a duplicate card for
-               every child that is also rendered as a leaf. */
             drawPersonBranch(child);
         });
     }
 
-    /* ---------- root generation branches ---------- */
-    const rootKids=children.get(String(root._id))||[];
-
-    rootKids.forEach((child,index)=>{
-        const cp=pos.get(String(child._id));
-        if(!cp) return;
-
-        const dx=cp.x-trunkBaseX;
-        const side=dx>=0?1:-1;
-        const distance=Math.abs(dx);
-
-        strokeCurve(
-            trunkBaseX,
-            trunkTopY+25,
-            trunkBaseX+side*Math.min(240,distance*.35),
-            trunkTopY-150,
-            cp.x-side*Math.min(300,distance*.28),
-            cp.y+150,
-            cp.x,
-            cp.y+30,
-            50
-        );
-
-        foliage(
-            cp.x-side*30,
-            cp.y-40,
-            1
-        );
-
-        /* The recursive renderer below draws the child plaque once.
-           Do not draw it here again, otherwise the child gets a double card. */
-        drawPersonBranch(child);
+    /* Render EVERY Generation 1 member from bottom to top on the same trunk. */
+    roots.forEach(r=>{
+        const rp=pos.get(String(r._id));
+        if(!rp) return;
+        drawPersonBranch(r);
     });
-
-    /* Root's own name is placed inside the trunk area. */
-    plaque(
-        root,
-        trunkBaseX,
-        trunkTopY+115,
-        false
-    );
 
     /* top canopy */
     const topNodes=people.filter(p=>generation(p)===maxGen);

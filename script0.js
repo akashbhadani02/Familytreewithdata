@@ -380,12 +380,10 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
 
     if(!root) return;
 
-    children.forEach((list,parentId)=>{
-        /* For Generation-1 members, database insertion order is important:
-           the first name remains first/lower and the next name is above it.
-           Other generations keep creation order as well, avoiding unexpected
-           alphabetical rearranging of the family tree. */
-        list.sort((a,b)=>new Date(a.createdAt||0)-new Date(b.createdAt||0));
+    children.forEach(list=>{
+        list.sort((a,b)=>
+            String(a.name||'').localeCompare(String(b.name||''), 'gu')
+        );
     });
 
     const maxGen = Math.max(...people.map(generation), 1);
@@ -462,24 +460,6 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
     }
 
     place(root, treeWidth/2);
-
-    /* Multiple Generation-1 members: keep the original entry order.
-       The first entered member stays lower and every later member is
-       placed above it, so names never sit on top of each other. */
-    const rootChildren = children.get(String(root._id)) || [];
-    if(rootChildren.length > 1){
-        const stackGap = Math.max(115, Math.min(155, levelGap * .52));
-        const baseY = treeHeight - 250 - 55;
-        const centerX = treeWidth / 2;
-        rootChildren.forEach((child,index)=>{
-            const id=String(child._id);
-            const oldPos=pos.get(id) || {x:centerX,y:baseY};
-            pos.set(id,{
-                x: centerX + (index - (rootChildren.length-1)/2) * Math.min(185, Math.max(120, 900/rootChildren.length)),
-                y: baseY - index*stackGap
-            });
-        });
-    }
 
     /* Canvas sizing */
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
