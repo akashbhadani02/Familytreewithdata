@@ -403,60 +403,7 @@
         }
 </style>
 
-<style>
 
-/* ===== FAMILY TREE FIT-TO-SCREEN PATCH ===== */
-.tree-view, .tree-container, .family-tree-container, #treeView, #treeContainer {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-}
-
-.tree-viewport, .tree-scroll, .tree-wrapper, #treeViewport, #treeScroll {
-  position: relative;
-  width: 100%;
-  max-width: 100%;
-  overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-
-.tree-canvas, .tree-content, #treeCanvas, #treeContent {
-  box-sizing: border-box;
-  margin: 0 auto;
-  transform-origin: 50% 100%;
-}
-
-/* Keep the tree close to the bottom of its viewport instead of leaving
-   a large blank area underneath it. */
-.tree-viewport, .tree-scroll, #treeViewport, #treeScroll {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-/* Prevent cards/branches from forcing accidental wrapping of the whole tree. */
-.tree-canvas, .tree-content, #treeCanvas, #treeContent {
-  flex: 0 0 auto;
-}
-
-/* Mobile: let the user pinch/scroll naturally, but don't create
-   unnecessary blank height. */
-@media (max-width: 768px) {
-  .tree-viewport, .tree-scroll, #treeViewport, #treeScroll {
-    min-height: 0;
-    max-height: calc(100dvh - 140px);
-  }
-}
-
-/* Desktop: use the available screen without excessive vertical space. */
-@media (min-width: 769px) {
-  .tree-viewport, .tree-scroll, #treeViewport, #treeScroll {
-    max-height: calc(100dvh - 180px);
-  }
-}
-
-</style>
 </head>
 
 <body>
@@ -1449,7 +1396,7 @@ function forwardPhoto(file){
   });
 }
 </script>
-</body>
+<script>\nfunction fitRealTreeToViewport(){\n const box=document.querySelector('.treebox');\n const layer=document.getElementById('treeLayer');\n const canvas=document.getElementById('realTreeCanvas');\n if(!box||!layer||!canvas||!canvas.width)return;\n const treeW=parseFloat(canvas.style.width)||canvas.width/(window.devicePixelRatio||1);\n const treeH=parseFloat(canvas.style.height)||canvas.height/(window.devicePixelRatio||1);\n const availW=Math.max(320,box.clientWidth-24),availH=Math.max(320,box.clientHeight-24);\n const fit=Math.min(1,availW/treeW,availH/treeH);\n const z=Math.max(.45,fit);\n layer.style.transformOrigin='0 0';layer.style.transform='scale('+z+')';\n box.scrollLeft=Math.max(0,(treeW*z-box.clientWidth)/2);\n box.scrollTop=Math.max(0,treeH*z-box.clientHeight);\n}\nwindow.addEventListener('resize',()=>{if(document.body.classList.contains('real-tree-open'))setTimeout(fitRealTreeToViewport,100)});\n</script>\n</body>
 </html>
 
 <script id="adminTreeAddChildHelper">
