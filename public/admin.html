@@ -633,8 +633,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             layer.classList.add('real-natural-tree');
 
             const NS='http://www.w3.org/2000/svg';
-            const CARD_W=210, LEVEL_GAP=265, SIDE_GAP=82, PAD=260;
-            const byId=new Map(people.map(p=>[String(p._id),p]));
+            const CARD_W=210, CARD_H=178, LEVEL_GAP=250, SIDE_GAP=105, PAD=320;
             const children=new Map();
             people.forEach(p=>{
                 if(!p.parentId)return;
@@ -642,24 +641,24 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 if(!children.has(pid))children.set(pid,[]);
                 children.get(pid).push(p);
             });
-            children.forEach(a=>a.sort((a,b)=>(Number(a.generation)||1)-(Number(b.generation)||1)));
+            children.forEach(a=>a.sort((x,y)=>(Number(x.generation)||1)-(Number(y.generation)||1)));
             const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>(Number(a.generation)||1)-(Number(b.generation)||1))[0];
             if(!root)return;
 
-            // Calculate a real family-tree layout: one branch for every child, with the
-            // oldest ancestor high in the crown and later generations spreading outward.
+            // Width of every natural branch.  More children = wider branch canopy.
             const widthMemo=new Map();
             function subtreeWidth(id){
                 id=String(id); if(widthMemo.has(id))return widthMemo.get(id);
                 const kids=children.get(id)||[];
-                if(!kids.length){widthMemo.set(id,CARD_W);return CARD_W;}
+                if(!kids.length){widthMemo.set(id,CARD_W+50);return CARD_W+50;}
                 const total=kids.reduce((sum,k)=>sum+subtreeWidth(k._id),0)+SIDE_GAP*(kids.length-1);
-                const w=Math.max(CARD_W,total);
+                const w=Math.max(CARD_W+80,total);
                 widthMemo.set(id,w);return w;
             }
             const positions=new Map();
             function place(node,cx,y){
-                const kids=children.get(String(node._id))||[], w=subtreeWidth(node._id);
+                const kids=children.get(String(node._id))||[];
+                const w=subtreeWidth(node._id);
                 positions.set(String(node._id),{x:cx-CARD_W/2,y});
                 if(!kids.length)return;
                 let cur=cx-w/2;
@@ -669,121 +668,149 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                     cur+=kw+SIDE_GAP;
                 });
             }
-            const totalW=subtreeWidth(root._id)+PAD*2;
+
+            const totalW=Math.max(1500,subtreeWidth(root._id)+PAD*2);
             const maxLevel=Math.max(...people.map(p=>Number(p.generation)||1),1);
-            const totalH=PAD+maxLevel*LEVEL_GAP+420;
-            place(root,totalW/2,120);
+            const totalH=Math.max(1500,PAD+maxLevel*LEVEL_GAP+520);
+            place(root,totalW/2,135);
 
             const oldCanvas=$('canvas');
-            oldCanvas.dataset.baseWidth=totalW;oldCanvas.dataset.baseHeight=totalH;
+            oldCanvas.dataset.baseWidth=totalW; oldCanvas.dataset.baseHeight=totalH;
             applyTreeZoom(totalW,totalH);
-            svg.setAttribute('width',totalW);svg.setAttribute('height',totalH);svg.setAttribute('viewBox',`0 0 ${totalW} ${totalH}`);
+            svg.setAttribute('width',totalW); svg.setAttribute('height',totalH);
+            svg.setAttribute('viewBox',`0 0 ${totalW} ${totalH}`);
             svg.innerHTML='';
 
-            // Move the existing real member cards onto the natural branch positions.
             document.querySelectorAll('#cards .card').forEach(card=>{
                 const q=positions.get(String(card.dataset.personId));
                 if(!q)return;
-                card.style.left=q.x+'px';card.style.top=q.y+'px';
+                card.style.left=q.x+'px'; card.style.top=q.y+'px';
+                card.style.zIndex='20';
             });
 
             const add=(tag,attrs,parent=svg)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));parent.appendChild(e);return e;};
             const path=(d,stroke,width,extra={})=>add('path',{d,fill:'none',stroke,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',...extra});
+            const text=(x,y,value,size=15,extra={})=>{const t=add('text',{x,y,'text-anchor':'middle','font-size':size,'font-family':'Noto Sans, Arial, sans-serif','font-weight':'800',fill:'#4a2917',...extra});t.textContent=value;return t;};
             const defs=add('defs');
             defs.innerHTML=`
-              <linearGradient id="rtSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9dcf4"/><stop offset=".62" stop-color="#d9f1dc"/><stop offset="1" stop-color="#83b85b"/></linearGradient>
-              <linearGradient id="rtGrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fbd57"/><stop offset="1" stop-color="#376f35"/></linearGradient>
-              <linearGradient id="rtTrunk" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3b2111"/><stop offset=".16" stop-color="#754321"/><stop offset=".38" stop-color="#ad6a35"/><stop offset=".52" stop-color="#d08a49"/><stop offset=".67" stop-color="#865025"/><stop offset=".88" stop-color="#4c2a16"/><stop offset="1" stop-color="#2e180d"/></linearGradient>
-              <linearGradient id="rtBranch" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4a2814"/><stop offset=".35" stop-color="#8d552b"/><stop offset=".58" stop-color="#b96f36"/><stop offset="1" stop-color="#4a2814"/></linearGradient>
-              <radialGradient id="rtLeaf"><stop offset="0" stop-color="#b9e879"/><stop offset=".55" stop-color="#5ea63e"/><stop offset="1" stop-color="#225c2a"/></radialGradient>
-              <filter id="rtShadow"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity=".25"/></filter>`;
+              <linearGradient id="rtSky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9e3f2"/><stop offset=".58" stop-color="#dff0d1"/><stop offset="1" stop-color="#79aa54"/></linearGradient>
+              <linearGradient id="rtGround2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#78b452"/><stop offset="1" stop-color="#315f31"/></linearGradient>
+              <linearGradient id="rtWood2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3b1f10"/><stop offset=".18" stop-color="#75411f"/><stop offset=".42" stop-color="#c17a3b"/><stop offset=".58" stop-color="#d99555"/><stop offset=".78" stop-color="#7b4722"/><stop offset="1" stop-color="#32190c"/></linearGradient>
+              <linearGradient id="rtBranch2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4a2814"/><stop offset=".45" stop-color="#b56d36"/><stop offset=".7" stop-color="#d18a4c"/><stop offset="1" stop-color="#4b2814"/></linearGradient>
+              <radialGradient id="rtLeaf2"><stop offset="0" stop-color="#bce982"/><stop offset=".52" stop-color="#5caa3d"/><stop offset="1" stop-color="#1e592b"/></radialGradient>
+              <filter id="rtShadow2"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity=".23"/></filter>`;
 
-            // Background inside Real Tree View: soft sky, distant hills and green ground.
-            add('rect',{x:0,y:0,width:totalW,height:totalH,fill:'url(#rtSky)'});
-            add('path',{d:`M0 ${totalH-620} Q ${totalW*.16} ${totalH-760} ${totalW*.32} ${totalH-610} T ${totalW*.62} ${totalH-650} T ${totalW} ${totalH-600} L ${totalW} ${totalH} L0 ${totalH}Z`,fill:'url(#rtGrass)'});
-            for(let i=0;i<18;i++){
-                const x=80+i*((totalW-160)/17), y=totalH-470-(i%3)*25;
-                add('path',{d:`M${x} ${y+90} Q${x-20} ${y+20} ${x+8} ${y-35} Q${x+40} ${y+25} ${x} ${y+90}Z`,fill:'#3d7b36',opacity:.45});
-            }
+            // Natural background.
+            add('rect',{x:0,y:0,width:totalW,height:totalH,fill:'url(#rtSky2)'});
+            add('path',{d:`M0 ${totalH-570} Q ${totalW*.18} ${totalH-730} ${totalW*.38} ${totalH-590} T ${totalW*.72} ${totalH-650} T ${totalW} ${totalH-570} L${totalW} ${totalH} L0 ${totalH}Z`,fill:'url(#rtGround2)'});
 
             const rootQ=positions.get(String(root._id));
-            const rootCx=rootQ.x+CARD_W/2;
-            const bottom=totalH-160;
-            const trunkTopY=rootQ.y+CARD_H*.72;
+            const cx=rootQ.x+CARD_W/2;
+            const groundY=totalH-145;
+            const trunkTop=rootQ.y+CARD_H*.58;
 
-            // Wide, irregular trunk with a flared base and visible roots.
-            path(`M ${rootCx-92} ${bottom} C ${rootCx-118} ${bottom-140}, ${rootCx-62} ${bottom-310}, ${rootCx-78} ${bottom-520} C ${rootCx-88} ${bottom-790}, ${rootCx-55} ${trunkTopY+420}, ${rootCx-28} ${trunkTopY}`, 'url(#rtTrunk)', 128, {filter:'url(#rtShadow)'});
-            path(`M ${rootCx+88} ${bottom} C ${rootCx+122} ${bottom-145}, ${rootCx+58} ${bottom-315}, ${rootCx+76} ${bottom-525} C ${rootCx+90} ${bottom-785}, ${rootCx+54} ${trunkTopY+430}, ${rootCx+28} ${trunkTopY}`, 'url(#rtTrunk)', 128, {filter:'url(#rtShadow)'});
-            // bark ridges
-            for(let i=-5;i<=5;i++){
-                const off=i*15;
-                path(`M ${rootCx+off} ${bottom-30} C ${rootCx+off+i*8} ${bottom-220}, ${rootCx+off-i*5} ${bottom-430}, ${rootCx+off+i*7} ${trunkTopY+30}`,'#5a3219',Math.max(3,Math.abs(i%3)+2),{opacity:.42});
+            // Big organic trunk, deliberately much wider than the family branches.
+            path(`M ${cx-110} ${groundY} C ${cx-150} ${groundY-180}, ${cx-85} ${groundY-360}, ${cx-100} ${groundY-610} C ${cx-115} ${groundY-870}, ${cx-65} ${trunkTop+300}, ${cx-34} ${trunkTop}`,'url(#rtWood2)',145,{filter:'url(#rtShadow2)'});
+            path(`M ${cx+110} ${groundY} C ${cx+150} ${groundY-180}, ${cx+85} ${groundY-360}, ${cx+100} ${groundY-610} C ${cx+115} ${groundY-870}, ${cx+65} ${trunkTop+300}, ${cx+34} ${trunkTop}`,'url(#rtWood2)',145,{filter:'url(#rtShadow2)'});
+            for(let i=-7;i<=7;i++){
+                const ox=i*13;
+                path(`M ${cx+ox} ${groundY-30} C ${cx+ox+i*7} ${groundY-240}, ${cx+ox-i*6} ${groundY-470}, ${cx+ox+i*5} ${trunkTop+30}`,'#5b3118',Math.max(2,Math.abs(i)%3+2),{opacity:.36});
             }
-            // Roots.
-            const roots=[-1,-.72,-.45,.45,.72,1];
-            roots.forEach((dir,i)=>{
-                const endX=rootCx+dir*(170+i*28);
-                path(`M ${rootCx+dir*18} ${bottom-55} C ${rootCx+dir*45} ${bottom-12}, ${rootCx+dir*95} ${bottom+5}, ${endX} ${bottom+55+i*9}`,'url(#rtBranch)',12-(i%3)*2,{opacity:.95});
+
+            // Roots spreading out from the trunk.
+            [-1,-.82,-.63,-.4,.4,.63,.82,1].forEach((dir,i)=>{
+                const ex=cx+dir*(150+i*24);
+                path(`M ${cx+dir*25} ${groundY-45} C ${cx+dir*55} ${groundY-10}, ${cx+dir*105} ${groundY+8}, ${ex} ${groundY+55}`,'url(#rtBranch2)',11-(i%3),{opacity:.95});
             });
 
-            // Natural branch helper: thick at the parent, thin near the child.
-            function branchTo(parent,child,index){
-                const a=positions.get(String(parent._id)), b=positions.get(String(child._id));
-                if(!a||!b)return;
-                const px=a.x+CARD_W/2, py=a.y+20;
-                const cx=b.x+CARD_W/2, cy=b.y+CARD_H*.84;
-                const dx=cx-px, dir=dx>=0?1:-1;
-                const level=Math.max(1,Number(child.generation)||1);
-                const bw=Math.max(6,26-(level-1)*2.4);
-                const startY=py+65, endY=cy-5;
-                const bend=Math.max(65,Math.min(260,Math.abs(dx)*.38));
-                const c1x=px+dir*bend*.20, c2x=cx-dir*bend*.65;
-                path(`M ${px} ${startY} C ${c1x} ${startY+40}, ${c2x} ${endY-55}, ${cx} ${endY}`,'url(#rtBranch)',bw,{filter:'url(#rtShadow)'});
-                // secondary bark ridge makes the branch look organic rather than like a line.
-                path(`M ${px+dir*3} ${startY+4} C ${c1x+dir*12} ${startY+30}, ${c2x-dir*8} ${endY-35}, ${cx+dir*3} ${endY}`,'#d08a49',Math.max(2,bw*.22),{opacity:.55});
-
-                // Small fork on each child's branch + green foliage.
-                const lx=cx+dir*46, ly=endY-38;
-                path(`M ${lx-dir*8} ${ly+35} C ${lx} ${ly+5}, ${lx+dir*45} ${ly-5}, ${lx+dir*70} ${ly-30}`,'url(#rtBranch)',Math.max(3,bw*.22),{opacity:.9});
-                const leaves=[[lx,ly],[lx+dir*34,ly-22],[lx-dir*28,ly-16],[lx+dir*62,ly-52],[lx-dir*8,ly-58]];
-                leaves.forEach((v,j)=>add('ellipse',{cx:v[0],cy:v[1],rx:18-(j%2)*3,ry:11+(j%3)*2,fill:'url(#rtLeaf)',transform:`rotate(${dir*(j*13-25)} ${v[0]} ${v[1]})`,opacity:.9,filter:'url(#rtShadow)'}));
+            function leafCluster(x,y,dir=1,count=8){
+                for(let i=0;i<count;i++){
+                    const lx=x+dir*((i%4)*18-(i%2)*7), ly=y-((i*19)%58);
+                    add('ellipse',{cx:lx,cy:ly,rx:15-(i%3)*2,ry:9+(i%2)*2,fill:'url(#rtLeaf2)',transform:`rotate(${dir*(i*17-28)} ${lx} ${ly})`,filter:'url(#rtShadow2)',opacity:.96});
+                }
             }
 
-            // One and only one major branch per child, exactly matching the data.
-            people.forEach(parent=>{
+            // Branch labels are written on the wood, like the reference image.
+            function branchLabel(p,x,y,angle){
+                const name=(p.name||'').trim();
+                if(!name)return;
+                const safe=name.length>22?name.slice(0,21)+'…':name;
+                const g=add('g',{transform:`rotate(${angle} ${x} ${y})`});
+                add('rect',{x:x-58,y:y-12,width:116,height:24,rx:10,fill:'#d99758',opacity:.84,stroke:'#7a421f','stroke-width':1},g);
+                const t=add('text',{x,y:y+5,'text-anchor':'middle','font-size':'12','font-weight':'900','font-family':'Noto Sans, Arial, sans-serif',fill:'#3f2415'},g);t.textContent=safe;
+            }
+
+            // Each parent gets a real branch junction; every child gets its own offshoot.
+            // This creates the "one trunk -> many branches -> smaller twigs" structure.
+            function drawParentBranches(parent){
                 const kids=children.get(String(parent._id))||[];
-                kids.forEach((child,i)=>branchTo(parent,child,i));
-            });
+                if(!kids.length)return;
+                const pq=positions.get(String(parent._id));
+                if(!pq)return;
+                const px=pq.x+CARD_W/2, py=pq.y+CARD_H*.35;
+                const level=Number(parent.generation)||1;
+                const stemWidth=Math.max(12,30-(level-1)*2.2);
+                const junctionY=py-58;
+                const spread=Math.max(70,Math.min(190,subtreeWidth(parent._id)/(kids.length+1)*.35));
 
-            // Main crown branches from the ancestor and outward twig network.
+                // Parent stem rising above the card to a visible fork.
+                path(`M ${px} ${py+30} C ${px} ${py-10}, ${px} ${junctionY+45}, ${px} ${junctionY}`,'url(#rtBranch2)',stemWidth,{filter:'url(#rtShadow2)'});
+                add('circle',{cx:px,cy:junctionY,r:stemWidth*.48,fill:'#875025',filter:'url(#rtShadow2)'});
+
+                kids.forEach((child,i)=>{
+                    const cq=positions.get(String(child._id)); if(!cq)return;
+                    const tx=cq.x+CARD_W/2, ty=cq.y+CARD_H*.78;
+                    const dir=tx>=px?1:-1;
+                    const dx=Math.abs(tx-px);
+                    const bend=Math.max(75,Math.min(250,dx*.34));
+                    const bw=Math.max(6,21-(level-1)*1.8);
+                    const endY=ty+6;
+                    const c1x=px+dir*Math.max(25,bend*.25);
+                    const c2x=tx-dir*Math.max(35,bend*.55);
+                    path(`M ${px} ${junctionY} C ${c1x} ${junctionY-18}, ${c2x} ${endY-55}, ${tx} ${endY}`,'url(#rtBranch2)',bw,{filter:'url(#rtShadow2)'});
+                    path(`M ${px+dir*2} ${junctionY-1} C ${c1x+dir*9} ${junctionY-15}, ${c2x-dir*8} ${endY-48}, ${tx+dir*2} ${endY}`,'#e0a166',Math.max(2,bw*.2),{opacity:.55});
+
+                    // Name burned/written along this actual branch.
+                    const lx=px+(tx-px)*.52, ly=junctionY+(endY-junctionY)*.52-10;
+                    const ang=Math.max(-28,Math.min(28,Math.atan2(endY-junctionY,tx-px)*180/Math.PI-90));
+                    branchLabel(child,lx,ly,ang);
+
+                    // Small twig splitting off the child branch.
+                    const twigX=tx-dir*40, twigY=endY-20;
+                    path(`M ${twigX} ${twigY+20} C ${twigX+dir*15} ${twigY-5}, ${twigX+dir*42} ${twigY-18}, ${twigX+dir*65} ${twigY-42}`,'url(#rtBranch2)',Math.max(3,bw*.28),{opacity:.95});
+                    leafCluster(twigX+dir*62,twigY-42,dir,7);
+                });
+            }
+
+            // Root's connection to the giant trunk is a large crown fork.
             const rootKids=children.get(String(root._id))||[];
             rootKids.forEach((child,i)=>{
-                const q=positions.get(String(child._id)); if(!q)return;
-                const side=(q.x+CARD_W/2)<rootCx?-1:1;
-                path(`M ${rootCx} ${trunkTopY+35} C ${rootCx+side*85} ${trunkTopY-20}, ${q.x+CARD_W/2-side*90} ${q.y-40}, ${q.x+CARD_W/2} ${q.y+8}`,'url(#rtTrunk)',34,{filter:'url(#rtShadow)'});
+                const q=positions.get(String(child._id));if(!q)return;
+                const tx=q.x+CARD_W/2, ty=q.y+CARD_H*.78, dir=tx>=cx?1:-1;
+                const bw=32;
+                path(`M ${cx} ${trunkTop+25} C ${cx+dir*95} ${trunkTop-10}, ${tx-dir*120} ${ty-95}, ${tx} ${ty}`,'url(#rtWood2)',bw,{filter:'url(#rtShadow2)'});
+                path(`M ${cx+dir*5} ${trunkTop+24} C ${cx+dir*90} ${trunkTop+3}, ${tx-dir*110} ${ty-85}, ${tx+dir*3} ${ty}`,'#e0a166',6,{opacity:.45});
+                branchLabel(child,cx+(tx-cx)*.45,trunkTop+(ty-trunkTop)*.45-15,dir*(i%2?16:-16));
             });
 
-            // A final twig and leaves for every last-generation member.
+            // Draw all lower-generation branch junctions.
+            people.forEach(p=>{ if(String(p._id)!==String(root._id)) drawParentBranches(p); });
+
+            // Every last-generation member gets a visible terminal twig and leaves.
             people.filter(p=>(children.get(String(p._id))||[]).length===0).forEach((p,i)=>{
                 const q=positions.get(String(p._id));if(!q)return;
-                const x=q.x+CARD_W/2,y=q.y+CARD_H;
-                const dir=i%2?-1:1;
-                path(`M ${x} ${y-5} C ${x+dir*12} ${y+35}, ${x-dir*18} ${y+72}, ${x+dir*10} ${y+105}`,'url(#rtBranch)',7,{filter:'url(#rtShadow)'});
-                for(let j=0;j<6;j++){
-                    const lx=x+dir*(18+j*17),ly=y+35+(j%3)*25;
-                    add('ellipse',{cx:lx,cy:ly,rx:14,ry:9,fill:'url(#rtLeaf)',transform:`rotate(${dir*(j*18)} ${lx} ${ly})`,filter:'url(#rtShadow)',opacity:.95});
-                }
+                const x=q.x+CARD_W/2,y=q.y+CARD_H*.9,dir=i%2?-1:1;
+                path(`M ${x} ${y} C ${x+dir*18} ${y+35}, ${x-dir*22} ${y+78}, ${x+dir*5} ${y+118}`,'url(#rtBranch2)',7,{filter:'url(#rtShadow2)'});
+                leafCluster(x+dir*8,y+115,dir,9);
             });
 
-            // Small wood-burned generation labels on the trunk/branches, like the reference artwork.
+            // Generation text sits subtly on the trunk/wood, not as diagram lines.
             const gens=[...new Set(people.map(p=>Number(p.generation)||1))].sort((a,b)=>a-b);
             gens.forEach((g,i)=>{
-                const members=people.filter(p=>(Number(p.generation)||1)===g);
-                if(!members.length)return;
+                const members=people.filter(p=>(Number(p.generation)||1)===g); if(!members.length)return;
                 const q=positions.get(String(members[0]._id));if(!q)return;
-                const x=q.x+CARD_W/2,y=Math.max(60,q.y-22);
-                const t=add('text',{x,y,'text-anchor':'middle','font-size':'13','font-weight':'900',fill:'#4b2a15',opacity:.82});
-                t.textContent=`Generation ${g}`;
+                const gx=(q.x+CARD_W/2), gy=Math.max(70,q.y-35);
+                text(gx,gy,`Generation ${g}`,13,{opacity:.78});
             });
         }
 
