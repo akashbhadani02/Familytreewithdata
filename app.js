@@ -55,24 +55,6 @@ app.post("/api/family/start",upload.single("photo"),async(req,res)=>{
   }catch(e){res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 50MB allowed.":e.message})}
 });
 
-app.post("/api/family/:familyId/person",upload.single("photo"),async(req,res)=>{
-  try{
-    await connectDB();
-    const familyId=String(req.params.familyId||"").trim();
-    const parentId=String(req.body.parentId||"").trim();
-    const name=(req.body.name||"").trim();
-    if(!familyId||!parentId||!name) return res.status(400).json({ok:false,error:"Family, parent and name are required"});
-    const parent=await Person.findOne({_id:parentId,familyId});
-    if(!parent) return res.status(404).json({ok:false,error:"Parent member not found in this family"});
-    if(parent.generation>=13) return res.status(400).json({ok:false,error:"This family tree has reached the maximum of 13 generations."});
-    const p=await Person.create({
-      familyId,name,parentId:parent._id,generation:parent.generation+1,
-      photo:photoData(req.file),addToken:newToken()
-    });
-    res.json({ok:true,person:{_id:p._id,name:p.name,parentId:p.parentId,generation:p.generation,addToken:p.addToken},addLink:"/add/"+p.addToken});
-  }catch(e){res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 50MB allowed.":e.message})}
-});
-
 app.post("/api/add/:token",upload.single("photo"),async(req,res)=>{
   try{
     await connectDB();
@@ -96,59 +78,6 @@ app.get("/api/add/:token",async(req,res)=>{
     if(!p) return res.status(404).json({ok:false,error:"This link is not valid"});
     res.json({ok:true,parent:{name:p.name,generation:p.generation,familyId:p.familyId}});
   }catch(e){res.status(400).json({ok:false,error:e.message})}
-});
-
-
-// Public lineage search: find a person by name + father's name + grandfather's name,
-// then return the complete ancestor chain from the oldest available generation.
-app.post("/api/family/:familyId/search-lineage",async(req,res)=>{
-  try{
-    await connectDB();
-    const familyId=String(req.params.familyId||"").trim();
-    const name=String(req.body.name||"").trim();
-    const fatherName=String(req.body.fatherName||"").trim();
-    const grandfatherName=String(req.body.grandfatherName||"").trim();
-    if(!familyId) return res.status(400).json({ok:false,error:"Family ID is required."});
-    if(!name||!fatherName||!grandfatherName)
-      return res.status(400).json({ok:false,error:"Name, father name and grandfather name are required."});
-
-    const norm=s=>s.trim().replace(/\s+/g," ").toLowerCase();
-    const candidates=await Person.find({familyId,name:{$regex:"^"+name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"$",$options:"i"}})
-      .sort({generation:1,createdAt:1}).lean();
-
-    const matches=[];
-    for(const self of candidates){
-      const father=self.parentId ? await Person.findOne({_id:self.parentId,familyId}).lean() : null;
-      if(!father || norm(father.name)!==norm(fatherName)) continue;
-      const grandfather=father.parentId ? await Person.findOne({_id:father.parentId,familyId}).lean() : null;
-      if(!grandfather || norm(grandfather.name)!==norm(grandfatherName)) continue;
-
-      const chain=[];
-      let cur=self;
-      const seen=new Set();
-      while(cur && !seen.has(String(cur._id))){
-        seen.add(String(cur._id));
-        chain.push({
-          _id:cur._id,
-          name:cur.name,
-          photo:cur.photo||"",
-          generation:cur.generation
-        });
-        if(!cur.parentId) break;
-        cur=await Person.findOne({_id:cur.parentId,familyId}).lean();
-      }
-      chain.reverse();
-      matches.push({familyId:self.familyId,people:chain});
-      if(matches.length>=10) break;
-    }
-
-    if(!matches.length)
-      return res.status(404).json({ok:false,error:"આ નામ, પિતાનું નામ અને દાદાનું નામ મુજબ વંશાવળી મળી નથી."});
-
-    res.json({ok:true,matches});
-  }catch(e){
-    res.status(400).json({ok:false,error:e.message});
-  }
 });
 
 app.get("/api/family/:familyId",async(req,res)=>{
