@@ -1,384 +1,13 @@
-<!doctype html>
-<html lang="gu">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Family Tree Admin</title>
-    <style>
-        * {
-            box-sizing: border-box
-        }
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f7fb;
-            color: #203047
-        }
-        header {
-            background: #fff;
-            border-bottom: 1px solid #dce4ec;
-            padding: 16px;
-            text-align: center
-        }
-        header h1 {
-            margin: 0
-        }
-        .wrap {
-            max-width: 1250px;
-            margin: 18px auto;
-            padding: 0 14px
-        }
-        .panel {
-            background: #fff;
-            border: 1px solid #dce4ec;
-            border-radius: 16px;
-            padding: 18px;
-            box-shadow: 0 8px 28px #20304712;
-            margin-bottom: 18px
-        }
-        .row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center
-        }
-        input {
-            padding: 12px;
-            border: 1px solid #cbd6e2;
-            border-radius: 10px;
-            font-size: 15px
-        }
-        .btn {
-            padding: 11px 15px;
-            border: 0;
-            border-radius: 10px;
-            background: #315f91;
-            color: #fff;
-            font-weight: 800;
-            cursor: pointer
-        }
-        .btn.gray {
-            background: #e9eef4;
-            color: #30445b
-        }
-        .btn.danger {
-            background: #dc3545;
-            color: #fff
-        }
-        .btn.danger:hover {
-            filter: brightness(.95)
-        }
-        .families {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 12px
-        }
-        .family {
-            border: 1px solid #dce4ec;
-            border-radius: 12px;
-            padding: 14px
-        }
-        .family-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.family-actions .btn{flex:1;min-width:120px}.family b {
-            display: block;
-            margin-bottom: 6px
-        }
-        .treebox {
-            overflow: auto;
-            border: 1px solid #dce4ec;
-            border-radius: 14px;
-            height: 680px;
-            position: relative;
-            touch-action: auto;
-            -webkit-overflow-scrolling: touch
-        }
-        .tree-search{display:flex;gap:8px;max-width:620px;margin:0 auto 12px}.tree-search input{flex:1;padding:12px 14px;border:1px solid #cbd6e2;border-radius:10px;font-size:15px;outline:none}.tree-search input:focus{border-color:#315f91;box-shadow:0 0 0 3px #315f9118}.tree-search button{border:0;border-radius:10px;padding:12px 16px;background:#315f91;color:#fff;font-weight:800;cursor:pointer}.card.selfFound{background:#dff7e5!important;border-color:#69b77b!important;box-shadow:0 0 0 3px #9ad7a7,0 8px 24px #2e7d3230!important}.search-hint{text-align:center;font-size:12px;color:#718096;margin:-4px 0 10px}.tree-zoom-controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.tree-zoom-controls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.tree-zoom-controls button:hover{background:#f1f5f9}.tree-zoom-label{min-width:58px;text-align:center;font-weight:800;color:#315f91}.tree-layer{position:relative;transform-origin:0 0;will-change:transform}
-        .real-tree-open{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;z-index:99999!important;background:#fff!important;border-radius:0!important;border:0!important;padding:18px!important;box-shadow:none!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:auto!important;touch-action:pan-y!important}
-        .real-tree-open #treebox{height:auto!important;min-height:520px!important;border-radius:14px;background:#b9dcf0;overflow:visible!important;touch-action:auto!important;-webkit-overflow-scrolling:auto!important;position:relative!important;flex:none!important}
-        .real-tree-open #canvas{overflow:visible!important;position:relative!important}
-        .real-tree-open .tree-search,.real-tree-open .tree-zoom-controls,.real-tree-open .links-panel{display:flex!important;position:relative;z-index:20}
-        .real-tree-open .card{box-shadow:0 7px 24px #24384e24}
-.real-tree-open #treeLayer.real-natural-tree .card:nth-child(3n){transform:rotate(1.2deg)}
-        .real-tree-open #treeLayer.real-natural-tree .card:nth-child(4n){transform:rotate(-2deg)}
-        .real-tree-open #treeLayer.real-natural-tree .card img{display:none!important}
-        .real-tree-open #treeLayer.real-natural-tree .card b{font-family:Georgia,'Noto Sans Gujarati',Arial,sans-serif;font-size:17px!important;line-height:1.25;color:#2b160a!important;text-shadow:0 1px #f2cc8a}
-        .real-tree-open #treeLayer.real-natural-tree .card small{color:#4f2b16!important;font-weight:800;margin-top:5px}
-        .real-tree-open #treeLayer.real-natural-tree .tree-card-actions{grid-template-columns:1fr 1fr 1fr!important;gap:4px!important;margin-top:7px!important}
-        .real-tree-open #treeLayer.real-natural-tree .tree-card-actions .btn{padding:5px 3px!important;font-size:9px!important;border-radius:7px!important;background:#2e6b39!important;color:#fff!important}
-        .real-tree-open #treeLayer.real-natural-tree .tree-card-actions .btn.danger{grid-column:auto!important;background:#a33d2e!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg{
-            display:block!important;position:absolute!important;left:0!important;top:0!important;
-            z-index:1!important;overflow:visible!important;filter:none!important;
-            pointer-events:none!important;visibility:visible!important;opacity:1!important;
-        }
-        .real-tree-open #treeLayer.real-natural-tree #svg path{
-            fill:none!important;filter:drop-shadow(0 3px 2px #3c261633)!important;
-        }
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-trunk,
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-branch,
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-root,
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-twig{
-            vector-effect:non-scaling-stroke!important;
-            stroke-linecap:round!important;stroke-linejoin:round!important;
-        }
-        .real-tree-open #treeLayer.real-natural-tree #svg rect,.real-tree-open #treeLayer.real-natural-tree #svg ellipse,.real-tree-open #treeLayer.real-natural-tree #svg circle,.real-tree-open #treeLayer.real-natural-tree #svg text{pointer-events:none!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg text{font-family:Georgia,'Noto Sans Gujarati',Arial,sans-serif}
-        .real-tree-close{background:#dc3545!important;color:#fff!important}
-        .real-tree-open #treeLayer.real-natural-tree #cards{display:none!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg{z-index:5!important;display:block!important;visibility:visible!important;opacity:1!important;overflow:visible!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg path.rt-trunk{stroke-linecap:round!important;stroke-linejoin:round!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg path.rt-branch{stroke-linecap:round!important;stroke-linejoin:round!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg path.rt-main-branch{stroke-linecap:round!important;stroke-linejoin:round!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg path.rt-root{stroke-linecap:round!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg path.rt-twig{stroke-linecap:round!important}
-        .real-tree-open #treeLayer.real-natural-tree{
-            background:linear-gradient(#a9d7ee 0%,#dcefcf 62%,#78ad54 100%)!important;
-            overflow:visible!important;
-        }
-        .real-tree-open #treeLayer.real-natural-tree #svg{
-            width:100%!important;height:100%!important;
-            min-width:100%!important;min-height:100%!important;
-            background:transparent!important;
-            display:block!important;visibility:visible!important;opacity:1!important;
-        }
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-trunk{stroke-width:150px!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-main-branch{stroke-width:34px!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-branch{stroke-width:18px!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-twig{stroke-width:7px!important}
-        .real-tree-open #treeLayer.real-natural-tree{position:relative!important;overflow:visible!important;background:transparent!important;}
-        .real-tree-open #treeLayer.real-natural-tree #realTreeCanvas{display:block!important;visibility:visible!important;opacity:1!important;z-index:50!important;position:absolute!important;left:0!important;top:0!important;pointer-events:none!important;}
-        .real-tree-open #treeLayer.real-natural-tree #svg{display:none!important;visibility:hidden!important;}
-        .real-tree-open #treeLayer.real-natural-tree #cards{display:none!important;visibility:hidden!important;}
-        .real-tree-open #treeLayer.real-natural-tree::after{display:none!important;}
-        .canvas {
-            position: relative;
-            width: 7000px;
-            height: 5000px;
-            background: #fbfcfe
-        }
-        .card {
-            position: absolute;
-            width: 210px;
-            height: 245px;
-            box-sizing: border-box;
-            background: #fff;
-            border: 1px solid #cbd7e4;
-            border-radius: 14px;
-            padding: 10px;
-            text-align: center;
-            box-shadow: 0 5px 18px #24384e18;
-            z-index: 2
-        }
-        .card img {
-            width: 62px;
-            height: 62px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #e0e7ef
-        }
-        .card b {
-            display: block;
-            font-size: 14px;
-            margin-top: 6px
-        }
-        .card small {
-            display: block;
-            color: #718096;
-            font-size: 10px;
-            margin-top: 3px
-        }
-        #svg { pointer-events:none; }
-        #svg path {
-            stroke: #64748b !important;
-            stroke-width: 5 !important;
-            stroke-linecap: butt;
-            stroke-linejoin: miter;
-            fill: none !important;
-        }
-        .treebox { -webkit-overflow-scrolling: touch; }
-        @media (max-width: 1100px) {
-            .member-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
-        }
-        @media (max-width: 820px) {
-            .member-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
-            #viewer > .row:first-child {
-                display:flex!important;
-                flex-wrap:wrap!important;
-                align-items:center!important;
-                gap:8px!important;
-            }
-            #viewer > .row:first-child h2 {
-                width:100%!important;
-                flex:0 0 100%!important;
-            }
-            .tree-search {
-                display:flex!important;
-                flex-wrap:wrap!important;
-                gap:7px!important;
-            }
-            .tree-search input { flex:1 1 220px!important; min-width:0!important; }
-            .tree-zoom-controls {
-                display:flex!important;
-                flex-wrap:wrap!important;
-                justify-content:center!important;
-                gap:7px!important;
-            }
-            .search-hint {
-                display:block!important;
-                width:100%!important;
-                text-align:center!important;
-                margin:7px 0!important;
-            }
-        }
-        @media (max-width: 700px) {
-            header h1 { font-size: 20px; }
-            .wrap { padding: 0 8px; margin: 10px auto; }
-            .panel { padding: 12px; border-radius: 12px; }
-            .treebox { height: 560px; }
-            .canvas { width: 7000px; height: 5000px; }
-            .card { width: 190px; }
-            #svg path { stroke-width: 5 !important; }
-            .member-list { grid-template-columns:1fr!important; }
-            .member-item { padding:11px; }
-            .row .btn { min-height: 42px; }
-        }
-        .empty {
-            padding: 30px;
-            text-align: center;
-            color: #718096
-        }
-        .danger {
-            background: #b53a3a
-        }
-        .tree-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}.tree-card-actions .btn{width:100%;padding:8px 5px;font-size:11px}.tree-card-actions .btn.danger{grid-column:1/-1}
-        .member-tools { margin-top:8px; padding-top:8px; border-top:1px solid #edf1f5; }
-        .member-link { width:100%; font-size:11px; padding:8px; border:1px solid #d8e1eb; border-radius:8px; background:#f7f9fc; }
-        .tool-row { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
-        .tool-row .btn { padding:7px 9px; font-size:11px; }
-        .links-panel {
-            margin-top:16px;
-            border-top:1px solid #e2e8f0;
-            padding:16px 0 8px;
-            width:100%;
-            display:block!important;
-            clear:both;
-        }
-        .links-panel h3 {
-            display:block!important;
-            width:100%;
-            margin:0 0 6px!important;
-        }
-        .links-panel > div:first-of-type {
-            display:block!important;
-            width:100%;
-            clear:both;
-            line-height:1.5;
-        }
-        .member-list {
-            display:grid!important;
-            grid-template-columns:repeat(4,minmax(0,1fr));
-            gap:12px;
-            width:100%;
-            margin:14px 0 0!important;
-            align-items:stretch;
-        }
-        .member-item {
-            min-width:0;
-            box-sizing:border-box;
-            border:1px solid #dce4ec;
-            border-radius:12px;
-            padding:12px;
-            background:#fbfcfe;
-            overflow:hidden;
-        }
-        .member-item .name {
-            font-weight:800;
-            display:block;
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-        }
-        .member-item small { color:#718096; display:block; margin:3px 0 8px; }
-        .member-item .member-link {
-            box-sizing:border-box;
-            display:block;
-            max-width:100%;
-            overflow:hidden;
-            text-overflow:ellipsis;
-        }
-        .status {
-            margin-top: 10px;
-            color: #315f91;
-            font-size: 13px
-        }
-    </style>
-<style id="photoChoicePopupStyle">
-.photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:99999;align-items:center;justify-content:center;padding:20px}
-.photo-choice-overlay.show{display:flex}
-.photo-choice-box{width:min(360px,100%);background:#fff;border-radius:20px;padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.28);text-align:center}
-.photo-choice-box h3{margin:0 0 8px;font-size:20px}
-.photo-choice-box p{margin:0 0 18px;color:#666;font-size:14px}
-.photo-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.photo-choice-btn{border:0;border-radius:13px;padding:14px 10px;font-size:15px;font-weight:700;cursor:pointer}
-.photo-camera{background:#eef5ff;color:#1769d2}
-.photo-gallery{background:#edf9f0;color:#16833b}
-.photo-cancel{margin-top:12px;width:100%;background:#f2f2f2;color:#555}
-.photo-choice-input{display:none!important}
-        #realTreeBottomClose{display:none!important;text-align:center;padding:18px 10px 28px;position:relative;z-index:100;clear:both;}
-        .real-tree-open #realTreeBottomClose{display:block!important;width:100%!important;box-sizing:border-box!important;}
-        .real-tree-open #realTreeBtn{display:none!important;}
-        @media(max-width:700px){
-            .real-tree-open{padding:8px!important;overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y!important;}
-            .real-tree-open #treebox{height:auto!important;min-height:420px!important;overflow:visible!important;touch-action:auto!important;}
-            .real-tree-open #realTreeBottomClose{padding:22px 10px 40px!important;}
-            .real-tree-open #realTreeBottomClose .btn{width:min(92vw,320px)!important;font-size:15px!important;padding:12px 18px!important;display:inline-flex!important;justify-content:center!important;}
-        }
-</style>
-</head>
-<body>
-    <header>
-        <h1>🌳 Family Tree Admin</h1>
-    </header>
-    <div class="wrap">
-        <div id="login" class="panel">
-            <h2>Admin Login</h2>
-            <div class="row"><input id="key" type="password" placeholder="Admin password"><button class="btn"
-                    onclick="login()">Login</button></div>
-            <div class="status">Admin password: call on 9106141725 </div>
-        </div>
-        <div id="app" style="display:none">
-            <div class="panel">
-                <div class="row"><button class="btn" onclick="loadFamilies()">🔄 Refresh</button><button class="btn" onclick="createFamily()">➕ નવી Family બનાવો</button><button
-                        class="btn gray" onclick="logout()">Logout</button></div>
-                <div id="families" class="families" style="margin-top:14px"></div>
-            </div>
-            <div id="viewer" class="panel" style="display:none">
-                <div class="row">
-                    <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button id="realTreeBtn" class="btn" onclick="toggleRealTreeView()">🌳 Real Tree View</button><button class="btn" onclick="downloadPNG()">🖼️ Download PNG</button><button class="btn" onclick="downloadTreePDF()">📄 Download PDF</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ આખી Tree Delete</button>
-                </div>
-                <div class="tree-search"><input id="treeSearchInput" type="text" placeholder="🔎 તમારું નામ શોધો..." autocomplete="off" oninput="searchAdminTree(this.value)" onkeydown="if(event.key==='Enter')searchAdminTree(this.value,true)"><button type="button" onclick="clearAdminTreeSearch()">Clear</button></div><div id="treeSearchHint" class="search-hint">તમારું નામ લખો — તમારું card light green થશે.</div><div class="tree-zoom-controls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="tree-zoom-label">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div>
-                <div id="treebox" class="treebox">
-                    <div id="canvas" class="canvas"><div id="treeLayer" class="tree-layer"><svg id="svg" width="8000" height="4500"
-                            style="position:absolute;left:0;top:0;z-index:1"></svg>
-                        <div id="cards"></div>
-                    </div></div>
-                </div>
-                <div id="realTreeBottomClose" class="real-tree-bottom-close"><button type="button" class="btn danger" onclick="toggleRealTreeView()">✕ Close Tree View</button></div>
-                <div class="links-panel">
-                    <h3 style="margin:0">🔗 બધા Members ની Links</h3>
-                    <div style="font-size:13px;color:#718096;margin-top:5px">Admin અહીંથી કોઈપણ member નું નામ બદલી શકે છે અને તેની link copy/share કરી શકે છે. Name બદલવાથી link બદલાશે નહીં.</div>
-                    <div id="memberLinks" class="member-list"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script>
+
         let key = localStorage.getItem('adminKey') || '';
         let people = [];
         let currentFamilyId = '';
         let treeZoom=1; let pinchStartDistance=0; let pinchStartZoom=1;
         const $ = id => document.getElementById(id);
+
         function showAdminApp(){ $('login').style.display='none'; $('app').style.display='block'; }
         function showLogin(){ $('app').style.display='none'; $('login').style.display='block'; }
+
         async function login(){
             const entered=$('key').value.trim();
             if(!entered) return alert('Admin password નાખો.');
@@ -388,6 +17,7 @@
             else { localStorage.removeItem('adminKey'); key=''; }
         }
         function logout(){ key=''; localStorage.removeItem('adminKey'); currentFamilyId=''; location.reload(); }
+
         async function checkAdmin(){
             try{
                 const r=await fetch('/api/admin/families',{headers:{'x-admin-key':key}});
@@ -397,6 +27,7 @@
                 return false;
             }catch(e){ alert('Server connection error.'); return false; }
         }
+
         async function loadFamilies(){
             if(!key){showLogin();return;}
             try{
@@ -415,9 +46,12 @@
                 }
             }catch(e){alert('Families load error: '+e.message);}
         }
+
         async function prepareAdminPhoto(file){
     if(!file) return null;
     if(!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type)) throw new Error('માત્ર image photo પસંદ કરો.');
+    // Vercel serverless requests have a much smaller practical request limit than 50MB.
+    // Accept up to 50MB from the phone, then compress it in the browser before upload.
     if(file.size <= 900*1024 && /^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
     return await new Promise((resolve,reject)=>{
         const img=new Image(); const url=URL.createObjectURL(file);
@@ -436,6 +70,7 @@
         img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Invalid photo'))}; img.src=url;
     });
 }
+
 async function createFamily(){
             const name=prompt('નવી Family માટે પ્રથમ સભ્યનું પૂરું નામ લખો:');
             if(!name||!name.trim())return;
@@ -446,6 +81,7 @@ async function createFamily(){
                 await loadFamilies(); await viewFamily(d.familyId);
             }catch(e){alert('Create error: '+e.message);}
         }
+
         async function deleteFamily(id){
             if(!confirm('આ Family ની આખી Tree અને બધા members કાયમ માટે delete કરવાના છે?'))return;
             try{
@@ -456,6 +92,7 @@ async function createFamily(){
             }catch(e){alert('Delete error: '+e.message);}
         }
         async function deleteCurrentFamily(){if(currentFamilyId)await deleteFamily(currentFamilyId);}
+
         async function viewFamily(id){
             currentFamilyId=id;
             try{
@@ -467,6 +104,7 @@ async function createFamily(){
                 setTimeout(focusTreeRoot,150);
             }catch(e){alert('Tree load error: '+e.message);}
         }
+
         async function renderTree(){
             const cards=$('cards'), svg=$('svg'), canvas=$('canvas');
             cards.innerHTML=''; svg.innerHTML='';
@@ -477,6 +115,7 @@ async function createFamily(){
             children.forEach(a=>a.sort((x,y)=>(x.generation-y.generation)||new Date(x.createdAt)-new Date(y.createdAt)));
             const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>a.generation-b.generation)[0];
             if(!root){return;}
+
             const CARD_W=210, CARD_H=245, H_GAP=38, V_GAP=95, PAD_X=80, PAD_Y=50;
             const widths=new Map();
             function width(id){
@@ -501,6 +140,7 @@ async function createFamily(){
             const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
             canvas.dataset.baseWidth=maxX; canvas.dataset.baseHeight=maxY; applyTreeZoom(maxX,maxY);
             svg.setAttribute('width',maxX); svg.setAttribute('height',maxY);
+
             const localized={};
             people.forEach(p=>{localized[String(p._id)]=p.name});
             people.forEach(p=>{
@@ -510,6 +150,9 @@ async function createFamily(){
                 d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tree-card-actions"><button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add</button><button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button><button type="button" class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
                 d.onpointerdown=e=>{if(e.target.closest('button,input,a'))e.stopPropagation()};cards.appendChild(d);
             });
+
+            // Card-to-card joined connectors: every line touches the exact bottom/top edge.
+            // For multiple children, one horizontal bus joins all child branches.
             const grouped=new Map();
             people.forEach(p=>{
                 if(!p.parentId)return;
@@ -533,6 +176,7 @@ async function createFamily(){
             });
             renderMemberLinks();
         }
+
         function drawLine(svg,x1,y1,x2,y2){
             const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');
             p.setAttribute('d',`M${x1} ${y1} L${x2} ${y2}`);
@@ -543,6 +187,7 @@ async function createFamily(){
             p.setAttribute('stroke-linejoin','miter');
             svg.appendChild(p);
         }
+
         function updateTreeZoomLabel(){const el=$('treeZoomLabel');if(el)el.textContent=Math.round(treeZoom*100)+'%'}
         function applyTreeZoom(baseW,baseH){const canvas=$('canvas'),layer=$('treeLayer');if(!canvas||!layer)return;const w=Number(baseW||canvas.dataset.baseWidth||canvas.offsetWidth||1000),h=Number(baseH||canvas.dataset.baseHeight||canvas.offsetHeight||900);canvas.dataset.baseWidth=w;canvas.dataset.baseHeight=h;canvas.style.width=(w*treeZoom)+'px';canvas.style.height=(h*treeZoom)+'px';layer.style.width=w+'px';layer.style.height=h+'px';layer.style.transform='scale('+treeZoom+')';updateTreeZoomLabel()}
         function searchAdminTree(value,focus=false){
@@ -565,12 +210,14 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
  box.addEventListener('wheel',e=>{e.preventDefault();const r=box.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;setTreeZoom(treeZoom+(e.deltaY<0?.08:-.08),x,y)},{passive:false});
  box.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button!==0)return;drag=true;lastX=e.clientX;lastY=e.clientY;box.classList.add('dragging');box.setPointerCapture?.(e.pointerId)});box.addEventListener('pointermove',e=>{if(!drag)return;box.scrollLeft-=e.clientX-lastX;box.scrollTop-=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY});['pointerup','pointercancel'].forEach(t=>box.addEventListener(t,()=>{drag=false;box.classList.remove('dragging')}));
  box.addEventListener('touchstart',e=>{if(e.touches.length===2){e.preventDefault();const c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();pinchStartDistance=treeZoomDistance(e.touches[0],e.touches[1]);pinchStartZoom=treeZoom;pinchWorldX=(box.scrollLeft+c.x-r.left)/treeZoom;pinchWorldY=(box.scrollTop+c.y-r.top)/treeZoom}},{passive:false});box.addEventListener('touchmove',e=>{if(e.touches.length!==2||!pinchStartDistance)return;e.preventDefault();const d=treeZoomDistance(e.touches[0],e.touches[1]),c=treeZoomCenter(e.touches[0],e.touches[1]),r=box.getBoundingClientRect();treeZoom=Math.max(.35,Math.min(2.5,pinchStartZoom*(d/pinchStartDistance)));applyTreeZoom();requestAnimationFrame(()=>{box.scrollLeft=Math.max(0,pinchWorldX*treeZoom-(c.x-r.left));box.scrollTop=Math.max(0,pinchWorldY*treeZoom-(c.y-r.top))})},{passive:false});box.addEventListener('touchend',e=>{if(e.touches.length<2)pinchStartDistance=0},{passive:false})}
+
         function focusTreeRoot(){
             const box=$('treebox'), root=people.find(p=>!p.parentId);
             if(!box||!root)return;
             const card=[...$('cards').children].find(el=>el.querySelector('b')?.textContent===root.name);
             if(card)box.scrollTo({left:Math.max(0,card.offsetLeft-box.clientWidth/2+card.offsetWidth/2),top:Math.max(0,card.offsetTop-20),behavior:'smooth'});
         }
+
         async function renderMemberLinks(){
             const box=$('memberLinks'); box.innerHTML='';
             const localized={}; people.forEach(p=>{localized[String(p._id)]=p.name});
@@ -582,11 +229,13 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         }
         function addLink(token){return location.origin+'/add/'+token;}
         async function copyLink(link){try{await navigator.clipboard.writeText(link);alert('Link copy થઈ ગઈ.');}catch(e){prompt('Link copy કરો:',link);}}
+
         function openAdminMemberLink(token){
             if(!token) return alert('આ member ની link ઉપલબ્ધ નથી.');
             const link=location.origin+'/add/'+encodeURIComponent(token);
             window.open(link,'_blank','noopener,noreferrer');
         }
+
         async function adminAddChild(parentId,parentName,btn){
             if(btn && btn.disabled) return;
             if(btn){
@@ -599,71 +248,220 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             try{
                 const name=prompt('"'+parentName+'" ના નીચે જે સભ્ય ઉમેરવો છે તેનું નામ લખો:');
                 if(!name || !name.trim()) return;
+
                 const wantPhoto=confirm('શું આ Child માટે ફોટો પણ ઉમેરવો છે?\\n\\nOK = હા, Camera / Gallery પસંદ કરો\\nCancel = ના, ફક્ત નામ add કરો');
                 let file=null;
+
                 if(wantPhoto){
                     const input=document.createElement('input');
                     input.type='file';
-                    input.accept='image
+                    input.accept='image/*';
+                    input.style.display='none';
+                    input.id='adminTreeTempPhotoInput';
+                    document.body.appendChild(input);
+
+                    const photoPromise=new Promise((resolve,reject)=>{
+                        let done=false;
+                        const finish=(f)=>{
+                            if(done)return;
+                            done=true;
+                            input.removeEventListener('change',onChange);
+                            if(f) resolve(f); else reject(new Error('ફોટો પસંદ કરવામાં આવ્યો નથી.'));
+                        };
+                        const onChange=()=>finish(input.files && input.files[0] ? input.files[0] : null);
+                        input.addEventListener('change',onChange);
+                        setTimeout(()=>{ if(!done){ done=true; input.removeEventListener('change',onChange); reject(new Error('Photo selection cancelled.')); } },120000);
+                    });
+
+                    if(typeof openPhotoChoice==='function'){
+                        openPhotoChoice(input);
+                    }else{
+                        input.click();
+                    }
+
+                    try{
+                        file=await photoPromise;
+                    }finally{
+                        input.remove();
+                    }
+
+                    if(!file) throw new Error('ફોટો પસંદ કરો.');
+                    if(file.size>50*1024*1024) throw new Error('Photo maximum 50MB હોવો જોઈએ.');
+                    if(!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type)){
+                        throw new Error('માત્ર image photo પસંદ કરો.');
+                    }
+                }
+
+                const fd=new FormData();
+                fd.append('name',name.trim());
+                if(file){ file=await prepareAdminPhoto(file); fd.append('photo',file); }
+
+                const r=await fetch('/api/admin/person/'+encodeURIComponent(parentId)+'/add',{
+                    method:'POST',
+                    headers:{'x-admin-key':key},
+                    body:fd
+                });
+                const raw=await r.text(); let d; try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}
+                if(!r.ok || !d.ok) throw new Error(d.error||'Member add થયો નથી');
+
+                await viewFamily(currentFamilyId);
+                await loadFamilies();
+
+                const link=location.origin+d.addLink;
+                alert('✅ '+name.trim()+' સફળતાપૂર્વક Family Tree માં add થઈ ગયો!'+(file?'\\n📷 Photo પણ save થઈ ગયો.':''));
+                prompt('નવો member add થઈ ગયો. તેની link copy કરો:',link);
+            }catch(e){
+                if(e && e.message!=='Photo selection cancelled.')
+                    alert('❌ '+e.message);
+            }finally{
+                if(btn){
+                    btn.disabled=false;
+                    btn.textContent=btn.dataset.oldText||'➕ Add Child';
+                    btn.style.opacity='1';
+                    btn.style.cursor='pointer';
+                }
+            }
+        }
+
+        async function editName(id){
+            const p=people.find(x=>String(x._id)===String(id)); if(!p)return;
+            const name=prompt('નવું નામ:',p.name); if(name===null||!name.trim()||name.trim()===p.name)return;
+            try{
+                const r=await fetch('/api/admin/person/'+encodeURIComponent(id),{method:'PUT',headers:{'Content-Type':'application/json','x-admin-key':key},body:JSON.stringify({name:name.trim()})});
+                const d=await r.json(); if(!r.ok||!d.ok)return alert(d.error||'Name update થઈ નથી');
+                await viewFamily(currentFamilyId);
+            }catch(e){alert('Name update error: '+e.message);}
+        }
+
+        async function deleteMember(id){
+            const p=people.find(x=>String(x._id)===String(id)); if(!p)return;
+            if(!confirm('"'+p.name+'" અને તેની નીચેની આખી branch delete કરવી છે?'))return;
+            try{
+                const r=await fetch('/api/admin/person/'+encodeURIComponent(id),{method:'DELETE',headers:{'x-admin-key':key}}); const d=await r.json();
+                if(!r.ok||!d.ok)return alert(d.error||'Member delete થયો નથી');
+                await viewFamily(currentFamilyId); await loadFamilies();
+            }catch(e){alert('Member delete error: '+e.message);}
+        }
+
+        function avatar(n){return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n||'?')[0].toUpperCase()}</text></svg>`);}
+        function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+        function escAttr(v){return String(v??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+        function drawRealTreeStructure(){
+    const layer = $('treeLayer'), normalSvg = $('svg'), baseCanvas = $('canvas');
+    if(!layer || !baseCanvas || !people.length) return;
+
+    layer.classList.add('real-natural-tree');
+    if(normalSvg) normalSvg.style.display = 'none';
+
+    const cards = $('cards');
+    if(cards) cards.style.display = 'none';
+
+    let tc = $('realTreeCanvas');
+    if(!tc){
+        tc = document.createElement('canvas');
+        tc.id = 'realTreeCanvas';
+        layer.appendChild(tc);
+    }
+
+    const children = new Map();
+    people.forEach(p=>{
+        const pid = p.parentId ? String(p.parentId) : '';
+        if(!children.has(pid)) children.set(pid, []);
+        children.get(pid).push(p);
+    });
+
+    const generation = p => Number(p.generation) || 1;
+
+    /* Find the real root. If several generation-1 people exist,
+       use the first parentless person as the trunk owner. */
     const root =
         people.find(p => !p.parentId) ||
         people.slice().sort((a,b)=>generation(a)-generation(b))[0];
+
     if(!root) return;
+
     children.forEach(list=>{
         list.sort((a,b)=>
             String(a.name||'').localeCompare(String(b.name||''), 'gu')
         );
     });
+
     const maxGen = Math.max(...people.map(generation), 1);
+
+    /*
+      Natural tree layout:
+      - root at the bottom
+      - every generation moves upward
+      - every child gets its own branch
+      - subtree widths keep siblings separated
+    */
     const levelGap = Math.max(245, Math.min(310, 275 + maxGen*4));
     const leafGap = 250;
+
     const subtree = new Map();
+
     function measure(p){
         const id = String(p._id);
         if(subtree.has(id)) return subtree.get(id);
+
         const kids = children.get(id) || [];
         if(!kids.length){
             subtree.set(id, leafGap);
             return leafGap;
         }
+
         let total = 0;
         kids.forEach((c,i)=>{
             total += measure(c);
             if(i < kids.length-1) total += 75;
         });
+
         total = Math.max(total, leafGap);
         subtree.set(id,total);
         return total;
     }
+
     measure(root);
+
     const treeWidth = Math.max(
         1800,
         Math.min(10000, subtree.get(String(root._id)) + 700)
     );
+
     const treeHeight = Math.max(
         1900,
         620 + maxGen * levelGap
     );
+
     const pos = new Map();
+
     function place(p, x){
         const g = generation(p);
         const y = treeHeight - 250 - (g-1)*levelGap;
+
         pos.set(String(p._id), {x,y});
+
         const kids = children.get(String(p._id)) || [];
         if(!kids.length) return;
+
         let total = 0;
         kids.forEach((c,i)=>{
             total += measure(c);
             if(i < kids.length-1) total += 75;
         });
+
         let cursor = x - total/2;
+
         kids.forEach(c=>{
             const w = measure(c);
             place(c, cursor + w/2);
             cursor += w + 75;
         });
     }
+
     place(root, treeWidth/2);
+
+    /* Canvas sizing */
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
     tc.width = Math.round(treeWidth*dpr);
     tc.height = Math.round(treeHeight*dpr);
@@ -679,31 +477,43 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
     tc.style.pointerEvents = 'none';
     tc.style.maxWidth = 'none';
     tc.style.maxHeight = 'none';
+
     layer.style.width = treeWidth + 'px';
     layer.style.minWidth = treeWidth + 'px';
     layer.style.minHeight = treeHeight + 'px';
     layer.style.height = treeHeight + 'px';
+
     baseCanvas.style.width = treeWidth + 'px';
     baseCanvas.style.height = treeHeight + 'px';
     baseCanvas.dataset.baseWidth = treeWidth;
     baseCanvas.dataset.baseHeight = treeHeight;
+
+    /* The whole Real Tree is one page-sized document.
+       Do NOT put a second scroll box around the tree. This lets
+       desktop and mobile scroll all the way to the bottom Close button. */
     const treebox = $('treebox');
     if(treebox){
         treebox.style.height = treeHeight + 'px';
         treebox.style.minHeight = treeHeight + 'px';
         treebox.style.overflow = 'visible';
     }
+
     layer.style.transform = 'scale(' + treeZoom + ')';
     updateTreeZoomLabel();
+
     const ctx = tc.getContext('2d');
     ctx.setTransform(dpr,0,0,dpr,0,0);
     ctx.clearRect(0,0,treeWidth,treeHeight);
+
+    /* ---------- background ---------- */
     const sky = ctx.createLinearGradient(0,0,0,treeHeight);
     sky.addColorStop(0,'#9bd8f5');
     sky.addColorStop(.48,'#dff1d0');
     sky.addColorStop(1,'#8fb65c');
     ctx.fillStyle = sky;
     ctx.fillRect(0,0,treeWidth,treeHeight);
+
+    /* soft clouds */
     function cloud(x,y,s){
         ctx.save();
         ctx.fillStyle='rgba(255,255,255,.58)';
@@ -716,9 +526,13 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
     }
     cloud(treeWidth*.16,120,1.0);
     cloud(treeWidth*.78,170,.9);
+
+    /* ground */
     const groundY = treeHeight-115;
     ctx.fillStyle='#5f9345';
     ctx.fillRect(0,groundY,treeWidth,treeHeight-groundY);
+
+    /* ---------- drawing helpers ---------- */
     function woodGradient(x1,y1,x2,y2){
         const g=ctx.createLinearGradient(x1,y1,x2,y2);
         g.addColorStop(0,'#35190c');
@@ -729,8 +543,11 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         g.addColorStop(1,'#2d1409');
         return g;
     }
+
     function strokeCurve(x1,y1,c1x,c1y,c2x,c2y,x2,y2,width){
         ctx.save();
+
+        /* dark outline */
         ctx.beginPath();
         ctx.moveTo(x1,y1);
         ctx.bezierCurveTo(c1x,c1y,c2x,c2y,x2,y2);
@@ -738,6 +555,8 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         ctx.lineWidth=width+10;
         ctx.lineCap='round';
         ctx.stroke();
+
+        /* wood */
         ctx.beginPath();
         ctx.moveTo(x1,y1);
         ctx.bezierCurveTo(c1x,c1y,c2x,c2y,x2,y2);
@@ -745,14 +564,18 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         ctx.lineWidth=width;
         ctx.lineCap='round';
         ctx.stroke();
+
+        /* natural highlight */
         ctx.beginPath();
         ctx.moveTo(x1-width*.08,y1);
         ctx.bezierCurveTo(c1x-width*.04,c1y-3,c2x-width*.04,c2y-3,x2-width*.03,y2-2);
         ctx.strokeStyle='rgba(239,174,101,.38)';
         ctx.lineWidth=Math.max(2,width*.11);
         ctx.stroke();
+
         ctx.restore();
     }
+
     function twig(x1,y1,x2,y2,width){
         ctx.save();
         ctx.beginPath();
@@ -768,6 +591,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         ctx.stroke();
         ctx.restore();
     }
+
     function leaf(x,y,rx,ry,angle,color){
         ctx.save();
         ctx.translate(x,y);
@@ -778,6 +602,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         ctx.fill();
         ctx.restore();
     }
+
     function foliage(x,y,scale=1){
         const colors=['#2e6e2d','#3f8736','#5da447','#78b84f','#98c95a'];
         const pts=[
@@ -800,51 +625,70 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             );
         });
     }
+
     const drawnPlaques = new Set();
+
     function plaque(p,x,y,small=false){
         const pid=String(p._id||'');
         if(pid && drawnPlaques.has(pid)) return;
         if(pid) drawnPlaques.add(pid);
+
         const name=String(p.name||'').trim();
         if(!name) return;
+
         ctx.save();
+
         const fontSize = small ? 15 : 18;
         ctx.font='800 '+fontSize+'px Arial, "Noto Sans Gujarati", sans-serif';
+
         const label =
             name.length>24 ? name.slice(0,23)+'…' : name;
+
         const w=Math.max(
             145,
             Math.min(290,ctx.measureText(label).width+42)
         );
         const h=small ? 48 : 58;
+
         ctx.shadowColor='rgba(30,15,5,.35)';
         ctx.shadowBlur=9;
         ctx.shadowOffsetY=5;
+
         ctx.fillStyle='#c98543';
         ctx.strokeStyle='#5b3218';
         ctx.lineWidth=4;
+
         ctx.beginPath();
         ctx.roundRect(x-w/2,y-h/2,w,h,12);
         ctx.fill();
         ctx.stroke();
+
         ctx.shadowColor='transparent';
+
         ctx.fillStyle='#2d1609';
         ctx.textAlign='center';
         ctx.textBaseline='middle';
         ctx.fillText(label,x,y-5);
+
         ctx.font='700 11px Arial';
         ctx.fillStyle='#5b3218';
         ctx.fillText('Generation '+generation(p),x,y+17);
+
         ctx.restore();
     }
+
+    /* ---------- roots ---------- */
     const rootPos=pos.get(String(root._id));
     const trunkBaseX=rootPos.x;
     const trunkTopY=rootPos.y+75;
+
     for(let i=0;i<9;i++){
         const dir=i<4?-1:(i>4?1:0);
         if(!dir) continue;
+
         const n=Math.abs(i-4);
         const endX=trunkBaseX+dir*(130+n*48);
+
         strokeCurve(
             trunkBaseX+dir*20,
             groundY+10,
@@ -857,6 +701,8 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             Math.max(7,18-n*2)
         );
     }
+
+    /* ---------- main trunk ---------- */
     strokeCurve(
         trunkBaseX-105,
         groundY+10,
@@ -868,6 +714,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         trunkTopY,
         95
     );
+
     strokeCurve(
         trunkBaseX+105,
         groundY+10,
@@ -879,6 +726,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         trunkTopY,
         95
     );
+
     strokeCurve(
         trunkBaseX,
         groundY,
@@ -890,6 +738,8 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         trunkTopY-5,
         105
     );
+
+    /* bark texture */
     for(let i=-5;i<=5;i++){
         ctx.beginPath();
         ctx.moveTo(trunkBaseX+i*12,groundY-10);
@@ -903,13 +753,21 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         ctx.lineWidth=3;
         ctx.stroke();
     }
+
+    /* ---------- recursive branches ---------- */
     function drawPersonBranch(parent){
         const pp=pos.get(String(parent._id));
         if(!pp) return;
+
         const kids=children.get(String(parent._id))||[];
+
+        /* Every person owns exactly one plaque.
+           Root is handled separately below, so skip it here. */
         if(String(parent._id)!==String(root._id)){
             plaque(parent,pp.x,pp.y+72,false);
         }
+
+        /* leaf generation: branch + foliage + name */
         if(!kids.length){
             const side=(pp.x>=treeWidth/2?1:-1);
             twig(
@@ -922,22 +780,32 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             foliage(pp.x+side*78,pp.y-105,.85);
             return;
         }
+
         kids.forEach((child,index)=>{
             const cp=pos.get(String(child._id));
             if(!cp) return;
+
             const dx=cp.x-pp.x;
             const side=dx>=0?1:-1;
             const distance=Math.abs(dx);
+
             const startY=pp.y-15;
             const endY=cp.y+28;
+
             const curve=Math.max(
                 100,
                 Math.min(300,distance*.42)
             );
+
             const width=Math.max(
                 10,
                 34-(generation(parent)-1)*4
             );
+
+            /*
+              Branch starts from parent and bends naturally
+              toward the child, not as a straight line.
+            */
             strokeCurve(
                 pp.x,
                 startY,
@@ -949,9 +817,15 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 endY,
                 width
             );
+
+            /*
+              Side twig with leaves makes every branch
+              look like a real tree rather than a diagram.
+            */
             const twigSide=index%2===0?-1:1;
             const tx=cp.x+twigSide*55;
             const ty=cp.y-55;
+
             twig(
                 cp.x,
                 cp.y,
@@ -959,17 +833,27 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 ty,
                 Math.max(5,width*.28)
             );
+
             foliage(tx,ty-18,.65);
+
+            /* The recursive call owns the child plaque.
+               Drawing it here would create a duplicate card for
+               every child that is also rendered as a leaf. */
             drawPersonBranch(child);
         });
     }
+
+    /* ---------- root generation branches ---------- */
     const rootKids=children.get(String(root._id))||[];
+
     rootKids.forEach((child,index)=>{
         const cp=pos.get(String(child._id));
         if(!cp) return;
+
         const dx=cp.x-trunkBaseX;
         const side=dx>=0?1:-1;
         const distance=Math.abs(dx);
+
         strokeCurve(
             trunkBaseX,
             trunkTopY+25,
@@ -981,19 +865,27 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             cp.y+30,
             50
         );
+
         foliage(
             cp.x-side*30,
             cp.y-40,
             1
         );
+
+        /* The recursive renderer below draws the child plaque once.
+           Do not draw it here again, otherwise the child gets a double card. */
         drawPersonBranch(child);
     });
+
+    /* Root's own name is placed inside the trunk area. */
     plaque(
         root,
         trunkBaseX,
         trunkTopY+115,
         false
     );
+
+    /* top canopy */
     const topNodes=people.filter(p=>generation(p)===maxGen);
     topNodes.forEach(p=>{
         const pp=pos.get(String(p._id));
@@ -1001,25 +893,34 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         foliage(pp.x,pp.y-125,.95);
     });
 }
+
         async function toggleRealTreeView(){
     const viewer=$('viewer'), btn=$('realTreeBtn');
     if(!viewer) return;
+
     const opening=!viewer.classList.contains('real-tree-open');
+
     if(opening){
         viewer.classList.add('real-tree-open');
+
         if(btn){
             btn.textContent='✕ Close Tree View';
             btn.classList.add('real-tree-close');
         }
+
         document.body.style.overflow='hidden';
         treeZoom=1;
+
         setTimeout(()=>{
             drawRealTreeStructure();
         },80);
+
     }else{
         viewer.classList.remove('real-tree-open');
+
         const realCanvas=$('realTreeCanvas');
         if(realCanvas) realCanvas.remove();
+
         const layer=$('treeLayer');
         if(layer){
             layer.classList.remove('real-natural-tree');
@@ -1029,24 +930,30 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             layer.style.minHeight='';
             layer.style.transform='scale(1)';
         }
+
         const treebox=$('treebox');
         if(treebox){
             treebox.style.height='';
             treebox.style.minHeight='';
             treebox.style.overflow='';
         }
+
         const oldSvg=$('svg');
         if(oldSvg) oldSvg.style.display='';
+
         const cards=$('cards');
         if(cards) cards.style.display='';
+
         if(btn){
             btn.textContent='🌳 Real Tree View';
             btn.classList.remove('real-tree-close');
         }
+
         document.body.style.overflow='';
         renderTree();
     }
 }
+
 async function loadHtml2Canvas(){
             if(window.html2canvas) return;
             const s=document.createElement('script');
@@ -1054,6 +961,7 @@ async function loadHtml2Canvas(){
             document.head.appendChild(s);
             await new Promise((resolve,reject)=>{s.onload=resolve;s.onerror=reject;});
         }
+
         async function loadJsPDF(){
             if(window.jspdf && window.jspdf.jsPDF) return;
             const s=document.createElement('script');
@@ -1061,6 +969,7 @@ async function loadHtml2Canvas(){
             document.head.appendChild(s);
             await new Promise((resolve,reject)=>{s.onload=resolve;s.onerror=reject;});
         }
+
         async function downloadTreePDF(){
             if(!people.length) return alert('પહેલા Family Tree ખોલો.');
             const btns=[...document.querySelectorAll('.tree-card-actions,.links-panel')];
@@ -1086,106 +995,17 @@ async function loadHtml2Canvas(){
             }catch(e){alert('PDF download error: '+e.message);}
             finally{btns.forEach((el,i)=>el.style.display=oldDisplay[i]);}
         }
+
         async function downloadPNG(){
             if(!people.length)return;
             await loadHtml2Canvas();
             const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe',useCORS:true});
             const a=document.createElement('a');a.download='family-tree-admin.png';a.href=c.toDataURL('image/png');a.click();
         }
+
         (async function restoreAdminSession(){
             if(!key)return;
             const ok=await checkAdmin();
             if(ok){showAdminApp();await loadFamilies();}else{localStorage.removeItem('adminKey');key='';showLogin();}
         })();
-    </script>
-<div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()">
-  <div class="photo-choice-box">
-    <h3>📷 Photo ઉમેરો</h3>
-    <p>Photo ક્યાંથી લેવી છે?</p>
-    <div class="photo-choice-actions">
-      <button type="button" class="photo-choice-btn photo-camera" onclick="chooseCamera()">📷 Camera</button>
-      <button type="button" class="photo-choice-btn photo-gallery" onclick="chooseGallery()">🖼️ Gallery</button>
-    </div>
-    <button type="button" class="photo-choice-btn photo-cancel" onclick="closePhotoChoice()">Cancel</button>
-    <input id="photoCameraInput" class="photo-choice-input" type="file" accept="image/*" capture="environment">
-    <input id="photoGalleryInput" class="photo-choice-input" type="file" accept="image/*">
-  </div>
-</div>
-<script id="photoChoicePopupScript">
-let photoChoiceTargetInput = null;
-function openPhotoChoice(input){
-  photoChoiceTargetInput = input || null;
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.add('show');
-}
-function closePhotoChoice(){
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.remove('show');
-  photoChoiceTargetInput=null;
-}
-function forwardPhoto(file){
-  if(!photoChoiceTargetInput || !file){ closePhotoChoice(); return; }
-  const dt=new DataTransfer();
-  dt.items.add(file);
-  photoChoiceTargetInput.files=dt.files;
-  photoChoiceTargetInput.dispatchEvent(new Event('change',{bubbles:true}));
-  closePhotoChoice();
-}
-function chooseCamera(){
-  const i=document.getElementById('photoCameraInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files && i.files[0]);
-  i.click();
-}
-function chooseGallery(){
-  const i=document.getElementById('photoGalleryInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files && i.files[0]);
-  i.click();
-}
-</script>
-<script id="adminPhotoChoiceScript">
-function openPhotoChoice(input){
-  photoChoiceTargetInput=input||null;
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.add('show');
-}
-function closePhotoChoice(){
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.remove('show');
-  photoChoiceTargetInput=null;
-}
-function forwardPhoto(file){
-  if(!photoChoiceTargetInput||!file){closePhotoChoice();return;}
-  try{
-    const dt=new DataTransfer();
-    dt.items.add(file);
-    photoChoiceTargetInput.files=dt.files;
-    photoChoiceTargetInput.dispatchEvent(new Event('change',{bubbles:true}));
-  }catch(e){}
-  closePhotoChoice();
-}
-function chooseCamera(){
-  const i=document.getElementById('photoCameraInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
-  i.click();
-}
-function chooseGallery(){
-  const i=document.getElementById('photoGalleryInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
-  i.click();
-}
-</script>
-</body>
-</html>
-<script id="adminTreeAddChildHelper">
-function adminTreeAddChild(parentId){
-  if(typeof window.addChild==='function'){ window.addChild(parentId); return; }
-  if(typeof window.openAddChild==='function'){ window.openAddChild(parentId); return; }
-  if(typeof window.showAddChild==='function'){ window.showAddChild(parentId); return; }
-  alert('Add Child form તૈયાર નથી.');
-}
-        initTreeZoomTouch();
-</script>
+    
