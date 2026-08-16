@@ -163,9 +163,15 @@ async function renderTree(){
    const px=parent.x+CARD_W/2,py=parent.y+CARD_H;
    const childY=childData[0].y,busY=py+(childY-py)/2;
    const xs=childData.map(q=>q.x+CARD_W/2),minX=Math.min(...xs),maxX=Math.max(...xs);
-   draw(svg,px,py,px,busY);
-   if(childData.length>1)draw(svg,minX,busY,maxX,busY);
-   childData.forEach(q=>draw(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY));
+   draw(svg,px,py,px,busY,'trunk');
+   if(childData.length>1)draw(svg,minX,busY,maxX,busY,'branch');
+   childData.forEach(q=>draw(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY,'branch'));
+ });
+ // Keep a visible branch below the final generation as well.
+ people.filter(p=>(children[String(p._id)]||[]).length===0).forEach(p=>{
+   const q=pos[String(p._id)];if(!q)return;
+   const x=q.x+CARD_W/2,y=q.y+CARD_H;
+   draw(svg,x,y,x,y+34,'branch');
  });
  if(focusPersonId){
    requestAnimationFrame(()=>focusTreePerson(focusPersonId));
@@ -237,7 +243,7 @@ function focusTreePerson(id){
    treebox.scrollTop=Math.max(0,(card.offsetTop+145/2)*treeZoom-treebox.clientHeight/2);
  }
 }
-function draw(svg,x1,y1,x2,y2){const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');p.setAttribute('d',`M${x1} ${y1} L${x2} ${y2}`);p.setAttribute('fill','none');p.setAttribute('stroke','#64748b');p.setAttribute('stroke-width','5');p.setAttribute('stroke-linecap','butt');p.setAttribute('stroke-linejoin','miter');svg.appendChild(p)}
+function draw(svg,x1,y1,x2,y2,kind='branch'){const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');p.setAttribute('d',`M${x1} ${y1} L${x2} ${y2}`);p.setAttribute('fill','none');p.setAttribute('stroke',kind==='trunk'?'#8b5e3c':'#71849a');p.setAttribute('stroke-width',kind==='trunk'?'8':'5');p.setAttribute('stroke-linecap','butt');p.setAttribute('stroke-linejoin','miter');svg.appendChild(p)}
 function avatar(n){return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n||'?')[0].toUpperCase()}</text></svg>`)}
 function copyCurrentLink(){copyText(location.href)}
 async function downloadPNG(){if(!people.length)return alert('Tree ખાલી છે');if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r)}const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe'}),a=document.createElement('a');a.download='family-tree.png';a.href=c.toDataURL('image/png');a.click()}

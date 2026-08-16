@@ -432,19 +432,30 @@ async function createFamily(){
                 const busY=py+(childY-py)/2;
                 const xs=childData.map(q=>q.x+CARD_W/2);
                 const minX=Math.min(...xs), maxX=Math.max(...xs);
-                drawLine(svg,px,py,px,busY);
-                if(childData.length>1) drawLine(svg,minX,busY,maxX,busY);
-                childData.forEach(q=>drawLine(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY));
+                // Main trunk: always continues from the parent's card toward the next generation.
+                drawLine(svg,px,py,px,busY,'trunk');
+                if(childData.length>1) drawLine(svg,minX,busY,maxX,busY,'branch');
+                childData.forEach(q=>drawLine(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY,'branch'));
+            });
+
+            // Extend the family-tree trunk/branches below the final generation too,
+            // so the last-generation cards visibly sit on a complete tree structure.
+            const leafPeople=people.filter(p=>(children.get(String(p._id))||[]).length===0);
+            leafPeople.forEach(p=>{
+                const q=positions.get(String(p._id));
+                if(!q)return;
+                const x=q.x+CARD_W/2, y=q.y+CARD_H;
+                drawLine(svg,x,y,x,y+34,'branch');
             });
             renderMemberLinks();
         }
 
-        function drawLine(svg,x1,y1,x2,y2){
+        function drawLine(svg,x1,y1,x2,y2,kind='branch'){
             const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');
             p.setAttribute('d',`M${x1} ${y1} L${x2} ${y2}`);
             p.setAttribute('fill','none');
-            p.setAttribute('stroke','#64748b');
-            p.setAttribute('stroke-width','5');
+            p.setAttribute('stroke',kind==='trunk'?'#8b5e3c':'#64748b');
+            p.setAttribute('stroke-width',kind==='trunk'?'8':'5');
             p.setAttribute('stroke-linecap','butt');
             p.setAttribute('stroke-linejoin','miter');
             svg.appendChild(p);
