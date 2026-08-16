@@ -177,38 +177,52 @@ app.post("/api/admin/person/:id/add",upload.single("photo"),async(req,res)=>{
   }
 });
 
-app.put("/api/admin/person/:id",upload.single("photo"),async(req,res)=>{
+
+// Admin: update or delete only a member's photo. Photo is already cropped/compressed in browser.
+app.post("/api/admin/person/:id/photo",upload.single("photo"),async(req,res)=>{
   try{
     const adminKey=process.env.ADMIN_KEY || "Akashkey123";
     if(!adminKey || req.headers["x-admin-key"]!==adminKey)
       return res.status(401).json({ok:false,error:"Unauthorized"});
+    await connectDB();
+    if(!req.file) return res.status(400).json({ok:false,error:"Photo is required"});
+    const p=await Person.findById(req.params.id);
+    if(!p) return res.status(404).json({ok:false,error:"Member not found"});
+    p.photo=photoData(req.file);
+    await p.save();
+    res.json({ok:true,person:p});
+  }catch(e){
+    res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 50MB allowed.":e.message});
+  }
+});
 
+app.delete("/api/admin/person/:id/photo",async(req,res)=>{
+  try{
+    const adminKey=process.env.ADMIN_KEY || "Akashkey123";
+    if(!adminKey || req.headers["x-admin-key"]!==adminKey)
+      return res.status(401).json({ok:false,error:"Unauthorized"});
     await connectDB();
     const p=await Person.findById(req.params.id);
     if(!p) return res.status(404).json({ok:false,error:"Member not found"});
-
-    // Name is optional here so the same endpoint can be used for a photo-only update.
-    const update={};
-    if(typeof req.body.name==="string" && req.body.name.trim()){
-      update.name=req.body.name.trim();
-    }
-    if(req.file){
-      update.photo=photoData(req.file);
-    }
-    if(!Object.keys(update).length){
-      return res.status(400).json({ok:false,error:"Name or photo is required"});
-    }
-
-    const updated=await Person.findByIdAndUpdate(req.params.id,update,{new:true}).lean();
-    res.json({ok:true,person:updated});
+    p.photo="";
+    await p.save();
+    res.json({ok:true,person:p});
   }catch(e){
-    res.status(400).json({
-      ok:false,
-      error:e.message.includes("File too large")
-        ? "Photo is too large. Maximum 50MB allowed."
-        : e.message
-    });
+    res.status(400).json({ok:false,error:e.message});
   }
+});
+
+app.put("/api/admin/person/:id",async(req,res)=>{
+  try{
+    const adminKey=process.env.ADMIN_KEY || "Akashkey123";
+    if(!adminKey || req.headers["x-admin-key"]!==adminKey) return res.status(401).json({ok:false,error:"Unauthorized"});
+    await connectDB();
+    const name=(req.body.name||"").trim();
+    if(!name) return res.status(400).json({ok:false,error:"Name is required"});
+    const p=await Person.findByIdAndUpdate(req.params.id,{name},{new:true}).lean();
+    if(!p) return res.status(404).json({ok:false,error:"Member not found"});
+    res.json({ok:true,person:p});
+  }catch(e){res.status(400).json({ok:false,error:e.message})}
 });
 
 // Explicit member-link route so Vercel/Express always serves the add form at /add/<token>.

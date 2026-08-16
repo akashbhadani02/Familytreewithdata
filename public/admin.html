@@ -403,28 +403,6 @@
         }
 </style>
 
-
-<style>
-#photoCropModal{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:99999;display:none;align-items:center;justify-content:center;padding:16px}
-#photoCropModal.show{display:flex}
-.photo-crop-box{width:min(620px,96vw);max-height:94vh;background:#111827;border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 70px rgba(0,0,0,.55)}
-.photo-crop-title{font-size:18px;font-weight:700;color:#fff}
-.photo-crop-area{width:100%;height:min(65vh,520px);background:#050505;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-#photoCropImage{display:block;max-width:100%;max-height:100%}
-.photo-crop-actions{display:flex;gap:10px;justify-content:flex-end}
-.photo-crop-actions button{min-height:42px}
-.photo-uploading{opacity:.6!important;pointer-events:none!important;cursor:not-allowed!important}
-.photo-upload-spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:photoSpin .7s linear infinite;vertical-align:-2px;margin-right:6px}
-@keyframes photoSpin{to{transform:rotate(360deg)}}
-@media(max-width:600px){
- .photo-crop-box{padding:12px}
- .photo-crop-area{height:58vh}
- .photo-crop-actions{flex-direction:column}
- .photo-crop-actions button{width:100%}
-}
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
 </head>
 
 <body>
@@ -625,7 +603,13 @@ async function createFamily(){
                 const q=positions.get(String(p._id)); if(!q)return;
                 const d=document.createElement('div'); d.className='card'; d.dataset.personId=String(p._id); d.dataset.personName=(p.name||'').toLowerCase(); d.style.left=q.x+'px'; d.style.top=q.y+'px';
                 const shown=localized[String(p._id)]||p.name;
-                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tree-card-actions"><button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add</button><button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button><button type="button" class="btn gray" onclick="updatePhoto('${escAttr(p._id)}')">📷 Update Image</button><button type="button" class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
+                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tree-card-actions">
+<button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add</button>
+<button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button>
+<button type="button" class="btn" onclick="updateMemberPhoto('${escAttr(p._id)}')">📷 Photo</button>
+<button type="button" class="btn danger" onclick="deleteMemberPhoto('${escAttr(p._id)}')">🗑️ Photo Delete</button>
+<button type="button" class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button>
+</div>`;
                 d.onpointerdown=e=>{if(e.target.closest('button,input,a'))e.stopPropagation()};cards.appendChild(d);
             });
 
@@ -701,7 +685,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             const localized={}; people.forEach(p=>{localized[String(p._id)]=p.name});
             people.forEach(p=>{
                 const link=addLink(p.addToken), item=document.createElement('div'); item.className='member-item';
-                item.innerHTML=`<div class="name">${esc(localized[String(p._id)]||p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn gray" onclick="updatePhoto('${escAttr(p._id)}')">📷 Update Image</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
+                item.innerHTML=`<div class="name">${esc(localized[String(p._id)]||p.name)}</div><small>Generation ${p.generation}</small><input class="member-link" value="${esc(link)}" readonly><div class="tool-row"><button class="btn" onclick="copyLink('${escAttr(link)}')">🔗 Copy Link</button><button class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button><button class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button><button class="btn" onclick="updateMemberPhoto('${escAttr(p._id)}')">📷 Update Photo</button><button class="btn danger" onclick="deleteMemberPhoto('${escAttr(p._id)}')">🗑️ Delete Photo</button><button class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete Member</button></div>`;
                 box.appendChild(item);
             });
         }
@@ -801,7 +785,61 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             }
         }
 
-        async function editName(id){
+        
+        function pickAdminPhoto(){
+            return new Promise((resolve,reject)=>{
+                const input=document.createElement('input');
+                input.type='file'; input.accept='image/*'; input.style.display='none';
+                document.body.appendChild(input);
+                let done=false;
+                const cleanup=()=>{input.removeEventListener('change',onChange); input.remove();};
+                const finish=(file)=>{
+                    if(done)return; done=true; cleanup();
+                    if(file) resolve(file); else reject(new Error('Photo selection cancelled.'));
+                };
+                const onChange=()=>finish(input.files&&input.files[0] ? input.files[0] : null);
+                input.addEventListener('change',onChange);
+                if(typeof openPhotoChoice==='function') openPhotoChoice(input); else input.click();
+                setTimeout(()=>{if(!done)finish(null)},120000);
+            });
+        }
+
+        async function updateMemberPhoto(id){
+            const p=people.find(x=>String(x._id)===String(id)); if(!p)return;
+            try{
+                const file=await pickAdminPhoto();
+                if(!file)return;
+                const cropped=await cropAdminPhoto(file);
+                if(!cropped)return;
+                const fd=new FormData(); fd.append('photo',cropped,'family-photo.jpg');
+                const r=await fetch('/api/admin/person/'+encodeURIComponent(id)+'/photo',{
+                    method:'POST',headers:{'x-admin-key':key},body:fd
+                });
+                const d=await r.json();
+                if(!r.ok||!d.ok)throw new Error(d.error||'Photo update થઈ નથી');
+                await viewFamily(currentFamilyId);
+                alert('✅ '+p.name+' નો photo successfully update થઈ ગયો.');
+            }catch(e){
+                if(e && e.message!=='Photo selection cancelled.' && e.message!=='Crop cancelled.') alert('❌ '+e.message);
+            }
+        }
+
+        async function deleteMemberPhoto(id){
+            const p=people.find(x=>String(x._id)===String(id)); if(!p)return;
+            if(!p.photo)return alert('આ member માટે photo નથી.');
+            if(!confirm('"'+p.name+'" નો photo delete કરવો છે?'))return;
+            try{
+                const r=await fetch('/api/admin/person/'+encodeURIComponent(id)+'/photo',{
+                    method:'DELETE',headers:{'x-admin-key':key}
+                });
+                const d=await r.json();
+                if(!r.ok||!d.ok)throw new Error(d.error||'Photo delete થયો નથી');
+                await viewFamily(currentFamilyId);
+                alert('✅ '+p.name+' નો photo delete થઈ ગયો.');
+            }catch(e){alert('❌ '+e.message);}
+        }
+
+async function editName(id){
             const p=people.find(x=>String(x._id)===String(id)); if(!p)return;
             const name=prompt('નવું નામ:',p.name); if(name===null||!name.trim()||name.trim()===p.name)return;
             try{
@@ -810,169 +848,6 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 await viewFamily(currentFamilyId);
             }catch(e){alert('Name update error: '+e.message);}
         }
-
-        async function updatePhoto(id){
-            const p=people.find(x=>String(x._id)===String(id));
-            if(!p) return;
-
-            // One hidden input with both Camera and Gallery options.
-            const input=document.createElement('input');
-            input.type='file';
-            input.accept='image/*';
-            input.setAttribute('capture','environment');
-            input.style.display='none';
-            document.body.appendChild(input);
-
-            const buttons=[...document.querySelectorAll(`button[onclick*="updatePhoto('${id}')"]`)];
-            const oldTexts=buttons.map(b=>b.innerHTML);
-            let locked=true;
-            buttons.forEach(b=>{
-                b.disabled=true;
-                b.classList.add('photo-uploading');
-                b.innerHTML='<span class="photo-upload-spinner"></span>Opening...';
-            });
-
-            const unlock=()=>{
-                buttons.forEach((b,i)=>{
-                    b.disabled=false;
-                    b.classList.remove('photo-uploading');
-                    b.innerHTML=oldTexts[i]||'📷 Update Image';
-                });
-                input.remove();
-            };
-
-            input.onchange=()=>{
-                const file=input.files && input.files[0];
-                if(!file){ unlock(); return; }
-
-                if(!file.type.startsWith('image/')){
-                    alert('Please select an image.');
-                    unlock();
-                    return;
-                }
-
-                const reader=new FileReader();
-                reader.onload=()=>{
-                    openPhotoCropper(reader.result,id,unlock);
-                };
-                reader.onerror=()=>{
-                    alert('Image open થઈ શકી નથી.');
-                    unlock();
-                };
-                reader.readAsDataURL(file);
-            };
-
-            // Unlock after crop/upload flow completes. While picker/crop/upload is active
-            // the Update Image button remains blocked.
-            input.click();
-        }
-
-        function openPhotoCropper(dataUrl,id,unlock){
-            let modal=document.getElementById('photoCropModal');
-            if(!modal){
-                modal=document.createElement('div');
-                modal.id='photoCropModal';
-                modal.innerHTML=`
-                  <div class="photo-crop-box">
-                    <div class="photo-crop-title">📷 Crop Profile Photo</div>
-                    <div class="photo-crop-area"><img id="photoCropImage" alt="Crop photo"></div>
-                    <div class="photo-crop-actions">
-                      <button type="button" class="btn gray" id="photoCropCancel">Cancel</button>
-                      <button type="button" class="btn" id="photoCropUpload">✂️ Crop & Upload</button>
-                    </div>
-                  </div>`;
-                document.body.appendChild(modal);
-            }
-
-            const img=modal.querySelector('#photoCropImage');
-            const cancel=modal.querySelector('#photoCropCancel');
-            const upload=modal.querySelector('#photoCropUpload');
-            img.src=dataUrl;
-            modal.classList.add('show');
-
-            let cropper=null;
-            const cleanup=(doUnlock=true)=>{
-                if(cropper) cropper.destroy();
-                cropper=null;
-                modal.classList.remove('show');
-                if(doUnlock) unlock();
-            };
-
-            img.onload=()=>{
-                cropper=new Cropper(img,{
-                    aspectRatio:1,
-                    viewMode:1,
-                    dragMode:'move',
-                    autoCropArea:.9,
-                    responsive:true,
-                    background:false,
-                    guides:false,
-                    center:true,
-                    highlight:false,
-                    cropBoxMovable:true,
-                    cropBoxResizable:true,
-                    zoomable:true,
-                    scalable:false,
-                    rotatable:false
-                });
-            };
-
-            cancel.onclick=()=>cleanup(true);
-
-            upload.onclick=async()=>{
-                if(!cropper) return;
-                upload.disabled=true;
-                cancel.disabled=true;
-                upload.classList.add('photo-uploading');
-                upload.innerHTML='<span class="photo-upload-spinner"></span>Uploading...';
-
-                try{
-                    const canvas=cropper.getCroppedCanvas({
-                        width:800,
-                        height:800,
-                        imageSmoothingEnabled:true,
-                        imageSmoothingQuality:'high'
-                    });
-
-                    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.88));
-                    if(!blob) throw new Error('Crop image તૈયાર થઈ નથી.');
-
-                    const fd=new FormData();
-                    fd.append('photo',new File([blob],'profile-photo.jpg',{type:'image/jpeg'}));
-
-                    const r=await fetch('/api/admin/person/'+encodeURIComponent(id),{
-                        method:'PUT',
-                        headers:{'x-admin-key':key},
-                        body:fd
-                    });
-
-                    const raw=await r.text();
-                    let d;
-                    try{d=JSON.parse(raw)}
-                    catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}
-
-                    if(!r.ok || !d.ok) throw new Error(d.error||'Image update થઈ નથી');
-
-                    cleanup(false);
-                    unlock();
-                    await viewFamily(currentFamilyId);
-                    await loadFamilies();
-                    alert('✅ Photo successfully update થઈ ગયો.');
-                }catch(e){
-                    upload.disabled=false;
-                    cancel.disabled=false;
-                    upload.classList.remove('photo-uploading');
-                    upload.innerHTML='✂️ Crop & Upload';
-                    alert('❌ '+e.message);
-                    // Keep button blocked until user cancels/completes this upload flow.
-                }
-            };
-
-            modal.onclick=e=>{
-                if(e.target===modal) cleanup(true);
-            };
-        }
-
 
         async function deleteMember(id){
             const p=people.find(x=>String(x._id)===String(id)); if(!p)return;
@@ -1740,6 +1615,34 @@ async function loadHtml2Canvas(){
   </div>
 </div>
 
+
+<div id="photoCropOverlay" class="photo-crop-overlay">
+  <div class="photo-crop-box">
+    <h3>✂️ Round Photo Crop</h3>
+    <p>Photo ને drag કરો અને zoom કરીને circle ની અંદર proper set કરો.</p>
+    <div class="photo-crop-stage"><canvas id="photoCropCanvas" width="360" height="360"></canvas><div class="photo-crop-circle"></div></div>
+    <div class="photo-crop-controls">
+      <button type="button" class="btn" onclick="cropZoom(-0.1)">➖</button>
+      <input id="photoCropZoom" type="range" min="1" max="3" step="0.01" value="1" oninput="cropSetZoom(this.value)">
+      <button type="button" class="btn" onclick="cropZoom(0.1)">➕</button>
+    </div>
+    <div class="photo-crop-actions">
+      <button type="button" class="btn danger" onclick="cancelPhotoCrop()">Cancel</button>
+      <button type="button" class="btn" onclick="applyPhotoCrop()">✅ Crop & Set Photo</button>
+    </div>
+  </div>
+</div>
+<style id="photoCropStyle">
+.photo-crop-overlay{display:none;position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.72);align-items:center;justify-content:center;padding:14px}
+.photo-crop-overlay.show{display:flex}
+.photo-crop-box{width:min(440px,100%);background:#fff;border-radius:20px;padding:18px;box-shadow:0 20px 70px rgba(0,0,0,.4);text-align:center}
+.photo-crop-box h3{margin:0 0 5px;font-size:20px}.photo-crop-box p{margin:0 0 14px;color:#666;font-size:13px}
+.photo-crop-stage{width:min(360px,90vw);height:min(360px,90vw);margin:auto;position:relative;overflow:hidden;background:#111;border-radius:12px;touch-action:none}
+#photoCropCanvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}.photo-crop-circle{position:absolute;left:50%;top:50%;width:78%;height:78%;transform:translate(-50%,-50%);border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 9999px rgba(0,0,0,.48);pointer-events:none}
+.photo-crop-controls{display:flex;align-items:center;gap:8px;margin:14px 0}.photo-crop-controls input{flex:1}.photo-crop-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px}
+@media(max-width:480px){.photo-crop-box{padding:13px}.photo-crop-actions .btn{font-size:12px;padding:10px 6px}}
+</style>
+
 <script id="photoChoicePopupScript">
 let photoChoiceTargetInput = null;
 
@@ -1811,6 +1714,86 @@ function chooseGallery(){
 }
 </script>
 
+
+<script id="roundPhotoCropScript">
+let cropState=null;
+
+function openPhotoCrop(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      const overlay=document.getElementById('photoCropOverlay');
+      const canvas=document.getElementById('photoCropCanvas');
+      const stage=document.querySelector('.photo-crop-stage');
+      cropState={img,canvas,stage,zoom:1,x:0,y:0,startX:0,startY:0,dragging:false,resolve,reject};
+      document.getElementById('photoCropZoom').value=1;
+      overlay.classList.add('show');
+      drawPhotoCrop();
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Invalid photo'))};
+    img.src=url;
+  });
+}
+function drawPhotoCrop(){
+  if(!cropState)return;
+  const {img,canvas}=cropState, ctx=canvas.getContext('2d'), S=canvas.width;
+  ctx.clearRect(0,0,S,S); ctx.fillStyle='#111';ctx.fillRect(0,0,S,S);
+  const base=Math.max(S/img.naturalWidth,S/img.naturalHeight);
+  const scale=base*cropState.zoom;
+  const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
+  const cx=S/2+cropState.x,cy=S/2+cropState.y;
+  ctx.drawImage(img,cx-w/2,cy-h/2,w,h);
+}
+function cropSetZoom(v){if(!cropState)return;cropState.zoom=Math.max(1,Math.min(3,Number(v)||1));drawPhotoCrop()}
+function cropZoom(d){if(!cropState)return;cropSetZoom(cropState.zoom+d);document.getElementById('photoCropZoom').value=cropState.zoom}
+function closeCrop(){const o=document.getElementById('photoCropOverlay');if(o)o.classList.remove('show')}
+function cancelPhotoCrop(){if(!cropState)return;const r=cropState.reject;cropState=null;closeCrop();r(new Error('Crop cancelled.'))}
+function applyPhotoCrop(){
+  if(!cropState)return;
+  const s=cropState, src=s.canvas, out=document.createElement('canvas'); out.width=800;out.height=800;
+  const o=out.getContext('2d'); const ratio=800/src.width;
+  o.drawImage(src,0,0,800,800);
+  out.toBlob(blob=>{
+    if(!blob){const r=s.reject;cropState=null;closeCrop();r(new Error('Crop failed.'));return}
+    const r=s.resolve;cropState=null;closeCrop();r(new File([blob],'family-photo.jpg',{type:'image/jpeg'}));
+  },'image/jpeg',.92);
+}
+function cropPointerStart(e){
+  if(!cropState)return;cropState.dragging=true;cropState.startX=e.clientX-cropState.x;cropState.startY=e.clientY-cropState.y;
+  e.currentTarget.setPointerCapture?.(e.pointerId);
+}
+function cropPointerMove(e){
+  if(!cropState||!cropState.dragging)return;
+  cropState.x=e.clientX-cropState.startX;cropState.y=e.clientY-cropState.startY;
+  const S=cropState.canvas.width, max=S*.7;
+  cropState.x=Math.max(-max,Math.min(max,cropState.x));cropState.y=Math.max(-max,Math.min(max,cropState.y));drawPhotoCrop();
+}
+function cropPointerEnd(){if(cropState)cropState.dragging=false}
+(function(){
+  const c=document.getElementById('photoCropCanvas');
+  if(c){c.addEventListener('pointerdown',cropPointerStart);c.addEventListener('pointermove',cropPointerMove);c.addEventListener('pointerup',cropPointerEnd);c.addEventListener('pointercancel',cropPointerEnd)}
+})();
+function cropAdminPhoto(file){return openPhotoCrop(file)}
+
+/* Every Camera/Gallery selection now goes through the round cropper first. */
+function forwardPhoto(file){
+  const target=photoChoiceTargetInput;
+  closePhotoChoice();
+  if(!target||!file){
+    if(target){try{target.value='';target.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}}
+    return;
+  }
+  openPhotoCrop(file).then(cropped=>{
+    try{
+      const dt=new DataTransfer();dt.items.add(cropped);target.files=dt.files;
+      target.dispatchEvent(new Event('change',{bubbles:true}));
+    }catch(e){}
+  }).catch(()=>{
+    try{target.value='';target.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}
+  });
+}
+</script>
 </body>
 </html>
 
