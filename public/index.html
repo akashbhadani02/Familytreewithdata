@@ -385,4 +385,113 @@ function copyCurrentLink(){copyText(location.href)}
 async function downloadPNG(){if(!people.length)return alert('Tree ખાલી છે');if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r)}const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe'}),a=document.createElement('a');a.download='family-tree.png';a.href=c.toDataURL('image/png');a.click()}
 init();
 initTreeZoomTouch();
-</script><div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()"><div class="photo-choice-box"><h3>📷 Photo પસંદ કરો</h3><p>Photo ક્યાંથી લેવી છે?</p><div class="photo-choice-actions"><button type="button" class="photo-choice-btn camera-btn" onclick="chooseCamera()">📷 Camera</button><button type="button" class="photo-choice-btn gallery-btn" onclick="chooseGallery()">🖼️ Gallery</button></div><button type="button" class="photo-choice-btn cancel-btn" onclick="closePhotoChoice()">Cancel</button><input id="cameraPicker" class="photo-hidden" type="file" accept="image/*" capture="environment"><input id="galleryPicker" class="photo-hidden" type="file" accept="image/*"></div></div><script>let photoTargetId=null;function openPhotoChoice(id){photoTargetId=id;document.getElementById('photoChoiceOverlay').classList.add('show')}function closePhotoChoice(){document.getElementById('photoChoiceOverlay').classList.remove('show');photoTargetId=null}function setPhoto(file){if(!file||!photoTargetId){closePhotoChoice();return}const target=document.getElementById(photoTargetId);const dt=new DataTransfer();dt.items.add(file);target.files=dt.files;target.dispatchEvent(new Event('change',{bubbles:true}));closePhotoChoice()}function chooseCamera(){const i=document.getElementById('cameraPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}function chooseGallery(){const i=document.getElementById('galleryPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}</script></body></html>
+</script><div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()"><div class="photo-choice-box"><h3>📷 Photo પસંદ કરો</h3><p>Photo ક્યાંથી લેવી છે?</p><div class="photo-choice-actions"><button type="button" class="photo-choice-btn camera-btn" onclick="chooseCamera()">📷 Camera</button><button type="button" class="photo-choice-btn gallery-btn" onclick="chooseGallery()">🖼️ Gallery</button></div><button type="button" class="photo-choice-btn cancel-btn" onclick="closePhotoChoice()">Cancel</button><input id="cameraPicker" class="photo-hidden" type="file" accept="image/*" capture="environment"><input id="galleryPicker" class="photo-hidden" type="file" accept="image/*"></div></div><script>let photoTargetId=null;function openPhotoChoice(id){photoTargetId=id;document.getElementById('photoChoiceOverlay').classList.add('show')}function closePhotoChoice(){document.getElementById('photoChoiceOverlay').classList.remove('show');photoTargetId=null}function setPhoto(file){if(!file||!photoTargetId){closePhotoChoice();return}const target=document.getElementById(photoTargetId);const dt=new DataTransfer();dt.items.add(file);target.files=dt.files;target.dispatchEvent(new Event('change',{bubbles:true}));closePhotoChoice()}function chooseCamera(){const i=document.getElementById('cameraPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}function chooseGallery(){const i=document.getElementById('galleryPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}</script><script>
+/* ===== ORGANIC REAL TREE: NO DUPLICATE TRUNK NAMES ===== */
+function buildGenerationTreeCanvas(people, canvas, layer, baseCanvas){
+  if(!people||!people.length||!canvas||!layer||!baseCanvas)return;
+  const id=p=>String(p._id??p.id??p.key), parent=p=>String(p.parentId??p.fatherId??p.parent??p.father??'');
+  const order=new Map(people.map((p,i)=>[id(p),i])), children=new Map(), byId=new Map(people.map(p=>[id(p),p]));
+  people.forEach(p=>{const pid=parent(p);if(pid&&byId.has(pid)){if(!children.has(pid))children.set(pid,[]);children.get(pid).push(p);}});
+  children.forEach(a=>a.sort((a,b)=>(order.get(id(a))||0)-(order.get(id(b))||0)));
+
+  // Roots are only the true generation-1/root records. A name is rendered exactly once.
+  let roots=people.filter(p=>!parent(p)||!byId.has(parent(p)));
+  if(!roots.length)roots=[people[0]];
+  const depth=new Map(),q=roots.map(p=>[p,0]);
+  while(q.length){const [p,d]=q.shift(),k=id(p);if(depth.has(k))continue;depth.set(k,d);(children.get(k)||[]).forEach(c=>q.push([c,d+1]));}
+
+  const GAP=10, ROW=112, PAD=45, width=new Map();
+  function textW(p){return Math.max(55,Math.min(170,10+String(p.name||'').length*6.5));}
+  function measure(p){
+    const cs=children.get(id(p))||[];
+    if(!cs.length){const w=textW(p);width.set(id(p),w);return w;}
+    let w=0;cs.forEach((c,i)=>{w+=measure(c);if(i<cs.length-1)w+=GAP;});
+    w=Math.max(textW(p),w);width.set(id(p),w);return w;
+  }
+  roots.forEach(measure);
+
+  // Place each real subtree around its parent. Generations may be diagonal/curved,
+  // not forced into one horizontal row.
+  const pos=new Map();
+  function place(p,x,y){
+    const cs=children.get(id(p))||[], w=width.get(id(p))||textW(p);
+    pos.set(id(p),{x,y});
+    if(!cs.length)return;
+    const total=cs.reduce((s,c)=>s+(width.get(id(c))||textW(c)),0)+GAP*(cs.length-1);
+    let cursor=x-total/2;
+    cs.forEach((c,i)=>{
+      const cw=width.get(id(c))||textW(c);
+      // Slight alternating vertical offsets create a natural tree instead of rows.
+      const side=i-(cs.length-1)/2;
+      const cy=y-ROW-Math.min(35,Math.abs(side)*9);
+      const cx=cursor+cw/2;
+      place(c,cx,cy);
+      cursor+=cw+GAP;
+    });
+  }
+
+  let cursor=PAD;
+  roots.forEach((r,i)=>{const w=width.get(id(r))||textW(r);place(r,cursor+w/2,PAD+80);cursor+=w+35;});
+
+  const vals=[...pos.values()], minX=Math.min(...vals.map(v=>v.x)),maxX=Math.max(...vals.map(v=>v.x));
+  const minY=Math.min(...vals.map(v=>v.y)),maxY=Math.max(...vals.map(v=>v.y));
+  const W=Math.max(760,Math.ceil(maxX-minX+PAD*2)),H=Math.max(560,Math.ceil(maxY-minY+PAD*2+90));
+  pos.forEach(v=>{v.x+=PAD-minX;v.y+=PAD-minY;});
+
+  const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  canvas.width=Math.ceil(W*dpr);canvas.height=Math.ceil(H*dpr);
+  canvas.style.width=W+'px';canvas.style.height=H+'px';canvas.style.position='absolute';canvas.style.left='0';canvas.style.top='0';
+  canvas.style.display='block';canvas.style.visibility='visible';canvas.style.opacity='1';canvas.style.pointerEvents='none';canvas.style.zIndex='20';
+  layer.style.width=W+'px';layer.style.height=H+'px';layer.style.minWidth=W+'px';layer.style.minHeight=H+'px';
+  baseCanvas.style.width=W+'px';baseCanvas.style.height=H+'px';
+
+  const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+
+  function branch(a,b,thick){
+    const dx=b.x-a.x, dy=b.y-a.y;
+    ctx.save();ctx.beginPath();ctx.moveTo(a.x,a.y);
+    // Strong curve: every child is visibly connected to its own parent.
+    ctx.bezierCurveTo(a.x+dx*.12,a.y+dy*.25,a.x+dx*.82,b.y-dy*.25,b.x,b.y);
+    ctx.strokeStyle='#6b3d1d';ctx.lineWidth=thick;ctx.lineCap='round';ctx.stroke();ctx.restore();
+  }
+  function leaf(x,y,ang){
+    ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.fillStyle='#5b8f3a';
+    ctx.beginPath();ctx.ellipse(0,0,10,4.5,0,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+  function name(p,x,y,root){
+    ctx.save();ctx.font=(root?'700 15px':'700 12px')+' Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#152514';ctx.fillText(String(p.name||''),x,y);ctx.restore();
+  }
+
+  // Draw branches first. No trunk-name pass is used, preventing duplicates.
+  people.forEach(p=>{
+    const pp=pos.get(id(p));if(!pp)return;
+    (children.get(id(p))||[]).forEach(c=>{
+      const cp=pos.get(id(c));if(!cp)return;
+      branch({x:pp.x,y:pp.y-3},{x:cp.x,y:cp.y+2},Math.max(5,Math.min(9,7+(children.get(id(p))||[]).length/10)));
+      leaf((pp.x+cp.x)/2,(pp.y+cp.y)/2,cp.x>=pp.x?-.45:.45);
+    });
+  });
+
+  // One name per person only.
+  people.forEach(p=>{
+    const pp=pos.get(id(p));if(pp)name(p,pp.x,pp.y,roots.includes(p));
+  });
+
+  layer.style.transform='scale('+(typeof treeZoom!=='undefined'?treeZoom:1)+')';
+  if(typeof updateTreeZoomLabel==='function')updateTreeZoomLabel();
+}
+
+function drawRealTreeStructure(){
+  const layer=$('treeLayer'),svg=$('svg'),base=$('canvas');if(!layer||!base||!people.length)return;
+  layer.classList.add('real-natural-tree');if(svg)svg.style.display='none';const cards=$('cards');if(cards)cards.style.display='none';
+  let tc=$('realTreeCanvas');if(!tc){tc=document.createElement('canvas');tc.id='realTreeCanvas';layer.appendChild(tc);}
+  buildGenerationTreeCanvas(people,tc,layer,base);
+}
+function drawUserRealTreeStructure(){
+  const layer=$('treeLayer'),svg=$('svg'),base=$('canvas');if(!layer||!base||!people.length)return;
+  layer.classList.add('real-natural-tree');if(svg)svg.style.display='none';const cards=$('cards');if(cards)cards.style.display='none';
+  let tc=$('realTreeCanvas');if(!tc){tc=document.createElement('canvas');tc.id='realTreeCanvas';layer.appendChild(tc);}
+  buildGenerationTreeCanvas(people,tc,layer,base);
+}
+</script></body></html>
