@@ -154,47 +154,122 @@ html,body{overflow-x:hidden;}
  }
 }
 </style><style>
-/* ===== FULLSCREEN TREE POPUP ===== */
-.tree-popup-overlay{
-  position:fixed!important;inset:0!important;z-index:2147483000!important;
-  display:none;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.72);padding:10px;box-sizing:border-box;
+/* ===== ACTUAL REAL TREE FULLSCREEN POPUP ===== */
+body.real-tree-popup-active{overflow:hidden!important;}
+
+#viewer.real-tree-open,
+#viewBox.real-tree-open{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483000!important;
+  display:flex!important;
+  flex-direction:column!important;
+  width:100vw!important;
+  height:100dvh!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  border-radius:0!important;
+  overflow:hidden!important;
+  background:#fff!important;
 }
-.tree-popup-overlay.open{display:flex!important;}
-.tree-popup{
-  position:relative!important;width:100%!important;height:100%!important;
-  max-width:1800px!important;max-height:100%!important;
-  background:#fff!important;border-radius:14px!important;
-  overflow:hidden!important;box-shadow:0 20px 70px rgba(0,0,0,.35);
-  display:flex!important;flex-direction:column!important;
+
+/* Hide the normal page UI while Real Tree is open. */
+#viewer.real-tree-open > .row,
+#viewer.real-tree-open > .tree-search,
+#viewer.real-tree-open > .search-hint,
+#viewer.real-tree-open > .tree-search-hint,
+#viewer.real-tree-open > .links-panel,
+#viewer.real-tree-open > .tree-actions,
+#viewer.real-tree-open > .real-tree-tools,
+#viewBox.real-tree-open > .center.title,
+#viewBox.real-tree-open > .center.sub,
+#viewBox.real-tree-open > .viewControls,
+#viewBox.real-tree-open > #currentLink,
+#viewBox.real-tree-open > .treeSearch,
+#viewBox.real-tree-open > .searchHint,
+#viewBox.real-tree-open > .real-tree-tools{
+  display:none!important;
 }
-.tree-popup-header{
-  flex:0 0 auto;height:54px;display:flex;align-items:center;
-  justify-content:space-between;padding:0 12px 0 16px;
-  background:#fff;border-bottom:1px solid #ddd;z-index:20;
+
+/* Tree controls stay inside the popup. */
+#viewer.real-tree-open > .tree-zoom-controls,
+#viewer.real-tree-open > .treeZoomControls,
+#viewBox.real-tree-open > .treeZoomControls,
+#viewBox.real-tree-open > .tree-zoom-controls{
+  flex:0 0 auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  padding:7px!important;
+  margin:0!important;
+  z-index:20!important;
+  background:#fff!important;
+  border-bottom:1px solid #ddd!important;
 }
-.tree-popup-title{font-size:17px;font-weight:700;}
-.tree-popup-close{
-  width:42px;height:42px;border:0;border-radius:10px;
-  background:#ef4444;color:#fff;font-size:26px;line-height:1;
-  cursor:pointer;font-weight:700;
+
+/* Actual tree surface fills the rest of the popup. */
+#viewer.real-tree-open > #treebox,
+#viewBox.real-tree-open > #treebox{
+  position:relative!important;
+  display:block!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:auto!important;
+  overscroll-behavior:contain!important;
+  touch-action:none!important;
+  border-radius:0!important;
+  background:#f8fafc!important;
 }
-.tree-popup-body{
-  position:relative;flex:1 1 auto;min-height:0;overflow:hidden!important;
+
+/* X button is always top-right. */
+#viewer.real-tree-open > #realTreeBottomClose,
+#viewBox.real-tree-open > #userRealTreeClose{
+  display:block!important;
+  position:fixed!important;
+  top:9px!important;
+  right:10px!important;
+  z-index:2147483647!important;
+  margin:0!important;
 }
-.tree-popup-body .tree-only-viewport,
-.tree-popup-body .real-tree-viewport,
-.tree-popup-body #realTreeViewport,
-.tree-popup-body #treeViewport{
-  width:100%!important;height:100%!important;max-height:none!important;
-  min-height:0!important;border-radius:0!important;
+#viewer.real-tree-open > #realTreeBottomClose button,
+#viewBox.real-tree-open > #userRealTreeClose button{
+  width:42px!important;
+  height:42px!important;
+  padding:0!important;
+  border-radius:50%!important;
+  font-size:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-shadow:0 3px 14px rgba(0,0,0,.25)!important;
+}
+#viewer.real-tree-open > #realTreeBottomClose button::after,
+#viewBox.real-tree-open > #userRealTreeClose button::after{
+  content:"×"!important;
+  font-size:30px!important;
+  line-height:1!important;
+  font-weight:700!important;
+}
+
+/* Tree itself must remain independently scrollable. */
+#viewer.real-tree-open #treebox,
+#viewBox.real-tree-open #treebox{
+  -webkit-overflow-scrolling:touch!important;
 }
 @media(max-width:768px){
- .tree-popup-overlay{padding:0;}
- .tree-popup{border-radius:0;}
- .tree-popup-header{height:50px;}
+  #viewer.real-tree-open > #treebox,
+  #viewBox.real-tree-open > #treebox{
+    height:calc(100dvh - 58px)!important;
+  }
 }
-</style></head>
+</style>
+</head>
 <body>
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
@@ -668,33 +743,49 @@ window.addEventListener('resize',()=>{
  window.__realTreeResizeTimer=setTimeout(()=>{try{__rerenderFullRealTree()}catch(e){console.error('Tree resize error:',e)}},120);
 });
 
+
 function toggleUserRealTree(){
  const view=$('viewBox'), btn=$('userRealTreeBtn');
  if(!view)return;
- const opening=!document.body.classList.contains('real-tree-open');
+ const opening=!view.classList.contains('real-tree-open');
+
  if(opening){
-   document.body.classList.add('real-tree-open');
    view.classList.add('real-tree-open');
-   if(btn) btn.textContent='✕ Close Real Tree';
-   treeZoom=1;
+   document.body.classList.add('real-tree-popup-active');
    document.body.style.overflow='hidden';
+   treeZoom=1;
+   if(btn) btn.textContent='🌳 Real Tree View';
+
    requestAnimationFrame(()=>{
-     try{ drawUserRealTreeStructure(); fitRealTreeToViewport(); }
-     catch(e){ console.error('Real Tree render error:',e); }
+     try{
+       drawUserRealTreeStructure();
+       fitRealTreeToViewport();
+     }catch(e){ console.error('Real Tree render error:',e); }
    });
  }else{
-   document.body.classList.remove('real-tree-open');
    view.classList.remove('real-tree-open');
+   document.body.classList.remove('real-tree-popup-active');
+
    if(btn) btn.textContent='🌳 Real Tree View';
    const rc=$('realTreeCanvas'); if(rc)rc.remove();
    const svg=$('svg'); if(svg)svg.style.display='';
    const cards=$('cards'); if(cards)cards.style.display='';
-   const layer=$('treeLayer'); if(layer){layer.classList.remove('real-natural-tree');layer.style.width='';layer.style.height='';layer.style.minWidth='';layer.style.minHeight='';layer.style.transform='scale('+treeZoom+')';}
-   const canvas=$('canvas'); if(canvas){canvas.style.width='';canvas.style.height='';}
+   const layer=$('treeLayer');
+   if(layer){
+     layer.classList.remove('real-natural-tree');
+     layer.style.width='';
+     layer.style.height='';
+     layer.style.minWidth='';
+     layer.style.minHeight='';
+     layer.style.transform='scale('+treeZoom+')';
+   }
+   const canvas=$('canvas');
+   if(canvas){canvas.style.width='';canvas.style.height='';}
    document.body.style.overflow='';
    renderTree();
  }
 }
+
 
 function initTreeZoomTouch(){
  const box=document.querySelector('.treebox');if(!box||box.dataset.zoomReady)return;box.dataset.zoomReady='1';
@@ -991,75 +1082,5 @@ initTreeZoomTouch();
   document.addEventListener('DOMContentLoaded',()=>setTimeout(bootTreeOnlyZoom,500));
   window.addEventListener('load',()=>setTimeout(bootTreeOnlyZoom,800));
   window.bootTreeOnlyZoom=bootTreeOnlyZoom;
-})();
-</script><script>
-/* ===== TREE POPUP OPEN/CLOSE ===== */
-(function(){
-  function makePopup(){
-    if(document.getElementById('treePopupOverlay')) return;
-    const ov=document.createElement('div');
-    ov.id='treePopupOverlay';
-    ov.className='tree-popup-overlay';
-    ov.innerHTML='<div class="tree-popup" role="dialog" aria-modal="true">'+
-      '<div class="tree-popup-header"><div class="tree-popup-title">🌳 Family Tree</div>'+
-      '<button type="button" class="tree-popup-close" id="treePopupClose" aria-label="Close">×</button></div>'+
-      '<div class="tree-popup-body" id="treePopupBody"></div></div>';
-    document.body.appendChild(ov);
-    document.getElementById('treePopupClose').onclick=closeTreePopup;
-    ov.addEventListener('click',e=>{if(e.target===ov)closeTreePopup();});
-  }
-
-  window.openTreePopup=function(treeEl){
-    makePopup();
-    const body=document.getElementById('treePopupBody');
-    const el=typeof treeEl==='string'?document.querySelector(treeEl):treeEl;
-    if(!el) return;
-    el.__treePopupOriginalParent=el.parentNode;
-    el.__treePopupOriginalNext=el.nextSibling;
-    body.appendChild(el);
-    document.getElementById('treePopupOverlay').classList.add('open');
-    document.body.style.overflow='hidden';
-    setTimeout(()=>{
-      if(window.bootTreeOnlyZoom) window.bootTreeOnlyZoom();
-      if(window.initMobilePinch) window.initMobilePinch();
-      if(window.fitFamilyTreeToScreen) window.fitFamilyTreeToScreen();
-    },150);
-  };
-
-  window.closeTreePopup=function(){
-    const ov=document.getElementById('treePopupOverlay');
-    if(!ov)return;
-    const el=document.querySelector('#treePopupBody > .tree-only-viewport,#treePopupBody > .real-tree-viewport,#treePopupBody > #realTreeViewport,#treePopupBody > #treeViewport');
-    if(el && el.__treePopupOriginalParent){
-      el.__treePopupOriginalParent.insertBefore(el,el.__treePopupOriginalNext);
-    }
-    ov.classList.remove('open');
-    document.body.style.overflow='';
-  };
-
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTreePopup();});
-
-  function addOpenButtons(){
-    // Existing buttons whose text indicates a tree view open the popup.
-    document.querySelectorAll('button,a').forEach(btn=>{
-      if(btn.dataset.popupTreeBound) return;
-      const txt=(btn.textContent||'').trim().toLowerCase();
-      if(!/real tree|family tree|tree view|view tree/.test(txt)) return;
-      if(/close|download|pdf/.test(txt)) return;
-      btn.dataset.popupTreeBound='1';
-      btn.addEventListener('click',function(e){
-        // Only intercept if a tree viewport already exists on this page.
-        const tree=document.querySelector('#realTreeViewport,#treeViewport,.real-tree-viewport,.tree-only-viewport');
-        if(tree){
-          e.preventDefault();e.stopImmediatePropagation();
-          openTreePopup(tree);
-        }
-      },true);
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(addOpenButtons,300));
-  window.addEventListener('load',()=>setTimeout(addOpenButtons,700));
-  window.addEventListener('treeRendered',addOpenButtons);
 })();
 </script></body></html>
