@@ -376,7 +376,14 @@
             color: #315f91;
             font-size: 13px
         }
-    </style>
+    
+/* SVG Family Tree: all members and connections are generated inside one scalable SVG. */
+#svg{display:block;overflow:visible;pointer-events:auto}
+#svg .svg-person-node{transition:filter .15s ease}
+#svg .svg-person-node:hover{filter:drop-shadow(0 6px 10px rgba(49,95,145,.22))}
+#svg .svg-person-node text{user-select:none}
+#cards{display:none!important}
+</style>
 
 <style id="photoChoicePopupStyle">
 .photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:99999;align-items:center;justify-content:center;padding:20px}
@@ -562,98 +569,99 @@ async function createFamily(){
         }
 
         async function renderTree(){
-            const cards=$('cards'), svg=$('svg'), canvas=$('canvas');
-            cards.innerHTML=''; svg.innerHTML='';
-            if(!people.length){cards.innerHTML='<div class="empty">આ Family માં member નથી.</div>';return;}
-            const byId=new Map(people.map(p=>[String(p._id),p]));
-            const children=new Map();
-            people.forEach(p=>{const pid=p.parentId?String(p.parentId):'root'; if(!children.has(pid))children.set(pid,[]); children.get(pid).push(p);});
-            children.forEach(a=>a.sort((x,y)=>(x.generation-y.generation)||new Date(x.createdAt)-new Date(y.createdAt)));
-            const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>a.generation-b.generation)[0];
-            if(!root){return;}
+ const cards=$('cards'),svg=$('svg'),canvas=$('canvas');
+ cards.innerHTML='';svg.innerHTML='';
+ if(!people.length){cards.innerHTML='<div class="empty">આ Family માં member નથી.</div>';return;}
 
-            const CARD_W=210, CARD_H=245, H_GAP=38, V_GAP=95, PAD_X=80, PAD_Y=50;
-            const widths=new Map();
-            function width(id){
-                id=String(id); if(widths.has(id))return widths.get(id);
-                const kids=children.get(id)||[];
-                const w=kids.length?kids.reduce((sum,k)=>sum+width(k._id),0)+H_GAP*(kids.length-1):CARD_W;
-                widths.set(id,w); return w;
-            }
-            const positions=new Map();
-            function place(node,cx,y){
-                const id=String(node._id), kids=children.get(id)||[], w=width(id);
-                const left=cx-w/2;
-                positions.set(id,{x:cx-CARD_W/2,y,w});
-                if(kids.length){
-                    let cur=left;
-                    kids.forEach(k=>{const kw=width(k._id);place(k,cur+kw/2,y+CARD_H+V_GAP);cur+=kw+H_GAP;});
-                }
-            }
-            place(root,PAD_X+width(root._id)/2,PAD_Y);
-            const all=[...positions.values()];
-            const maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X));
-            const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
-            canvas.dataset.baseWidth=maxX; canvas.dataset.baseHeight=maxY; applyTreeZoom(maxX,maxY);
-            svg.setAttribute('width',maxX); svg.setAttribute('height',maxY);
+ const NS='http://www.w3.org/2000/svg';
+ const CARD_W=230,CARD_H=82,H_GAP=42,V_GAP=105,PAD_X=80,PAD_Y=70;
+ const children=new Map(),roots=[];
+ people.forEach(p=>{
+   const pid=p.parentId?String(p.parentId):'root';
+   if(!children.has(pid))children.set(pid,[]);
+   children.get(pid).push(p);
+   if(!p.parentId)roots.push(p);
+ });
+ children.forEach(a=>a.sort((x,y)=>(Number(x.generation)-Number(y.generation))||new Date(x.createdAt)-new Date(y.createdAt)));
+ if(!roots.length)return;
 
-            const localized={};
-            people.forEach(p=>{localized[String(p._id)]=p.name});
-            people.forEach(p=>{
-                const q=positions.get(String(p._id)); if(!q)return;
-                const d=document.createElement('div'); d.className='card'; d.dataset.personId=String(p._id); d.dataset.personName=(p.name||'').toLowerCase(); d.style.left=q.x+'px'; d.style.top=q.y+'px';
-                const shown=localized[String(p._id)]||p.name;
-                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tree-card-actions">
-<button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Son</button>
-<button type="button" class="btn" onclick="editName('${escAttr(p._id)}')">✏️ Name</button>
-<button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button>
-<button type="button" class="btn" onclick="updateMemberPhoto('${escAttr(p._id)}')">📷 Photo</button>
-<button type="button" class="btn" onclick="deleteMemberPhoto('${escAttr(p._id)}')">📷 remove</button>
-<button type="button" class="btn" onclick="deleteMember('${escAttr(p._id)}')">🔴 Delete</button>
-</div>`;
-                d.onpointerdown=e=>{if(e.target.closest('button,input,a'))e.stopPropagation()};cards.appendChild(d);
-            });
+ /* Keep lightweight hidden cards for existing search/focus functions. */
+ people.forEach(p=>{
+   const d=document.createElement('div');
+   d.className='card';
+   d.dataset.personId=String(p._id);
+   d.dataset.personName=(p.name||'').toLowerCase();
+   d.style.display='none';
+   cards.appendChild(d);
+ });
 
-            // Card-to-card joined connectors: every line touches the exact bottom/top edge.
-            // For multiple children, one horizontal bus joins all child branches.
-            const grouped=new Map();
-            people.forEach(p=>{
-                if(!p.parentId)return;
-                const pid=String(p.parentId);
-                if(!grouped.has(pid))grouped.set(pid,[]);
-                grouped.get(pid).push(p);
-            });
-            grouped.forEach((kids,pid)=>{
-                const parent=positions.get(pid);
-                if(!parent)return;
-                const px=parent.x+CARD_W/2, py=parent.y+CARD_H;
-                const childData=kids.map(k=>positions.get(String(k._id))).filter(Boolean);
-                if(!childData.length)return;
-                const childY=childData[0].y;
-                const busY=py+(childY-py)/2;
-                const xs=childData.map(q=>q.x+CARD_W/2);
-                const minX=Math.min(...xs), maxX=Math.max(...xs);
-                drawLine(svg,px,py,px,busY);
-                if(childData.length>1) drawLine(svg,minX,busY,maxX,busY);
-                childData.forEach(q=>drawLine(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY));
-            });
-            renderMemberLinks();
-        }
+ const widths=new Map();
+ function width(id){
+   id=String(id);
+   if(widths.has(id))return widths.get(id);
+   const kids=children.get(id)||[];
+   const w=kids.length?Math.max(CARD_W,kids.reduce((sum,k)=>sum+width(k._id),0)+H_GAP*(kids.length-1)):CARD_W;
+   widths.set(id,w);return w;
+ }
+ const positions=new Map();
+ function place(node,cx,y){
+   const id=String(node._id),kids=children.get(id)||[],w=width(id);
+   positions.set(id,{x:cx-CARD_W/2,y,w});
+   if(kids.length){
+     let cur=cx-w/2;
+     kids.forEach(k=>{const kw=width(k._id);place(k,cur+kw/2,y+CARD_H+V_GAP);cur+=kw+H_GAP;});
+   }
+ }
+ const rootWidths=roots.map(r=>width(r._id));
+ let cursor=PAD_X;
+ roots.forEach((r,i)=>{const rw=rootWidths[i];place(r,cursor+rw/2,PAD_Y);cursor+=rw+H_GAP;});
+ const all=[...positions.values()];
+ const maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X));
+ const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
+ canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;
+ applyTreeZoom(maxX,maxY);
+ svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);
 
-        function drawLine(svg,x1,y1,x2,y2){
-            const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');
-            p.setAttribute('d',`M${x1} ${y1} L${x2} ${y2}`);
-            p.setAttribute('fill','none');
-            p.setAttribute('stroke','#64748b');
-            p.setAttribute('stroke-width','5');
-            p.setAttribute('stroke-linecap','butt');
-            p.setAttribute('stroke-linejoin','miter');
-            svg.appendChild(p);
-        }
+ const el=(tag,attrs={})=>{
+   const n=document.createElementNS(NS,tag);
+   Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,String(v)));
+   return n;
+ };
+ const colors=['#eaf4ff','#eefbf2','#fff8e7','#f6efff','#fff0f0'];
 
-        function updateTreeZoomLabel(){const el=$('treeZoomLabel');if(el)el.textContent=Math.round(treeZoom*100)+'%'}
-        function applyTreeZoom(baseW,baseH){const canvas=$('canvas'),layer=$('treeLayer');if(!canvas||!layer)return;const w=Number(baseW||canvas.dataset.baseWidth||canvas.offsetWidth||1000),h=Number(baseH||canvas.dataset.baseHeight||canvas.offsetHeight||900);canvas.dataset.baseWidth=w;canvas.dataset.baseHeight=h;canvas.style.width=(w*treeZoom)+'px';canvas.style.height=(h*treeZoom)+'px';layer.style.width=w+'px';layer.style.height=h+'px';layer.style.transform='scale('+treeZoom+')';updateTreeZoomLabel()}
-        function searchAdminTree(value,focus=false){
+ /* SVG connectors */
+ people.forEach(p=>{
+   if(!p.parentId)return;
+   const parent=positions.get(String(p.parentId)),child=positions.get(String(p._id));
+   if(!parent||!child)return;
+   const x1=parent.x+CARD_W/2,y1=parent.y+CARD_H,x2=child.x+CARD_W/2,y2=child.y,mid=y1+(y2-y1)*.5;
+   svg.appendChild(el('path',{d:`M ${x1} ${y1} V ${mid} C ${x1} ${mid} ${x2} ${mid} ${x2} ${mid} V ${y2}`,fill:'none',stroke:'#78909c','stroke-width':4,'stroke-linecap':'round'}));
+ });
+
+ people.forEach((p,i)=>{
+   const q=positions.get(String(p._id));if(!q)return;
+   const g=el('g',{class:'svg-person-node','data-person-id':String(p._id),cursor:'pointer'});
+   g.appendChild(el('rect',{x:q.x+3,y:q.y+5,width:CARD_W,height:CARD_H,rx:16,fill:'#203047',opacity:.10}));
+   g.appendChild(el('rect',{x:q.x,y:q.y,width:CARD_W,height:CARD_H,rx:16,fill:colors[i%colors.length],stroke:'#315f91','stroke-width':2}));
+   const name=el('text',{x:q.x+CARD_W/2,y:q.y+34,'text-anchor':'middle','font-size':16,'font-weight':'800',fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
+   const value=String(p.name||'');
+   if(value.length<=25)name.textContent=value;
+   else{
+     const words=value.split(/\s+/);let a='',b='';
+     words.forEach(w=>{if((a+' '+w).trim().length<=25)a=(a+' '+w).trim();else if((b+' '+w).trim().length<=25)b=(b+' '+w).trim();});
+     name.textContent='';
+     const t1=el('tspan',{x:q.x+CARD_W/2,y:q.y+29});t1.textContent=a;name.appendChild(t1);
+     if(b){const t2=el('tspan',{x:q.x+CARD_W/2,y:q.y+48});t2.textContent=b;name.appendChild(t2);}
+   }
+   g.appendChild(name);
+   const gen=el('text',{x:q.x+CARD_W/2,y:q.y+68,'text-anchor':'middle','font-size':11,'font-weight':'700',fill:'#718096','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
+   gen.textContent='Generation '+(p.generation||1);g.appendChild(gen);
+   g.addEventListener('click',()=>focusAdminTreePerson(String(p._id)));
+   svg.appendChild(g);
+ });
+ window.__treePositions=Object.fromEntries([...positions].map(([id,q])=>[id,q]));
+}
+function searchAdminTree(value,focus=false){
  const term=(value||'').trim().toLowerCase();
  const cards=[...document.querySelectorAll('#cards .card')]; cards.forEach(c=>c.classList.remove('selfFound'));
  if(!term){$('treeSearchHint').textContent='તમારું નામ લખો — તમારું card light green થશે.';return;}

@@ -10,6 +10,13 @@
 /* ===== USER REAL TREE VIEW (same as Admin) ===== */
 .real-tree-tools{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}.real-tree-tools .btn{width:auto;margin:0}.real-tree-open .treebox{height:650px;overflow:auto!important;position:relative;touch-action:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.real-tree-open #realTreeCanvas{display:block!important;position:absolute!important;left:0!important;top:0!important;z-index:20!important;pointer-events:none!important}.real-tree-open #cards{display:none!important}.real-tree-bottom-close{display:none;text-align:center;padding:18px 10px 6px}.real-tree-open .real-tree-bottom-close{display:block}.real-tree-open #userRealTreeBtn{display:none}.real-tree-open .treeSearch,.real-tree-open .treeZoomControls{display:none}.real-tree-open #currentLink{display:none}.real-tree-open .viewSubtitle{display:none}.real-tree-open .viewControls{display:none}
 @media(max-width:600px){.real-tree-open .treebox{height:72vh;min-height:420px}.real-tree-bottom-close .btn{width:min(92vw,320px)!important}}
+
+/* SVG Family Tree: all members and connections are generated inside one scalable SVG. */
+#svg{display:block;overflow:visible;pointer-events:auto}
+#svg .svg-person-node{transition:filter .15s ease}
+#svg .svg-person-node:hover{filter:drop-shadow(0 6px 10px rgba(49,95,145,.22))}
+#svg .svg-person-node text{user-select:none}
+#cards{display:none!important}
 </style></head>
 <body>
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
@@ -158,39 +165,142 @@ function showReadOnlyTree(){
 }
 async function loadFamily(){if(!familyId)return;const r=await fetch('/api/family/'+encodeURIComponent(familyId));const d=await r.json();if(d.ok){people=d.people;renderTree()}}
 async function renderTree(){
- const cards=$('cards'),svg=$('svg'),canvas=$('canvas');
+ const cards=$('cards'),svg=$('svg'),canvas=$('canvas'),layer=$('treeLayer');
  cards.innerHTML='';svg.innerHTML='';if(!people.length)return;
+
+ const NS='http://www.w3.org/2000/svg';
+ const CARD_W=230,CARD_H=82,H_GAP=42,V_GAP=105,PAD_X=80,PAD_Y=70;
  const children={};
- people.forEach(p=>{const pid=p.parentId?String(p.parentId):'root';(children[pid]??=[]).push(p)});
- Object.values(children).forEach(a=>a.sort((x,y)=>(x.generation-y.generation)||new Date(x.createdAt)-new Date(y.createdAt)));
- const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>a.generation-b.generation)[0];if(!root)return;
- const CARD_H=145,H_GAP=38,V_GAP=95,PAD_X=80,PAD_Y=50;
+ const roots=[];
+ people.forEach(p=>{
+   const pid=p.parentId?String(p.parentId):'root';
+   (children[pid]??=[]).push(p);
+   if(!p.parentId)roots.push(p);
+ });
+ Object.values(children).forEach(a=>a.sort((x,y)=>(Number(x.generation)-Number(y.generation))||new Date(x.createdAt)-new Date(y.createdAt)));
+ if(!roots.length)return;
+
+ /* Hidden index cards keep search/focus behaviour working; the visible tree is 100% SVG. */
+ people.forEach(p=>{
+   const c=document.createElement('div');
+   c.className='card';
+   c.dataset.personId=String(p._id);
+   c.dataset.personName=(p.name||'').toLowerCase();
+   c.style.display='none';
+   cards.appendChild(c);
+ });
+
  const widths={};
- function width(id){id=String(id);if(widths[id]!=null)return widths[id];const kids=children[id]||[];const w=kids.length?kids.reduce((sum,k)=>sum+width(k._id),0)+H_GAP*(kids.length-1):CARD_W;return widths[id]=w}
+ function width(id){
+   id=String(id);
+   if(widths[id]!=null)return widths[id];
+   const kids=children[id]||[];
+   widths[id]=kids.length
+     ? Math.max(CARD_W,kids.reduce((sum,k)=>sum+width(k._id),0)+H_GAP*(kids.length-1))
+     : CARD_W;
+   return widths[id];
+ }
+
  const pos={};
  window.__treePositions=pos;
- function place(node,cx,y){const id=String(node._id),kids=children[id]||[],w=width(id),left=cx-w/2;pos[id]={x:cx-CARD_W/2,y,w};if(kids.length){let cur=left;kids.forEach(k=>{const kw=width(k._id);place(k,cur+kw/2,y+CARD_H+V_GAP);cur+=kw+H_GAP})}}
- place(root,PAD_X+width(root._id)/2,PAD_Y);
- const all=Object.values(pos),maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X)),maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
- canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;applyTreeZoom(maxX,maxY);svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
- const readonly=document.body.classList.contains('readonly-view');
- const localized={}; people.forEach(p=>localized[String(p._id)]=p.name);
- people.forEach(p=>{const q=pos[String(p._id)];if(!q)return;const d=document.createElement('div');d.className='card';d.dataset.personId=String(p._id);d.dataset.personName=(p.name||'').toLowerCase();d.style.left=q.x+'px';d.style.top=q.y+'px';const link=absoluteLink('/add/'+p.addToken);const shown=localized[String(p._id)]||p.name;d.innerHTML='<img src="'+(p.photo||avatar(shown))+'"><b>'+safe(shown)+'</b><small class="relation">Generation '+p.generation+'</small>'+(readonly?'':'<span class="personLink" data-link="'+safe(link)+'">🔗 '+(children[String(p._id)]?'આગળનું નામ ઉમેરો':'આ સભ્યનો દીકરો ઉમેરવા link')+'</span>');if(!readonly){const pl=d.querySelector('.personLink');pl.onclick=()=>copyText(link);pl.onpointerdown=e=>e.stopPropagation();pl.ontouchstart=e=>e.stopPropagation()}d.onpointerdown=e=>{if(e.target.closest('button,input,a,.personLink'))e.stopPropagation()};cards.appendChild(d)});
- const grouped={};
- people.forEach(p=>{if(!p.parentId)return;const pid=String(p.parentId);(grouped[pid]??=[]).push(p)});
- Object.entries(grouped).forEach(([pid,kids])=>{
-   const parent=pos[pid];if(!parent)return;
-   const childData=kids.map(k=>pos[String(k._id)]).filter(Boolean);if(!childData.length)return;
-   const px=parent.x+CARD_W/2,py=parent.y+CARD_H;
-   const childY=childData[0].y,busY=py+(childY-py)/2;
-   const xs=childData.map(q=>q.x+CARD_W/2),minX=Math.min(...xs),maxX=Math.max(...xs);
-   draw(svg,px,py,px,busY);
-   if(childData.length>1)draw(svg,minX,busY,maxX,busY);
-   childData.forEach(q=>draw(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY));
- });
- if(focusPersonId){
-   requestAnimationFrame(()=>focusTreePerson(focusPersonId));
+
+ function place(node,cx,y){
+   const id=String(node._id),kids=children[id]||[],w=width(id);
+   pos[id]={x:cx-CARD_W/2,y,w};
+   if(kids.length){
+     let cur=cx-w/2;
+     kids.forEach(k=>{
+       const kw=width(k._id);
+       place(k,cur+kw/2,y+CARD_H+V_GAP);
+       cur+=kw+H_GAP;
+     });
+   }
  }
+
+ /* Support multiple roots by laying them side-by-side. */
+ const rootWidths=roots.map(r=>width(r._id));
+ let totalRootW=rootWidths.reduce((a,b)=>a+b,0)+H_GAP*Math.max(0,roots.length-1);
+ let rootCursor=PAD_X;
+ roots.forEach((r,i)=>{
+   const rw=rootWidths[i];
+   place(r,rootCursor+rw/2,PAD_Y);
+   rootCursor+=rw+H_GAP;
+ });
+
+ const all=Object.values(pos);
+ const maxX=Math.max(1100,totalRootW+PAD_X*2,...all.map(q=>q.x+CARD_W+PAD_X));
+ const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
+ canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;
+ applyTreeZoom(maxX,maxY);
+ svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
+ svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);
+
+ function el(tag,attrs={}){
+   const n=document.createElementNS(NS,tag);
+   Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,String(v)));
+   return n;
+ }
+ function addText(g,text,x,y,size=15,weight='700'){
+   const t=el('text',{x,y,'text-anchor':'middle','font-size':size,'font-weight':weight,fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
+   const value=String(text||'');
+   const max=24;
+   if(value.length<=max){t.textContent=value;}
+   else{
+     let line='',lines=[];
+     value.split(/\s+/).forEach(word=>{
+       if((line+' '+word).trim().length>max){if(line)lines.push(line);line=word;}
+       else line=(line+' '+word).trim();
+     });
+     if(line)lines.push(line);
+     lines=lines.slice(0,2);
+     lines.forEach((ln,i)=>{
+       const sp=el('tspan',{x,y:y+i*19});sp.textContent=ln;t.appendChild(sp);
+     });
+   }
+   g.appendChild(t);
+ }
+
+ /* Draw connectors first so they always stay behind the name boxes. */
+ people.forEach(p=>{
+   if(!p.parentId)return;
+   const parent=pos[String(p.parentId)],child=pos[String(p._id)];
+   if(!parent||!child)return;
+   const x1=parent.x+CARD_W/2,y1=parent.y+CARD_H;
+   const x2=child.x+CARD_W/2,y2=child.y;
+   const mid=y1+(y2-y1)*0.5;
+   const path=el('path',{
+     d:`M ${x1} ${y1} V ${mid} C ${x1} ${mid} ${x2} ${mid} ${x2} ${mid} V ${y2}`,
+     fill:'none',stroke:'#78909c','stroke-width':4,'stroke-linecap':'round'
+   });
+   svg.appendChild(path);
+ });
+
+ const colors=['#eaf4ff','#eefbf2','#fff8e7','#f6efff','#fff0f0'];
+ people.forEach((p,i)=>{
+   const q=pos[String(p._id)];if(!q)return;
+   const g=el('g',{class:'svg-person-node','data-person-id':String(p._id),cursor:'pointer'});
+   const shadow=el('rect',{x:q.x+3,y:q.y+5,width:CARD_W,height:CARD_H,rx:16,fill:'#203047',opacity:.10});
+   const rect=el('rect',{x:q.x,y:q.y,width:CARD_W,height:CARD_H,rx:16,fill:colors[i%colors.length],stroke:'#315f91','stroke-width':2});
+   g.appendChild(shadow);g.appendChild(rect);
+   const name=el('text',{x:q.x+CARD_W/2,y:q.y+34,'text-anchor':'middle','font-size':16,'font-weight':'800',fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
+   const value=String(p.name||'');
+   if(value.length<=25) name.textContent=value;
+   else{
+     const words=value.split(/\s+/);let a='',b='';
+     words.forEach(w=>{if((a+' '+w).trim().length<=25)a=(a+' '+w).trim();else if((b+' '+w).trim().length<=25)b=(b+' '+w).trim();});
+     name.textContent='';
+     const t1=el('tspan',{x:q.x+CARD_W/2,y:q.y+29});t1.textContent=a;name.appendChild(t1);
+     if(b){const t2=el('tspan',{x:q.x+CARD_W/2,y:q.y+48});t2.textContent=b;name.appendChild(t2);}
+   }
+   g.appendChild(name);
+   const gen=el('text',{x:q.x+CARD_W/2,y:q.y+68,'text-anchor':'middle','font-size':11,'font-weight':'700',fill:'#718096','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
+   gen.textContent='Generation '+(p.generation||1);
+   g.appendChild(gen);
+   g.addEventListener('click',()=>focusTreePerson(String(p._id)));
+   svg.appendChild(g);
+ });
+ window.__treeSvgNodes=svg.querySelectorAll('.svg-person-node');
+ if(focusPersonId)requestAnimationFrame(()=>focusTreePerson(focusPersonId));
 }
 function searchTreePerson(value,focus=false){
  const term=(value||'').trim().toLowerCase();
