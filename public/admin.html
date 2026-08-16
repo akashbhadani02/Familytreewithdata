@@ -1039,7 +1039,16 @@ async function editName(id){
             const cp=pos.get(String(child._id)); if(!cp)return;
             const dx=cp.x-pp.x, side=dx>=0?1:-1, distance=Math.abs(dx);
             const width=Math.max(10,34-(generation(parent)-1)*4);
-            strokeCurve(pp.x,pp.y-5,pp.x+side*Math.max(80,Math.min(260,distance*.42)),pp.y-90,cp.x-side*Math.max(70,Math.min(240,distance*.30)),cp.y+95,cp.x,cp.y+35,width);
+            // Never start a branch inside a card. Cards are 164px tall, so
+            // the branch starts just above the parent's top edge and ends
+            // just below the child's bottom edge. This also applies to Gen-1.
+            const CARD_H = 164;
+            const parentEdgeY = pp.y - CARD_H/2 - 3;
+            const childEdgeY  = cp.y + CARD_H/2 + 3;
+            strokeCurve(pp.x,parentEdgeY,
+                pp.x+side*Math.max(80,Math.min(260,distance*.42)),pp.y-110,
+                cp.x-side*Math.max(70,Math.min(240,distance*.30)),cp.y+110,
+                cp.x,childEdgeY,width);
             if(!generationChildren.get(String(child._id))?.length){
                 twig(cp.x,cp.y+20,cp.x+side*65,cp.y-65,6); foliage(cp.x+side*78,cp.y-85,.72);
             }
