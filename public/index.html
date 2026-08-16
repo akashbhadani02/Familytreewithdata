@@ -30,8 +30,36 @@
 <script>
 const $=id=>document.getElementById(id);let token=null,familyId=null,people=[],focusPersonId=null;let treeZoom=1;let pinchStartDistance=0,pinchStartZoom=1;const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
 function showPreview(input,id){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{$(id).src=e.target.result;$(id).style.display='block'};r.readAsDataURL(f)}
-function absoluteLink(path){return location.origin+path}
-function copyText(text){navigator.clipboard.writeText(text).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',text))}
+function absoluteLink(path){
+  const clean=String(path||'').trim();
+  if(/^https?:\/\//i.test(clean)) return clean;
+  const base=location.origin.replace(/\/$/,'');
+  return base+'/'+clean.replace(/^\//,'');
+}
+function memberAddLink(person){
+  if(!person || !person.addToken) return '';
+  return absoluteLink('/add/'+encodeURIComponent(String(person.addToken)));
+}
+async function copyMemberLink(person){
+  const link=memberAddLink(person);
+  if(!link) return alert('આ Childની link હજી generate થઈ નથી.');
+  try{
+    const check=await fetch('/api/add/'+encodeURIComponent(String(person.addToken)),{cache:'no-store'});
+    const data=await check.json().catch(()=>({}));
+    if(!check.ok || !data.ok) return alert('આ Childની valid link server પર મળતી નથી. કૃપા કરીને Child ફરી add કરો.');
+  }catch(e){
+    return alert('Link verify થઈ શકી નથી. Internet/server connection ચેક કરો.');
+  }
+  copyText(link);
+}
+function copyText(text){
+  if(!text) return;
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',text));
+  }else{
+    const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');alert('Link copy થઈ ગઈ')}catch(e){prompt('આ link copy કરો:',text)}ta.remove();
+  }
+}
 function safe(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 async function init(){
  const m=location.pathname.match(/^\/add\/([^/]+)$/);
@@ -116,7 +144,7 @@ function renderChildStatus(){
   const kids=people.filter(p=>p.parentId && String(p.parentId)===String(focusPersonId)).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
   if(!kids.length){box.style.display='block';box.innerHTML='<b>👦 તમારા Child/પુત્રની સ્થિતિ</b><div style="margin-top:5px;color:#68778a">હજુ સુધી કોઈ Childનું નામ add થયું નથી.</div>';return;}
   box.style.display='block';
-  box.innerHTML='<b>👦 તમારા Childનું નામ add થઈ ગયું છે</b><div style="margin-top:5px;color:#68778a">નીચેના નામ તમારા Father/Parent link હેઠળ સફળતાપૂર્વક ઉમેરાયા છે:</div>'+kids.map(k=>'<div class="child-row"><span class="child-name">✅ '+safe(k.name)+'</span><button type="button" class="btn mini-copy" onclick="copyText('+JSON.stringify(absoluteLink('/add/'+k.addToken))+')">🔗 Child Link Copy</button></div>').join('');
+  box.innerHTML='<b>👦 તમારા Childનું નામ add થઈ ગયું છે</b><div style="margin-top:5px;color:#68778a">નીચેના નામ તમારા Father/Parent link હેઠળ સફળતાપૂર્વક ઉમેરાયા છે:</div>'+kids.map(k=>{const link=memberAddLink(k);return '<div class="child-row"><span class="child-name">✅ '+safe(k.name)+'</span><button type="button" class="btn mini-copy" onclick="copyMemberLink('+JSON.stringify(k).replace(/</g,'\\u003c')+')">🔗 Child Link Copy</button></div>'}).join('');
 }
 function prepareLineageFields(){
   if(!people.length || !focusPersonId)return;
@@ -168,7 +196,7 @@ async function addPerson(){
    focusPersonId=String(d.person._id||focusPersonId);
    const parentLink=absoluteLink('/add/'+parentAddToken);
    $('addSuccess').style.display='block';
-   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે શું કરવું છે?</b><div style="display:grid;gap:8px;margin-top:10px"><button type="button" class="btn" onclick="copyText('+JSON.stringify(parentLink)+')">👦 આ જ Father માટે બીજો Son ઉમેરો</button><button type="button" class="btn" onclick="copyText('+JSON.stringify(link)+')">🔗 '+safe(name)+'ની Link Copy કરો</button><button type="button" class="btn" onclick="copyText('+JSON.stringify(link)+')">➡️ '+safe(name)+'નો Son ઉમેરો</button><button type="button" class="btn" onclick="showFamilyTree()">🌳 Family Tree જુઓ</button></div><div class="linkbox" style="margin-top:8px">'+safe(name)+'ની નવી link: '+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">🔗 '+safe(name)+'ની Link Copy કરો</div><div class="linkbox" style="margin-top:8px">બીજો Son ઉમેરવા માટેની Father link: '+safe(parentLink)+'</div><div class="copy" onclick="copyText('+JSON.stringify(parentLink)+')">🔗 Father Link Copy કરો</div></div>';
+   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે શું કરવું છે?</b><div style="display:grid;gap:8px;margin-top:10px"><button type="button" class="btn" onclick="copyText('+JSON.stringify(parentLink)+')">👦 આ જ Father માટે બીજો Son ઉમેરો</button><button type="button" class="btn" onclick="copyMemberLink('+JSON.stringify(d.person)+')">🔗 '+safe(name)+'ની Link Copy કરો</button><button type="button" class="btn" onclick="copyMemberLink('+JSON.stringify(d.person)+')">➡️ '+safe(name)+'નો Son ઉમેરો</button><button type="button" class="btn" onclick="showFamilyTree()">🌳 Family Tree જુઓ</button></div><div class="linkbox" style="margin-top:8px">'+safe(name)+'ની નવી link: '+safe(link)+'</div><div class="copy" onclick="copyMemberLink('+JSON.stringify(d.person)+')">🔗 '+safe(name)+'ની Link Copy કરો</div><div class="linkbox" style="margin-top:8px">બીજો Son ઉમેરવા માટેની Father link: '+safe(parentLink)+'</div><div class="copy" onclick="copyText('+JSON.stringify(parentLink)+')">🔗 Father Link Copy કરો</div></div>';
    $('addName').value='';$('addPhoto').value='';$('addPreview').style.display='none';
    $('parentText').innerHTML='હવે <b>'+safe(name)+'</b>ની કડી સાચવાઈ ગઈ છે. આખી વંશાવલી નીચે ખુલશે.';
    await loadFamily();
