@@ -161,10 +161,10 @@ function renderChildStatus(){
   const kids=people.filter(p=>p.parentId && String(p.parentId)===String(parentId)).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
   if(!kids.length){box.style.display='block';box.innerHTML='<b>👦 તમારા Child/પુત્રની સ્થિતિ</b><div style="margin-top:5px;color:#68778a">હજુ સુધી કોઈ Childનું નામ add થયું નથી.</div>';return;}
   box.style.display='block';
-  box.innerHTML='<b>👦 તમારા Childનું નામ add થઈ ગયું છે</b><div style="margin-top:5px;color:#68778a">નીચેના નામ તમારા Father/Parent link હેઠળ સફળતાપૂર્વક ઉમેરાયા છે:</div>'+kids.map(k=>{
+  box.innerHTML=kids.map(k=>{
     const link=memberAddLink(k);
     const safeJson=JSON.stringify(k).replace(/</g,'\u003c');
-    return '<div class="child-row"><div class="child-name">✅ '+safe(k.name)+'</div><div class="child-link-box"><a class="child-add-link" href="'+safe(link)+'">🔗 '+safe(link)+'</a><button type="button" class="btn mini-copy" onclick="copyMemberLink('+safeJson+',this)">📋 Copy Link</button></div><div class="child-link-hint">આ link ખોલવાથી <b>'+safe(k.name)+'</b>નો દીકરો/આગળની પેઢીનું નામ add કરી શકાશે.</div></div>'
+    return '<div class="child-row"><div class="child-name">'+safe(k.name)+'</div><div class="child-link-box"><a class="child-add-link" href="'+safe(link)+'">'+safe(link)+'</a><button type="button" class="btn mini-copy" onclick="copyMemberLink('+safeJson+',this)">📋 Copy</button></div></div>'
   }).join('');
 }
 function prepareLineageFields(){
