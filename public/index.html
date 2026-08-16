@@ -383,8 +383,11 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
                 pp.x+side*Math.max(80,Math.min(260,distance*.42)),pp.y-110,
                 cp.x-side*Math.max(70,Math.min(240,distance*.30)),cp.y+110,
                 cp.x,childEdgeY,width);
-            if(!generationChildren.get(String(child._id))?.length){
-                twig(cp.x,cp.y+20,cp.x+side*65,cp.y-65,6); foliage(cp.x+side*78,cp.y-85,.72);
+            const childKids = generationChildren.get(String(child._id)) || [];
+            // ONLY the last generation gets twigs/leaves. Intermediate generations stay clean.
+            if(childKids.length === 0){
+                twig(cp.x,cp.y+20,cp.x+side*65,cp.y-65,6);
+                foliage(cp.x+side*78,cp.y-85,.72);
             }
             drawDescendantBranches(child);
         });
@@ -399,7 +402,7 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     });
 
     // Small foliage at the top and side of the real tree.
-    foliage(trunkX,trunkTopY-95,1.15);
+    // Leaves are shown ONLY on the final (last) generation. No leaves on the trunk/top.
 }
 
         async function toggleRealTreeView(){
