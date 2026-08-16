@@ -1424,97 +1424,79 @@ function forwardPhoto(file){
 }
 </script>
 <script>
-/* ===== GENERATION-WISE BRANCH TREE ===== */
+/* ===== ORGANIC / COMPACT GENERATION TREE ===== */
 (function(){
-  function esc(v){
-    return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  }
-  function photoOf(n){
-    return n.photo||n.image||n.photoUrl||n.profilePhoto||n.avatar||'';
-  }
-  function childrenOf(n,all){
-    const id=n.id??n._id??n.key;
-    return all.filter(x=>(x.parentId??x.fatherId??x.parent??x.father??'')==id);
-  }
+  function esc2(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function pid2(n){return String(n.parentId??n.fatherId??n.parent??n.father??'');}
+  function nid2(n){return String(n.id??n._id??n.key);}
+  function img2(n){return n.photo||n.image||n.photoUrl||n.profilePhoto||n.avatar||'';}
 
   window.renderGenerationWiseTree=function(container,nodes,opts={}){
     if(!container||!Array.isArray(nodes)||!nodes.length)return;
-    const idSet=new Set(nodes.map(n=>String(n.id??n._id??n.key)));
-    let roots=nodes.filter(n=>{
-      const p=String(n.parentId??n.fatherId??n.parent??n.father??'');
-      return !p||!idSet.has(p);
-    });
-    if(!roots.length) roots=[nodes[0]];
+    const byId=new Map(nodes.map(n=>[nid2(n),n])), kids=new Map();
+    nodes.forEach(n=>{const p=pid2(n);if(p&&byId.has(p)){if(!kids.has(p))kids.set(p,[]);kids.get(p).push(n);}});
+    let roots=nodes.filter(n=>!pid2(n)||!byId.has(pid2(n))); if(!roots.length)roots=[nodes[0]];
 
-    // Compact vertical generation bands. Siblings share one branch level.
-    const levels=[];
-    const seen=new Set();
-    let q=roots.map(n=>({n,d:0}));
-    while(q.length){
-      const {n,d}=q.shift();
-      const id=String(n.id??n._id??n.key);
-      if(seen.has(id))continue; seen.add(id);
-      (levels[d]??=[]).push(n);
-      childrenOf(n,nodes).forEach(c=>q.push({n:c,d:d+1}));
+    const depth=new Map(),q=roots.map(n=>[n,0]);
+    while(q.length){const [n,d]=q.shift(),id=nid2(n);if(depth.has(id)&&depth.get(id)<=d)continue;depth.set(id,d);(kids.get(id)||[]).forEach(c=>q.push([c,d+1]));}
+    const levels=[];nodes.forEach(n=>{const d=depth.get(nid2(n))??0;(levels[d]??=[]).push(n);});
+
+    // Dynamic subtree width: spacing depends on the real number/shape of children.
+    // This avoids a fixed huge gap between brothers.
+    const NODE_GAP=18,ROOT_GAP=28,ROW=128,PAD=45,subtreeW=new Map();
+    function calc(n){
+      const cs=kids.get(nid2(n))||[];
+      if(!cs.length){subtreeW.set(nid2(n),64);return 64;}
+      const w=Math.max(72,cs.reduce((s,c)=>s+calc(c),0)+NODE_GAP*(cs.length-1));
+      subtreeW.set(nid2(n),w);return w;
     }
+    roots.forEach(calc);
 
-    const W=Math.max(1100,Math.min(2600,380+Math.max(...levels.map(a=>a.length))*92));
-    const rowH=150, H=Math.max(500,100+levels.length*rowH);
-    const cx=W/2;
+    let W=Math.max(760,roots.reduce((s,r)=>s+(subtreeW.get(nid2(r))||72),0)+ROOT_GAP*Math.max(0,roots.length-1)+PAD*2);
+    W=Math.min(1700,W);
+    const maxD=Math.max(...depth.values(),0),H=PAD*2+ROW*(maxD+1),pos=new Map();
+    let cursor=PAD;
+
+    function place(n,d){
+      const id=nid2(n),w=subtreeW.get(id)||72,cs=kids.get(id)||[],start=cursor;
+      cursor+=w;
+      pos.set(id,{x:start+w/2,y:PAD+d*ROW});
+      cs.forEach(c=>{place(c,d+1);cursor+=NODE_GAP;});
+    }
+    roots.forEach(r=>{place(r,0);cursor+=ROOT_GAP;});
+
+    const xs=[...pos.values()].map(p=>p.x),minX=Math.min(...xs),maxX=Math.max(...xs);
+    const shift=(W-(maxX-minX+PAD*2))/2-minX+PAD; pos.forEach(p=>p.x+=shift);
+
     let svg=`<svg class="gen-real-tree" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">`;
-    svg+=`<defs><filter id="gshadow"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".18"/></filter></defs>`;
+    svg+=`<defs><filter id="gshadow2"><feDropShadow dx="0" dy="1.2" stdDeviation="1.5" flood-opacity=".16"/></filter></defs>`;
 
-    const pos=new Map();
-    levels.forEach((arr,d)=>{
-      const y=70+d*rowH;
-      const gap=Math.min(110, Math.max(62,(W-100)/(arr.length+1)));
-      const total=(arr.length-1)*gap;
-      arr.forEach((n,i)=>{
-        const x=cx-total/2+i*gap;
-        pos.set(String(n.id??n._id??n.key),{x,y});
-      });
-    });
-
-    // Generation-wise curved branches: parent -> child, compact horizontally.
     nodes.forEach(n=>{
-      const p=String(n.parentId??n.fatherId??n.parent??n.father??'');
-      const a=pos.get(String(n.id??n._id??n.key)), b=pos.get(p);
-      if(!a||!b)return;
-      const mid=(a.y+b.y)/2;
-      svg+=`<path class="gen-branch" d="M ${b.x} ${b.y+22} C ${b.x} ${mid}, ${a.x} ${mid}, ${a.x} ${a.y-25}"/>`;
+      const a=pos.get(nid2(n)),b=pos.get(pid2(n)); if(!a||!b)return;
+      const y1=b.y+25,y2=a.y-27,mid=y1+(y2-y1)*.48;
+      svg+=`<path class="gen-branch" d="M ${b.x} ${y1} C ${b.x} ${mid}, ${a.x} ${mid-14}, ${a.x} ${y2}"/>`;
     });
 
-    levels.forEach((arr,d)=>{
-      const y=70+d*rowH;
-      svg+=`<text class="gen-gen-label" x="${cx}" y="${y-45}">Generation ${d+1}</text>`;
-      arr.forEach(n=>{
-        const p=pos.get(String(n.id??n._id??n.key)), name=String(n.name??n.fullName??'');
-        const img=photoOf(n);
-        svg+=`<g filter="url(#gshadow)">`;
-        if(img){
-          svg+=`<image href="${esc(img)}" x="${p.x-25}" y="${p.y-25}" width="50" height="50" preserveAspectRatio="xMidYMid slice" class="gen-node-photo"/>`;
-        }else{
-          svg+=`<circle cx="${p.x}" cy="${p.y}" r="25" fill="#e5e7eb" class="gen-node-photo"/>`;
-        }
-        svg+=`</g><text class="gen-node-name" x="${p.x}" y="${p.y+43}" font-size="13">${esc(name)}</text>`;
-      });
-    });
-    svg+=`</svg>`;
-    container.innerHTML=svg;
+    levels.forEach(arr=>arr.forEach(n=>{
+      const p=pos.get(nid2(n)),name=String(n.name??n.fullName??''),im=img2(n);
+      svg+=`<g filter="url(#gshadow2)">`;
+      if(im)svg+=`<image href="${esc2(im)}" x="${p.x-22}" y="${p.y-22}" width="44" height="44" preserveAspectRatio="xMidYMid slice" class="gen-node-photo"/>`;
+      else svg+=`<circle cx="${p.x}" cy="${p.y}" r="22" fill="#e5e7eb" class="gen-node-photo"/>`;
+      svg+=`</g><text class="gen-node-name" x="${p.x}" y="${p.y+38}" font-size="11">${esc2(name)}</text>`;
+    }));
+    svg+=`</svg>`; container.innerHTML=svg;
   };
 
   window.printGenerationTreeA4=function(){
-    const el=document.querySelector('.gen-real-tree');
-    if(!el)return;
-    const w=window.open('','_blank');
+    const el=document.querySelector('.gen-real-tree'); if(!el)return;
+    const w=window.open('','_blank','width=1200,height=900'); if(!w)return;
     w.document.write(`<html><head><title>Family Tree</title><style>
       @page{size:A4 landscape;margin:0}
-      html,body{margin:0;padding:0;background:#fff}
-      body{width:297mm;height:210mm;overflow:hidden}
+      html,body{margin:0;padding:0;background:#fff;width:297mm;height:210mm;overflow:hidden}
+      body{display:flex;align-items:center;justify-content:center}
       svg{width:297mm;height:210mm;display:block}
     </style></head><body>${el.outerHTML}</body></html>`);
-    w.document.close();
-    setTimeout(()=>{w.focus();w.print();},500);
+    w.document.close();setTimeout(()=>{w.focus();w.print();},500);
   };
 })();
 </script></body>
