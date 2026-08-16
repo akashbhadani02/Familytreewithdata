@@ -1,35 +1,4 @@
-<!doctype html>
-<html lang="gu">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>અમારું પરિવાર વૃક્ષ</title>
-<style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#203047}header{background:#fff;border-bottom:1px solid #dce4ec;padding:16px;text-align:center}header h1{margin:0;font-size:24px}.wrap{max-width:1100px;margin:18px auto;padding:0 14px}.panel{background:#fff;border:1px solid #dce4ec;border-radius:16px;padding:20px;box-shadow:0 8px 28px #20304712}.center{text-align:center}.title{font-size:20px;font-weight:800;margin-bottom:8px}.sub{font-size:13px;color:#68778a;line-height:1.6}.form{max-width:520px;margin:18px auto}.label{font-weight:800;font-size:13px;margin:14px 0 6px;display:block}input[type=text]{width:100%;padding:14px;border:1px solid #cbd6e2;border-radius:10px;font-size:16px}input[type=file]{width:100%;padding:12px;border:1px dashed #cbd6e2;border-radius:10px}.btn{width:100%;padding:14px;border:0;border-radius:10px;background:#315f91;color:white;font-size:16px;font-weight:800;cursor:pointer;margin-top:15px}.btn.secondary{background:#e9eef4;color:#30445b}.preview{width:100px;height:100px;border-radius:50%;object-fit:cover;display:none;margin:10px auto}.success{background:#edf8f1;border:1px solid #b9e2c8;padding:15px;border-radius:10px;margin-top:16px;text-align:center;display:none}.linkbox{word-break:break-all;background:#f3f6fa;padding:10px;border-radius:8px;margin-top:8px;font-size:12px}.treebox{margin-top:18px;background:#fff;border:1px solid #dce4ec;border-radius:16px;overflow:auto;height:650px;position:relative;touch-action:none;cursor:grab;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.treebox.dragging{cursor:grabbing}.treebox.dragging{cursor:grabbing}.treeZoomControls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.treeZoomControls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.treeZoomControls button:hover{background:#f1f5f9}.treeZoomLabel{min-width:58px;text-align:center;font-weight:800;color:#315f91}.treeSearch{display:flex;gap:8px;max-width:620px;margin:0 auto 12px}.treeSearch input{flex:1;padding:12px 14px;border:1px solid #cbd6e2;border-radius:10px;font-size:15px;outline:none}.treeSearch input:focus{border-color:#315f91;box-shadow:0 0 0 3px #315f9118}.treeSearch button{border:0;border-radius:10px;padding:12px 16px;background:#315f91;color:#fff;font-weight:800;cursor:pointer}.card.selfFound{background:#dff7e5!important;border-color:#69b77b!important;box-shadow:0 0 0 3px #9ad7a7,0 8px 24px #2e7d3230!important}.searchHint{text-align:center;font-size:12px;color:#718096;margin:-4px 0 10px}.treeLayer{position:relative;transform-origin:0 0;will-change:transform}.canvas{position:relative;width:10000px;height:5200px;background:#fbfcfe}.card{position:absolute;width:190px;height:145px;background:#fff;border:1px solid #cbd7e4;border-radius:14px;padding:10px;text-align:center;box-shadow:0 5px 18px #24384e18;z-index:2}.card img{width:62px;height:62px;border-radius:50%;object-fit:cover;border:2px solid #e0e7ef}.card b{display:block;font-size:14px;margin-top:6px;white-space:normal;overflow-wrap:anywhere}.card small{display:block;color:#718096;font-size:10px;margin-top:3px}.card .relation{color:#718096}.card .personLink{display:block;margin-top:8px;font-size:11px;color:#315f91;cursor:pointer;text-decoration:underline}.line{position:absolute;background:#71849a;height:3px;transform-origin:0 0;z-index:1}.hidden{display:none}.copy{font-size:12px;color:#315f91;cursor:pointer;text-decoration:underline;margin-top:7px}.topActions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.topActions button{width:auto;padding:10px 14px;font-size:13px}.note{font-size:12px;background:#fff7df;border:1px solid #ead89c;border-radius:10px;padding:10px;margin-top:12px}.nextBox{margin-top:12px;background:#eef5ff;border:1px solid #c8ddf5;padding:12px;border-radius:10px}.nextBox b{display:block;margin-bottom:5px}.treeViewBtn{display:block;width:min(520px,100%);margin:18px auto 0;padding:14px 18px;border:0;border-radius:12px;background:#2e7d32;color:#fff;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 5px 14px #2e7d3230}.treeViewBtn:hover{filter:brightness(.96)}.readonly-view .siteNav{display:none}.readonly-view .viewControls,.readonly-view #currentLink,.readonly-view .personLink{display:none}.readonly-view .viewSubtitle{display:none}.readonly-view .treebox{margin-top:18px}
 
-<style id="photoChoiceCss">.photoActions{display:flex;gap:10px;margin-top:8px}.photoActions .btn{margin-top:0;flex:1}.photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center;padding:18px}.photo-choice-overlay.show{display:flex}.photo-choice-box{width:min(360px,100%);background:#fff;border-radius:18px;padding:20px;text-align:center}.photo-choice-box h3{margin:0 0 8px}.photo-choice-box p{color:#667085;margin:0 0 16px}.photo-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.photo-choice-btn{border:0;border-radius:12px;padding:14px;font-weight:800;font-size:15px}.camera-btn{background:#eaf2ff;color:#155dcc}.gallery-btn{background:#edf9f0;color:#16823b}.cancel-btn{margin-top:10px;width:100%;background:#f1f1f1;color:#555}.photo-hidden{display:none!important} 
-/* ===== USER REAL TREE VIEW (same as Admin) ===== */
-.real-tree-tools{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}.real-tree-tools .btn{width:auto;margin:0}.real-tree-open .treebox{height:650px;overflow:auto!important;position:relative;touch-action:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.real-tree-open #realTreeCanvas{display:block!important;position:absolute!important;left:0!important;top:0!important;z-index:20!important;pointer-events:none!important}.real-tree-open #cards{display:none!important}.real-tree-bottom-close{display:none;text-align:center;padding:18px 10px 6px}.real-tree-open .real-tree-bottom-close{display:block}.real-tree-open #userRealTreeBtn{display:none}.real-tree-open .treeSearch,.real-tree-open .treeZoomControls{display:none}.real-tree-open #currentLink{display:none}.real-tree-open .viewSubtitle{display:none}.real-tree-open .viewControls{display:none}
-@media(max-width:600px){.real-tree-open .treebox{height:72vh;min-height:420px}.real-tree-bottom-close .btn{width:min(92vw,320px)!important}}
-
-/* SVG Family Tree: all members and connections are generated inside one scalable SVG. */
-/* Stable SVG tree renderer */
-#svg{position:absolute!important;left:0!important;top:0!important;display:block!important;visibility:visible!important;overflow:visible!important;z-index:10!important;min-width:1px;min-height:1px}
-#treeLayer{position:relative!important;min-width:1px;min-height:1px}
-
-#svg{display:block;overflow:visible;pointer-events:auto}
-#svg .svg-person-node{transition:filter .15s ease}
-#svg .svg-person-node:hover{filter:drop-shadow(0 6px 10px rgba(49,95,145,.22))}
-#svg .svg-person-node text{user-select:none}
-#cards{display:none!important}
-</style></head>
-<body>
-<header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
-<div class="wrap">
-<div id="rootBox" class="panel hidden"><div class="center title">પરિવારની શરૂઆત કરો</div><div class="center sub">સૌથી પહેલા પરિવારના સૌથી મોટા/જૂના સભ્યનું પૂરું નામ લખો. પછી તેમને મળેલી link તેમના દીકરા/આગળના સભ્યને મોકલો.</div><div class="form"><label class="label">પૂરું નામ</label><input id="rootName" type="text" placeholder="ઉદાહરણ: રમેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 50MB સુધી)</label><input id="rootPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'rootPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('rootPhoto')">📷 Photo પસંદ કરો</button></div><img id="rootPreview" class="preview"><button class="btn" onclick="createRoot()">✅ પરિવાર વૃક્ષ શરૂ કરો</button><div id="rootSuccess" class="success"></div></div></div>
-<div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 50MB સુધી)</label><input id="addPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'addPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('addPhoto')">📷 Photo પસંદ કરો</button></div><img id="addPreview" class="preview"><button id="addPersonBtn" class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div><button id="viewTreeBtn" type="button" class="treeViewBtn" onclick="showReadOnlyRealTree()">🌳 Real Tree View જુઓ</button></div></div>
-<div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub viewSubtitle">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્ય માટે છે.</div><div class="topActions viewControls"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treeSearch"><input id="treeSearchInput" type="text" placeholder="🔎 તમારું નામ શોધો..." autocomplete="off" oninput="searchTreePerson(this.value)" onkeydown="if(event.key==='Enter')searchTreePerson(this.value,true)"><button type="button" onclick="clearTreeSearch()">Clear</button></div><div id="treeSearchHint" class="searchHint">તમારું નામ લખો — તમારું card light green થશે.</div><div class="treeZoomControls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="treeZoomLabel">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div><div class="real-tree-tools"><button id="userRealTreeBtn" type="button" class="treeViewBtn" onclick="toggleUserRealTree()">🌳 Real Tree View</button></div><div id="treebox" class="treebox"><div id="canvas" class="canvas"><div id="treeLayer" class="treeLayer"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div><div id="userRealTreeClose" class="real-tree-bottom-close"><button type="button" class="btn danger" onclick="toggleUserRealTree()">✕ Close Tree View</button></div>
-</div>
-<script>
 const $=id=>document.getElementById(id);let token=null,familyId=null,people=[],focusPersonId=null;let treeZoom=1;let pinchStartDistance=0,pinchStartZoom=1;const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
 function showPreview(input,id){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{$(id).src=e.target.result;$(id).style.display='block'};r.readAsDataURL(f)}
 function absoluteLink(path){return location.origin+path}
@@ -169,39 +138,140 @@ function showReadOnlyTree(){
 }
 async function loadFamily(){if(!familyId)return;const r=await fetch('/api/family/'+encodeURIComponent(familyId));const d=await r.json();if(d.ok){people=d.people;renderTree()}}
 async function renderTree(){
- const svg=$('svg'),canvas=$('canvas'),layer=$('treeLayer');
- if(!svg||!canvas||!layer)return;
- svg.innerHTML='';
- if(!Array.isArray(people)||!people.length){svg.setAttribute('width','900');svg.setAttribute('height','500');svg.setAttribute('viewBox','0 0 900 500');return;}
+ const cards=$('cards'),svg=$('svg'),canvas=$('canvas'),layer=$('treeLayer');
+ cards.innerHTML='';svg.innerHTML='';if(!people.length)return;
+
  const NS='http://www.w3.org/2000/svg';
- const W=220,H=86,HGap=36,VGap=115,Pad=70;
- const kids=new Map(), roots=[];
- people.forEach(p=>{const pid=p.parentId?String(p.parentId):null;if(!kids.has(pid))kids.set(pid,[]);kids.get(pid).push(p);if(!p.parentId)roots.push(p);});
- const seen=new Set();
- function sort(a){a.sort((x,y)=>new Date(x.createdAt||0)-new Date(y.createdAt||0));}
- kids.forEach(sort);
- if(!roots.length){
-   // Safety fallback for legacy/broken records: show all members instead of a blank tree.
-   people.forEach(p=>{if(!seen.has(String(p._id))){roots.push(p);if(!kids.has(null))kids.set(null,[]);}});
+ const CARD_W=230,CARD_H=82,H_GAP=42,V_GAP=105,PAD_X=80,PAD_Y=70;
+ const children={};
+ const roots=[];
+ people.forEach(p=>{
+   const pid=p.parentId?String(p.parentId):'root';
+   (children[pid]??=[]).push(p);
+   if(!p.parentId)roots.push(p);
+ });
+ Object.values(children).forEach(a=>a.sort((x,y)=>(Number(x.generation)-Number(y.generation))||new Date(x.createdAt)-new Date(y.createdAt)));
+ if(!roots.length)return;
+
+ /* Hidden index cards keep search/focus behaviour working; the visible tree is 100% SVG. */
+ people.forEach(p=>{
+   const c=document.createElement('div');
+   c.className='card';
+   c.dataset.personId=String(p._id);
+   c.dataset.personName=(p.name||'').toLowerCase();
+   c.style.display='none';
+   cards.appendChild(c);
+ });
+
+ const widths={};
+ function width(id){
+   id=String(id);
+   if(widths[id]!=null)return widths[id];
+   const kids=children[id]||[];
+   widths[id]=kids.length
+     ? Math.max(CARD_W,kids.reduce((sum,k)=>sum+width(k._id),0)+H_GAP*(kids.length-1))
+     : CARD_W;
+   return widths[id];
  }
- const widthCache=new Map();
- function subtreeWidth(id){id=String(id);if(widthCache.has(id))return widthCache.get(id);const a=kids.get(id)||[];const w=a.length?Math.max(W,a.reduce((n,c)=>n+subtreeWidth(c._id),0)+HGap*(a.length-1)):W;widthCache.set(id,w);return w;}
- const pos=new Map();
- function place(p,cx,y){const id=String(p._id),a=kids.get(id)||[],sw=subtreeWidth(id);pos.set(id,{x:cx-W/2,y});let cur=cx-sw/2;a.forEach(ch=>{const cw=subtreeWidth(ch._id);place(ch,cur+cw/2,y+H+VGap);cur+=cw+HGap;});}
- let cursor=Pad;roots.forEach(r=>{const rw=subtreeWidth(r._id);place(r,cursor+rw/2,Pad);cursor+=rw+HGap;});
- // Add any disconnected/orphaned members so the tree never silently loses names.
- people.forEach(p=>{const id=String(p._id);if(!pos.has(id)){const rw=W;place(p,cursor+rw/2,Pad);cursor+=rw+HGap;}});
- const all=[...pos.values()];
- const maxX=Math.max(900,cursor+Pad),maxY=Math.max(520,...all.map(q=>q.y+H+Pad));
- canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;applyTreeZoom(maxX,maxY);
- svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);svg.setAttribute('preserveAspectRatio','xMinYMin meet');svg.style.display='block';svg.style.visibility='visible';
- window.__treePositions=Object.fromEntries([...pos].map(([id,q])=>[id,q]));
- const el=(tag,a={})=>{const n=document.createElementNS(NS,tag);Object.entries(a).forEach(([k,v])=>n.setAttribute(k,String(v)));return n;};
- // Connectors first.
- people.forEach(p=>{if(!p.parentId)return;const pa=pos.get(String(p.parentId)),ch=pos.get(String(p._id));if(!pa||!ch)return;const x1=pa.x+W/2,y1=pa.y+H,x2=ch.x+W/2,y2=ch.y,mid=(y1+y2)/2;svg.appendChild(el('path',{d:`M${x1} ${y1} V${mid} H${x2} V${y2}`,fill:'none',stroke:'#6b7f93','stroke-width':4,'stroke-linecap':'round','stroke-linejoin':'round'}));});
- const fills=['#eaf4ff','#eefbf2','#fff8e7','#f6efff','#fff0f0'];
- function addName(g,p,q){const text=String(p.name||'Unnamed');const t=el('text',{x:q.x+W/2,y:q.y+34,'text-anchor':'middle','font-size':16,'font-weight':800,fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});let words=text.split(/\s+/),line='',lines=[];for(const word of words){const next=(line+' '+word).trim();if(next.length>24&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines=lines.slice(0,2);lines.forEach((ln,i)=>{const sp=el('tspan',{x:q.x+W/2,y:q.y+30+i*19});sp.textContent=ln;t.appendChild(sp);});g.appendChild(t);}
- people.forEach((p,i)=>{const q=pos.get(String(p._id));if(!q)return;const g=el('g',{class:'svg-person-node','data-person-id':String(p._id),cursor:'pointer'});g.appendChild(el('rect',{x:q.x+4,y:q.y+5,width:W,height:H,rx:15,fill:'#203047',opacity:.12}));g.appendChild(el('rect',{x:q.x,y:q.y,width:W,height:H,rx:15,fill:fills[i%fills.length],stroke:'#315f91','stroke-width':2}));addName(g,p,q);const gen=el('text',{x:q.x+W/2,y:q.y+70,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#718096','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});gen.textContent=`Generation ${p.generation||1}`;g.appendChild(gen);g.addEventListener('click',()=>focusTreePerson(String(p._id)));svg.appendChild(g);});
+
+ const pos={};
+ window.__treePositions=pos;
+
+ function place(node,cx,y){
+   const id=String(node._id),kids=children[id]||[],w=width(id);
+   pos[id]={x:cx-CARD_W/2,y,w};
+   if(kids.length){
+     let cur=cx-w/2;
+     kids.forEach(k=>{
+       const kw=width(k._id);
+       place(k,cur+kw/2,y+CARD_H+V_GAP);
+       cur+=kw+H_GAP;
+     });
+   }
+ }
+
+ /* Support multiple roots by laying them side-by-side. */
+ const rootWidths=roots.map(r=>width(r._id));
+ let totalRootW=rootWidths.reduce((a,b)=>a+b,0)+H_GAP*Math.max(0,roots.length-1);
+ let rootCursor=PAD_X;
+ roots.forEach((r,i)=>{
+   const rw=rootWidths[i];
+   place(r,rootCursor+rw/2,PAD_Y);
+   rootCursor+=rw+H_GAP;
+ });
+
+ const all=Object.values(pos);
+ const maxX=Math.max(1100,totalRootW+PAD_X*2,...all.map(q=>q.x+CARD_W+PAD_X));
+ const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
+ canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;
+ applyTreeZoom(maxX,maxY);
+ svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
+ svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);
+
+ function el(tag,attrs={}){
+   const n=document.createElementNS(NS,tag);
+   Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,String(v)));
+   return n;
+ }
+ function addText(g,text,x,y,size=15,weight='700'){
+   const t=el('text',{x,y,'text-anchor':'middle','font-size':size,'font-weight':weight,fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
+   const value=String(text||'');
+   const max=24;
+   if(value.length<=max){t.textContent=value;}
+   else{
+     let line='',lines=[];
+     value.split(/\s+/).forEach(word=>{
+       if((line+' '+word).trim().length>max){if(line)lines.push(line);line=word;}
+       else line=(line+' '+word).trim();
+     });
+     if(line)lines.push(line);
+     lines=lines.slice(0,2);
+     lines.forEach((ln,i)=>{
+       const sp=el('tspan',{x,y:y+i*19});sp.textContent=ln;t.appendChild(sp);
+     });
+   }
+   g.appendChild(t);
+ }
+
+ /* Draw connectors first so they always stay behind the name boxes. */
+ people.forEach(p=>{
+   if(!p.parentId)return;
+   const parent=pos[String(p.parentId)],child=pos[String(p._id)];
+   if(!parent||!child)return;
+   const x1=parent.x+CARD_W/2,y1=parent.y+CARD_H;
+   const x2=child.x+CARD_W/2,y2=child.y;
+   const mid=y1+(y2-y1)*0.5;
+   const path=el('path',{
+     d:`M ${x1} ${y1} V ${mid} C ${x1} ${mid} ${x2} ${mid} ${x2} ${mid} V ${y2}`,
+     fill:'none',stroke:'#78909c','stroke-width':4,'stroke-linecap':'round'
+   });
+   svg.appendChild(path);
+ });
+
+ const colors=['#eaf4ff','#eefbf2','#fff8e7','#f6efff','#fff0f0'];
+ people.forEach((p,i)=>{
+   const q=pos[String(p._id)];if(!q)return;
+   const g=el('g',{class:'svg-person-node','data-person-id':String(p._id),cursor:'pointer'});
+   const shadow=el('rect',{x:q.x+3,y:q.y+5,width:CARD_W,height:CARD_H,rx:16,fill:'#203047',opacity:.10});
+   const rect=el('rect',{x:q.x,y:q.y,width:CARD_W,height:CARD_H,rx:16,fill:colors[i%colors.length],stroke:'#315f91','stroke-width':2});
+   g.appendChild(shadow);g.appendChild(rect);
+   const name=el('text',{x:q.x+CARD_W/2,y:q.y+34,'text-anchor':'middle','font-size':16,'font-weight':'800',fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
+   const value=String(p.name||'');
+   if(value.length<=25) name.textContent=value;
+   else{
+     const words=value.split(/\s+/);let a='',b='';
+     words.forEach(w=>{if((a+' '+w).trim().length<=25)a=(a+' '+w).trim();else if((b+' '+w).trim().length<=25)b=(b+' '+w).trim();});
+     name.textContent='';
+     const t1=el('tspan',{x:q.x+CARD_W/2,y:q.y+29});t1.textContent=a;name.appendChild(t1);
+     if(b){const t2=el('tspan',{x:q.x+CARD_W/2,y:q.y+48});t2.textContent=b;name.appendChild(t2);}
+   }
+   g.appendChild(name);
+   const gen=el('text',{x:q.x+CARD_W/2,y:q.y+68,'text-anchor':'middle','font-size':11,'font-weight':'700',fill:'#718096','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
+   gen.textContent='Generation '+(p.generation||1);
+   g.appendChild(gen);
+   g.addEventListener('click',()=>focusTreePerson(String(p._id)));
+   svg.appendChild(g);
+ });
  window.__treeSvgNodes=svg.querySelectorAll('.svg-person-node');
  if(focusPersonId)requestAnimationFrame(()=>focusTreePerson(focusPersonId));
 }
@@ -523,4 +593,5 @@ function copyCurrentLink(){copyText(location.href)}
 async function downloadPNG(){if(!people.length)return alert('Tree ખાલી છે');if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r)}const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe'}),a=document.createElement('a');a.download='family-tree.png';a.href=c.toDataURL('image/png');a.click()}
 init();
 initTreeZoomTouch();
-</script><div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()"><div class="photo-choice-box"><h3>📷 Photo પસંદ કરો</h3><p>Photo ક્યાંથી લેવી છે?</p><div class="photo-choice-actions"><button type="button" class="photo-choice-btn camera-btn" onclick="chooseCamera()">📷 Camera</button><button type="button" class="photo-choice-btn gallery-btn" onclick="chooseGallery()">🖼️ Gallery</button></div><button type="button" class="photo-choice-btn cancel-btn" onclick="closePhotoChoice()">Cancel</button><input id="cameraPicker" class="photo-hidden" type="file" accept="image/*" capture="environment"><input id="galleryPicker" class="photo-hidden" type="file" accept="image/*"></div></div><script>let photoTargetId=null;function openPhotoChoice(id){photoTargetId=id;document.getElementById('photoChoiceOverlay').classList.add('show')}function closePhotoChoice(){document.getElementById('photoChoiceOverlay').classList.remove('show');photoTargetId=null}function setPhoto(file){if(!file||!photoTargetId){closePhotoChoice();return}const target=document.getElementById(photoTargetId);const dt=new DataTransfer();dt.items.add(file);target.files=dt.files;target.dispatchEvent(new Event('change',{bubbles:true}));closePhotoChoice()}function chooseCamera(){const i=document.getElementById('cameraPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}function chooseGallery(){const i=document.getElementById('galleryPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}</script></body></html>
+
+let photoTargetId=null;function openPhotoChoice(id){photoTargetId=id;document.getElementById('photoChoiceOverlay').classList.add('show')}function closePhotoChoice(){document.getElementById('photoChoiceOverlay').classList.remove('show');photoTargetId=null}function setPhoto(file){if(!file||!photoTargetId){closePhotoChoice();return}const target=document.getElementById(photoTargetId);const dt=new DataTransfer();dt.items.add(file);target.files=dt.files;target.dispatchEvent(new Event('change',{bubbles:true}));closePhotoChoice()}function chooseCamera(){const i=document.getElementById('cameraPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}function chooseGallery(){const i=document.getElementById('galleryPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}

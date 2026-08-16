@@ -1,459 +1,4 @@
-<!doctype html>
-<html lang="gu">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Family Tree Admin</title>
-    <style>
-        * {
-            box-sizing: border-box
-        }
-
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f7fb;
-            color: #203047
-        }
-
-        header {
-            background: #fff;
-            border-bottom: 1px solid #dce4ec;
-            padding: 16px;
-            text-align: center
-        }
-
-        header h1 {
-            margin: 0
-        }
-
-        .wrap {
-            max-width: 1250px;
-            margin: 18px auto;
-            padding: 0 14px
-        }
-
-        .panel {
-            background: #fff;
-            border: 1px solid #dce4ec;
-            border-radius: 16px;
-            padding: 18px;
-            box-shadow: 0 8px 28px #20304712;
-            margin-bottom: 18px
-        }
-
-        .row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center
-        }
-
-        input {
-            padding: 12px;
-            border: 1px solid #cbd6e2;
-            border-radius: 10px;
-            font-size: 15px
-        }
-
-        .btn {
-            padding: 11px 15px;
-            border: 0;
-            border-radius: 10px;
-            background: #315f91;
-            color: #fff;
-            font-weight: 800;
-            cursor: pointer
-        }
-
-        .btn.gray {
-            background: #e9eef4;
-            color: #30445b
-        }
-
-        .btn.danger {
-            background: #dc3545;
-            color: #fff
-        }
-
-        .btn.danger:hover {
-            filter: brightness(.95)
-        }
-
-        .families {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 12px
-        }
-
-        .family {
-            border: 1px solid #dce4ec;
-            border-radius: 12px;
-            padding: 14px
-        }
-
-        .family-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.family-actions .btn{flex:1;min-width:120px}.family b {
-            display: block;
-            margin-bottom: 6px
-        }
-
-        .treebox {
-            overflow: auto;
-            border: 1px solid #dce4ec;
-            border-radius: 14px;
-            height: 680px;
-            position: relative;
-            touch-action: auto;
-            -webkit-overflow-scrolling: touch
-        }
-
-        .tree-search{display:flex;gap:8px;max-width:620px;margin:0 auto 12px}.tree-search input{flex:1;padding:12px 14px;border:1px solid #cbd6e2;border-radius:10px;font-size:15px;outline:none}.tree-search input:focus{border-color:#315f91;box-shadow:0 0 0 3px #315f9118}.tree-search button{border:0;border-radius:10px;padding:12px 16px;background:#315f91;color:#fff;font-weight:800;cursor:pointer}.card.selfFound{background:#dff7e5!important;border-color:#69b77b!important;box-shadow:0 0 0 3px #9ad7a7,0 8px 24px #2e7d3230!important}.search-hint{text-align:center;font-size:12px;color:#718096;margin:-4px 0 10px}.tree-zoom-controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.tree-zoom-controls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.tree-zoom-controls button:hover{background:#f1f5f9}.tree-zoom-label{min-width:58px;text-align:center;font-weight:800;color:#315f91}.tree-layer{position:relative;transform-origin:0 0;will-change:transform}
-        .real-tree-open{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;z-index:99999!important;background:#fff!important;border-radius:0!important;border:0!important;padding:18px!important;box-shadow:none!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:auto!important;touch-action:pan-y!important}
-        .real-tree-open #treebox{height:min(72vh,760px)!important;min-height:420px!important;max-height:calc(100vh - 250px)!important;border-radius:14px;background:#b9dcf0;overflow:auto!important;touch-action:pan-x pan-y!important;-webkit-overflow-scrolling:touch!important;position:relative!important;flex:none!important;overscroll-behavior:contain!important}
-        .real-tree-open #canvas{overflow:visible!important;position:relative!important;width:max-content!important;height:max-content!important}
-        .real-tree-open .tree-search,.real-tree-open .tree-zoom-controls{display:flex!important;position:relative;z-index:20}.real-tree-open .links-panel{display:block!important;position:relative;z-index:20;width:100%;max-width:100%;box-sizing:border-box;overflow:visible!important}
-        .real-tree-open .card{box-shadow:0 7px 24px #24384e24}
-        /* Real Tree View only: wooden plaques sit on a natural tree. Normal Tree View is untouched. */
-        .real-tree-open #treeLayer.real-natural-tree .card{
-            width:210px!important;min-height:92px!important;height:auto!important;padding:12px 12px 9px!important;
-            background:linear-gradient(180deg,#e8b86d 0%,#c8873f 48%,#9d5d2d 100%)!important;
-            border:4px solid #6d3d1d!important;border-radius:18px 15px 20px 13px!important;
-            color:#2b160a!important;box-shadow:inset 0 1px 0 #f8d89b, inset 0 -5px 12px #6b371e44,0 8px 18px #4b2b1738!important;
-            transform:rotate(-1deg);z-index:8!important
-        }
-        .real-tree-open #treeLayer.real-natural-tree .card:nth-child(3n){transform:rotate(1.2deg)}
-        .real-tree-open #treeLayer.real-natural-tree .card:nth-child(4n){transform:rotate(-2deg)}
-        .real-tree-open #treeLayer.real-natural-tree .card img{display:none!important}
-        .real-tree-open #treeLayer.real-natural-tree .card b{font-family:Georgia,'Noto Sans Gujarati',Arial,sans-serif;font-size:17px!important;line-height:1.25;color:#2b160a!important;text-shadow:0 1px #f2cc8a}
-        .real-tree-open #treeLayer.real-natural-tree .card small{color:#4f2b16!important;font-weight:800;margin-top:5px}
-        .real-tree-open #treeLayer.real-natural-tree .tree-card-actions{grid-template-columns:1fr 1fr 1fr!important;gap:4px!important;margin-top:7px!important}
-        .real-tree-open #treeLayer.real-natural-tree .tree-card-actions .btn{padding:5px 3px!important;font-size:9px!important;border-radius:7px!important;background:#2e6b39!important;color:#fff!important}
-        .real-tree-open #treeLayer.real-natural-tree .tree-card-actions .btn.danger{grid-column:auto!important;background:#a33d2e!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg{
-            display:block!important;position:absolute!important;left:0!important;top:0!important;
-            z-index:1!important;overflow:visible!important;filter:none!important;
-            pointer-events:none!important;visibility:visible!important;opacity:1!important;
-        }
-        .real-tree-open #treeLayer.real-natural-tree #svg path{
-            fill:none!important;filter:drop-shadow(0 3px 2px #3c261633)!important;
-        }
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-trunk,
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-branch,
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-root,
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-twig{
-            vector-effect:non-scaling-stroke!important;
-            stroke-linecap:round!important;stroke-linejoin:round!important;
-        }
-        /* Real Tree View overrides the normal connector styling so natural wood stays thick and visible. */
-        .real-tree-open #treeLayer.real-natural-tree #svg rect,.real-tree-open #treeLayer.real-natural-tree #svg ellipse,.real-tree-open #treeLayer.real-natural-tree #svg circle,.real-tree-open #treeLayer.real-natural-tree #svg text{pointer-events:none!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg text{font-family:Georgia,'Noto Sans Gujarati',Arial,sans-serif}
-        .real-tree-close{background:#dc3545!important;color:#fff!important}
-
-        .real-tree-open #treeLayer.real-natural-tree #cards{display:none!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg{z-index:5!important;display:block!important;visibility:visible!important;opacity:1!important;overflow:visible!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg path.rt-trunk{stroke-linecap:round!important;stroke-linejoin:round!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg path.rt-branch{stroke-linecap:round!important;stroke-linejoin:round!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg path.rt-main-branch{stroke-linecap:round!important;stroke-linejoin:round!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg path.rt-root{stroke-linecap:round!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg path.rt-twig{stroke-linecap:round!important}
-
-        .real-tree-open #treeLayer.real-natural-tree{
-            background:linear-gradient(#a9d7ee 0%,#dcefcf 62%,#78ad54 100%)!important;
-            overflow:visible!important;
-        }
-        .real-tree-open #treeLayer.real-natural-tree #svg{
-            width:100%!important;height:100%!important;
-            min-width:100%!important;min-height:100%!important;
-            background:transparent!important;
-            display:block!important;visibility:visible!important;opacity:1!important;
-        }
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-trunk{stroke-width:150px!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-main-branch{stroke-width:34px!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-branch{stroke-width:18px!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg .rt-twig{stroke-width:7px!important}
-
-        /* Final Real Tree renderer: canvas is above the old SVG and below controls. */
-        .real-tree-open #treeLayer.real-natural-tree{position:relative!important;overflow:visible!important;background:transparent!important;}
-        .real-tree-open #treeLayer.real-natural-tree #realTreeCanvas{display:block!important;visibility:visible!important;opacity:1!important;z-index:50!important;position:absolute!important;left:0!important;top:0!important;pointer-events:none!important;}
-        .real-tree-open #treeLayer.real-natural-tree #svg{display:none!important;visibility:hidden!important;}
-        .real-tree-open #treeLayer.real-natural-tree #cards{display:none!important;visibility:hidden!important;}
-        .real-tree-open #treeLayer.real-natural-tree::after{display:none!important;}
-        .canvas {
-            position: relative;
-            width: 7000px;
-            height: 5000px;
-            background: #fbfcfe
-        }
-
-        .card {
-            position: absolute;
-            width: 210px;
-            height: 245px;
-            box-sizing: border-box;
-            background: #fff;
-            border: 1px solid #cbd7e4;
-            border-radius: 14px;
-            padding: 10px;
-            text-align: center;
-            box-shadow: 0 5px 18px #24384e18;
-            z-index: 2
-        }
-
-        .card img {
-            width: 62px;
-            height: 62px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #e0e7ef
-        }
-
-        .card b {
-            display: block;
-            font-size: 14px;
-            margin-top: 6px
-        }
-
-        .card small {
-            display: block;
-            color: #718096;
-            font-size: 10px;
-            margin-top: 3px
-        }
-
-        /* Clean parent-child connectors: lines stay only in the gap between cards. */
-        #svg { pointer-events:none; }
-        #svg path {
-            stroke: #64748b !important;
-            stroke-width: 5 !important;
-            stroke-linecap: butt;
-            stroke-linejoin: miter;
-            fill: none !important;
-        }
-        .treebox { -webkit-overflow-scrolling: touch; }
-        @media (max-width: 1100px) {
-            .member-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
-        }
-        @media (max-width: 820px) {
-            .member-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
-            #viewer > .row:first-child {
-                display:flex!important;
-                flex-wrap:wrap!important;
-                align-items:center!important;
-                gap:8px!important;
-            }
-            #viewer > .row:first-child h2 {
-                width:100%!important;
-                flex:0 0 100%!important;
-            }
-            .tree-search {
-                display:flex!important;
-                flex-wrap:wrap!important;
-                gap:7px!important;
-            }
-            .tree-search input { flex:1 1 220px!important; min-width:0!important; }
-            .tree-zoom-controls {
-                display:flex!important;
-                flex-wrap:wrap!important;
-                justify-content:center!important;
-                gap:7px!important;
-            }
-            .search-hint {
-                display:block!important;
-                width:100%!important;
-                text-align:center!important;
-                margin:7px 0!important;
-            }
-        }
-        @media (max-width: 700px) {
-            header h1 { font-size: 20px; }
-            .wrap { padding: 0 8px; margin: 10px auto; }
-            .panel { padding: 12px; border-radius: 12px; }
-            .treebox { height: 560px; }
-            .canvas { width: 7000px; height: 5000px; }
-            .card { width: 190px; }
-            #svg path { stroke-width: 5 !important; }
-            .member-list { grid-template-columns:1fr!important; }
-            .member-item { padding:11px; }
-            .row .btn { min-height: 42px; }
-        }
-
-        .empty {
-            padding: 30px;
-            text-align: center;
-            color: #718096
-        }
-
-        .danger {
-            background: #b53a3a
-        }
-
-
-        .tree-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}.tree-card-actions .btn{width:100%;padding:8px 5px;font-size:11px}.tree-card-actions .btn.danger{grid-column:1/-1}
-        .member-tools { margin-top:8px; padding-top:8px; border-top:1px solid #edf1f5; }
-        .member-link { width:100%; font-size:11px; padding:8px; border:1px solid #d8e1eb; border-radius:8px; background:#f7f9fc; }
-        .tool-row { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
-        .tool-row .btn { padding:7px 9px; font-size:11px; }
-        /* Member links always stay BELOW the tree/close button in a clean grid. */
-        .links-panel {
-            margin-top:16px;
-            border-top:1px solid #e2e8f0;
-            padding:16px 0 8px;
-            width:100%;
-            display:block!important;
-            clear:both;
-        }
-        .links-panel h3 {
-            display:block!important;
-            width:100%;
-            margin:0 0 6px!important;
-        }
-        .links-panel > div:first-of-type {
-            display:block!important;
-            width:100%;
-            clear:both;
-            line-height:1.5;
-        }
-        .member-list {
-            display:grid!important;
-            grid-template-columns:repeat(4,minmax(0,1fr));
-            gap:12px;
-            box-sizing:border-box;
-            max-width:100%;
-            overflow:visible!important;
-            width:100%;
-            margin:14px 0 0!important;
-            align-items:stretch;
-        }
-        .member-item {
-            min-width:0;
-            max-width:100%;
-            overflow:hidden;
-            box-sizing:border-box;
-            border:1px solid #dce4ec;
-            border-radius:12px;
-            padding:12px;
-            background:#fbfcfe;
-            overflow:hidden;
-        }
-        .member-item .name {
-            font-weight:800;
-            display:block;
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-        }
-        .member-item small { color:#718096; display:block; margin:3px 0 8px; }
-        .member-item .member-link {
-            box-sizing:border-box;
-            display:block;
-            width:100%;
-            max-width:100%;
-            min-width:0;
-            overflow:hidden;
-            text-overflow:ellipsis;
-        }
-
-        /* Member links must never create horizontal overflow or a second scroll area. */
-        .links-panel, .links-panel * { box-sizing:border-box; }
-        .links-panel .tool-row { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; width:100%; }
-        .links-panel .tool-row .btn { min-width:0; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .links-panel .member-link { white-space:nowrap; }
-        @media(max-width:900px){
-            .member-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
-        }
-        @media(max-width:560px){
-            .member-list{grid-template-columns:1fr!important; gap:10px!important;}
-            .links-panel{padding:14px 0 24px!important;}
-            .links-panel h3{font-size:17px!important;}
-            .links-panel > div:first-of-type{font-size:12px!important;line-height:1.45!important;}
-            .links-panel .tool-row{grid-template-columns:1fr 1fr!important;}
-            .links-panel .tool-row .btn{font-size:10px!important;padding:8px 5px!important;}
-        }
-
-        .status {
-            margin-top: 10px;
-            color: #315f91;
-            font-size: 13px
-        }
-    
-/* SVG Family Tree: all members and connections are generated inside one scalable SVG. */
-/* Stable SVG tree renderer */
-#svg{position:absolute!important;left:0!important;top:0!important;display:block!important;visibility:visible!important;overflow:visible!important;z-index:10!important;min-width:1px;min-height:1px}
-#treeLayer{position:relative!important;min-width:1px;min-height:1px}
-
-#svg{display:block;overflow:visible;pointer-events:auto}
-#svg .svg-person-node{transition:filter .15s ease}
-#svg .svg-person-node:hover{filter:drop-shadow(0 6px 10px rgba(49,95,145,.22))}
-#svg .svg-person-node text{user-select:none}
-#cards{display:none!important}
-</style>
-
-<style id="photoChoicePopupStyle">
-.photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:99999;align-items:center;justify-content:center;padding:20px}
-.photo-choice-overlay.show{display:flex}
-.photo-choice-box{width:min(360px,100%);background:#fff;border-radius:20px;padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.28);text-align:center}
-.photo-choice-box h3{margin:0 0 8px;font-size:20px}
-.photo-choice-box p{margin:0 0 18px;color:#666;font-size:14px}
-.photo-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.photo-choice-btn{border:0;border-radius:13px;padding:14px 10px;font-size:15px;font-weight:700;cursor:pointer}
-.photo-camera{background:#eef5ff;color:#1769d2}
-.photo-gallery{background:#edf9f0;color:#16833b}
-.photo-cancel{margin-top:12px;width:100%;background:#f2f2f2;color:#555}
-.photo-choice-input{display:none!important}
-
-        /* Real Tree: Close button only at the very bottom */
-        #realTreeBottomClose{display:none!important;text-align:center;padding:18px 10px 28px;position:relative;z-index:100;clear:both;}
-        .real-tree-open #realTreeBottomClose{display:block!important;width:100%!important;box-sizing:border-box!important;}
-        .real-tree-open #realTreeBtn{display:none!important;}
-        @media(max-width:700px){
-            .real-tree-open{padding:8px!important;overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y!important;}
-            .real-tree-open #treebox{height:calc(100vh - 235px)!important;min-height:300px!important;max-height:none!important;overflow:auto!important;touch-action:pan-x pan-y!important;-webkit-overflow-scrolling:touch!important;}
-            .real-tree-open #realTreeBottomClose{padding:22px 10px 40px!important;}
-            .real-tree-open #realTreeBottomClose .btn{width:min(92vw,320px)!important;font-size:15px!important;padding:12px 18px!important;display:inline-flex!important;justify-content:center!important;}
-        }
-</style>
-
-</head>
-
-<body>
-    <header>
-        <h1>🌳 Family Tree Admin</h1>
-    </header>
-    <div class="wrap">
-        <div id="login" class="panel">
-            <h2>Admin Login</h2>
-            <div class="row"><input id="key" type="password" placeholder="Admin password"><button class="btn"
-                    onclick="login()">Login</button></div>
-            <div class="status">Admin password: call on 9106141725 </div>
-        </div>
-        <div id="app" style="display:none">
-            <div class="panel">
-                <div class="row"><button class="btn" onclick="loadFamilies()">🔄 Refresh</button><button class="btn" onclick="createFamily()">➕ નવી Family બનાવો</button><button
-                        class="btn gray" onclick="logout()">Logout</button></div>
-                <div id="families" class="families" style="margin-top:14px"></div>
-            </div>
-            <div id="viewer" class="panel" style="display:none">
-                <div class="row">
-                    <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button id="realTreeBtn" class="btn" onclick="toggleRealTreeView()">🌳 Real Tree View</button><button class="btn" onclick="downloadPNG()">🖼️ Download PNG</button><button class="btn" onclick="downloadTreePDF()">📄 Download PDF</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ આખી Tree Delete</button>
-                </div>
-                <div class="tree-search"><input id="treeSearchInput" type="text" placeholder="🔎 તમારું નામ શોધો..." autocomplete="off" oninput="searchAdminTree(this.value)" onkeydown="if(event.key==='Enter')searchAdminTree(this.value,true)"><button type="button" onclick="clearAdminTreeSearch()">Clear</button></div><div id="treeSearchHint" class="search-hint">તમારું નામ લખો — તમારું card light green થશે.</div><div class="tree-zoom-controls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="tree-zoom-label">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div>
-                <div id="treebox" class="treebox">
-                    <div id="canvas" class="canvas"><div id="treeLayer" class="tree-layer"><svg id="svg" width="8000" height="4500"
-                            style="position:absolute;left:0;top:0;z-index:1"></svg>
-                        <div id="cards"></div>
-                    </div></div>
-                </div>
-                <div id="realTreeBottomClose" class="real-tree-bottom-close"><button type="button" class="btn danger" onclick="toggleRealTreeView()">✕ Close Tree View</button></div>
-                <div class="links-panel">
-                    <h3 style="margin:0">🔗 બધા Members ની Links</h3>
-                    <div style="font-size:13px;color:#718096;margin-top:5px">Admin અહીંથી કોઈપણ member નું નામ બદલી શકે છે અને તેની link copy/share કરી શકે છે. Name બદલવાથી link બદલાશે નહીં.</div>
-                    <div id="memberLinks" class="member-list"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script>
         let key = localStorage.getItem('adminKey') || '';
         let people = [];
         let currentFamilyId = '';
@@ -573,23 +118,97 @@ async function createFamily(){
         }
 
         async function renderTree(){
- const svg=$('svg'),canvas=$('canvas'),cards=$('cards');
- if(!svg||!canvas||!cards)return;
- svg.innerHTML='';cards.innerHTML='';
- if(!Array.isArray(people)||!people.length){svg.setAttribute('width','900');svg.setAttribute('height','500');svg.setAttribute('viewBox','0 0 900 500');return;}
- const NS='http://www.w3.org/2000/svg',W=220,H=86,HGap=36,VGap=115,Pad=70;
- const kids=new Map(),roots=[];people.forEach(p=>{const pid=p.parentId?String(p.parentId):null;if(!kids.has(pid))kids.set(pid,[]);kids.get(pid).push(p);if(!p.parentId)roots.push(p);});kids.forEach(a=>a.sort((x,y)=>new Date(x.createdAt||0)-new Date(y.createdAt||0)));
- const cache=new Map();function sw(id){id=String(id);if(cache.has(id))return cache.get(id);const a=kids.get(id)||[];const w=a.length?Math.max(W,a.reduce((n,c)=>n+sw(c._id),0)+HGap*(a.length-1)):W;cache.set(id,w);return w;}
- const pos=new Map();function place(p,cx,y){const id=String(p._id),a=kids.get(id)||[],w=sw(id);pos.set(id,{x:cx-W/2,y});let cur=cx-w/2;a.forEach(c=>{const cw=sw(c._id);place(c,cur+cw/2,y+H+VGap);cur+=cw+HGap;});}
- let cursor=Pad;roots.forEach(r=>{const w=sw(r._id);place(r,cursor+w/2,Pad);cursor+=w+HGap;});people.forEach(p=>{if(!pos.has(String(p._id))){place(p,cursor+W/2,Pad);cursor+=W+HGap;}});
- const all=[...pos.values()],maxX=Math.max(900,cursor+Pad),maxY=Math.max(520,...all.map(q=>q.y+H+Pad));canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;applyTreeZoom(maxX,maxY);svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);svg.setAttribute('preserveAspectRatio','xMinYMin meet');svg.style.display='block';svg.style.visibility='visible';
- window.__treePositions=Object.fromEntries([...pos].map(([id,q])=>[id,q]));
- const el=(tag,a={})=>{const n=document.createElementNS(NS,tag);Object.entries(a).forEach(([k,v])=>n.setAttribute(k,String(v)));return n;};
- people.forEach(p=>{if(!p.parentId)return;const pa=pos.get(String(p.parentId)),ch=pos.get(String(p._id));if(!pa||!ch)return;const x1=pa.x+W/2,y1=pa.y+H,x2=ch.x+W/2,y2=ch.y,mid=(y1+y2)/2;svg.appendChild(el('path',{d:`M${x1} ${y1} V${mid} H${x2} V${y2}`,fill:'none',stroke:'#6b7f93','stroke-width':4,'stroke-linecap':'round','stroke-linejoin':'round'}));});
- const fills=['#eaf4ff','#eefbf2','#fff8e7','#f6efff','#fff0f0'];
- people.forEach((p,i)=>{const q=pos.get(String(p._id));if(!q)return;const g=el('g',{class:'svg-person-node','data-person-id':String(p._id),cursor:'pointer'});g.appendChild(el('rect',{x:q.x+4,y:q.y+5,width:W,height:H,rx:15,fill:'#203047',opacity:.12}));g.appendChild(el('rect',{x:q.x,y:q.y,width:W,height:H,rx:15,fill:fills[i%fills.length],stroke:'#315f91','stroke-width':2}));const t=el('text',{x:q.x+W/2,y:q.y+34,'text-anchor':'middle','font-size':16,'font-weight':800,fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});let line='',lines=[];for(const word of String(p.name||'Unnamed').split(/\s+/)){const n=(line+' '+word).trim();if(n.length>24&&line){lines.push(line);line=word;}else line=n;}if(line)lines.push(line);lines.slice(0,2).forEach((ln,k)=>{const sp=el('tspan',{x:q.x+W/2,y:q.y+30+k*19});sp.textContent=ln;t.appendChild(sp);});g.appendChild(t);const gen=el('text',{x:q.x+W/2,y:q.y+70,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#718096','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});gen.textContent=`Generation ${p.generation||1}`;g.appendChild(gen);g.addEventListener('click',()=>focusAdminTreePerson(String(p._id)));svg.appendChild(g);});
- // Hidden search index only; visible member cards are SVG.
- people.forEach(p=>{const d=document.createElement('div');d.className='card';d.dataset.personId=String(p._id);d.dataset.personName=(p.name||'').toLowerCase();d.style.display='none';cards.appendChild(d);});
+ const cards=$('cards'),svg=$('svg'),canvas=$('canvas');
+ cards.innerHTML='';svg.innerHTML='';
+ if(!people.length){cards.innerHTML='<div class="empty">આ Family માં member નથી.</div>';return;}
+
+ const NS='http://www.w3.org/2000/svg';
+ const CARD_W=230,CARD_H=82,H_GAP=42,V_GAP=105,PAD_X=80,PAD_Y=70;
+ const children=new Map(),roots=[];
+ people.forEach(p=>{
+   const pid=p.parentId?String(p.parentId):'root';
+   if(!children.has(pid))children.set(pid,[]);
+   children.get(pid).push(p);
+   if(!p.parentId)roots.push(p);
+ });
+ children.forEach(a=>a.sort((x,y)=>(Number(x.generation)-Number(y.generation))||new Date(x.createdAt)-new Date(y.createdAt)));
+ if(!roots.length)return;
+
+ /* Keep lightweight hidden cards for existing search/focus functions. */
+ people.forEach(p=>{
+   const d=document.createElement('div');
+   d.className='card';
+   d.dataset.personId=String(p._id);
+   d.dataset.personName=(p.name||'').toLowerCase();
+   d.style.display='none';
+   cards.appendChild(d);
+ });
+
+ const widths=new Map();
+ function width(id){
+   id=String(id);
+   if(widths.has(id))return widths.get(id);
+   const kids=children.get(id)||[];
+   const w=kids.length?Math.max(CARD_W,kids.reduce((sum,k)=>sum+width(k._id),0)+H_GAP*(kids.length-1)):CARD_W;
+   widths.set(id,w);return w;
+ }
+ const positions=new Map();
+ function place(node,cx,y){
+   const id=String(node._id),kids=children.get(id)||[],w=width(id);
+   positions.set(id,{x:cx-CARD_W/2,y,w});
+   if(kids.length){
+     let cur=cx-w/2;
+     kids.forEach(k=>{const kw=width(k._id);place(k,cur+kw/2,y+CARD_H+V_GAP);cur+=kw+H_GAP;});
+   }
+ }
+ const rootWidths=roots.map(r=>width(r._id));
+ let cursor=PAD_X;
+ roots.forEach((r,i)=>{const rw=rootWidths[i];place(r,cursor+rw/2,PAD_Y);cursor+=rw+H_GAP;});
+ const all=[...positions.values()];
+ const maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X));
+ const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
+ canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;
+ applyTreeZoom(maxX,maxY);
+ svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);
+
+ const el=(tag,attrs={})=>{
+   const n=document.createElementNS(NS,tag);
+   Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,String(v)));
+   return n;
+ };
+ const colors=['#eaf4ff','#eefbf2','#fff8e7','#f6efff','#fff0f0'];
+
+ /* SVG connectors */
+ people.forEach(p=>{
+   if(!p.parentId)return;
+   const parent=positions.get(String(p.parentId)),child=positions.get(String(p._id));
+   if(!parent||!child)return;
+   const x1=parent.x+CARD_W/2,y1=parent.y+CARD_H,x2=child.x+CARD_W/2,y2=child.y,mid=y1+(y2-y1)*.5;
+   svg.appendChild(el('path',{d:`M ${x1} ${y1} V ${mid} C ${x1} ${mid} ${x2} ${mid} ${x2} ${mid} V ${y2}`,fill:'none',stroke:'#78909c','stroke-width':4,'stroke-linecap':'round'}));
+ });
+
+ people.forEach((p,i)=>{
+   const q=positions.get(String(p._id));if(!q)return;
+   const g=el('g',{class:'svg-person-node','data-person-id':String(p._id),cursor:'pointer'});
+   g.appendChild(el('rect',{x:q.x+3,y:q.y+5,width:CARD_W,height:CARD_H,rx:16,fill:'#203047',opacity:.10}));
+   g.appendChild(el('rect',{x:q.x,y:q.y,width:CARD_W,height:CARD_H,rx:16,fill:colors[i%colors.length],stroke:'#315f91','stroke-width':2}));
+   const name=el('text',{x:q.x+CARD_W/2,y:q.y+34,'text-anchor':'middle','font-size':16,'font-weight':'800',fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
+   const value=String(p.name||'');
+   if(value.length<=25)name.textContent=value;
+   else{
+     const words=value.split(/\s+/);let a='',b='';
+     words.forEach(w=>{if((a+' '+w).trim().length<=25)a=(a+' '+w).trim();else if((b+' '+w).trim().length<=25)b=(b+' '+w).trim();});
+     name.textContent='';
+     const t1=el('tspan',{x:q.x+CARD_W/2,y:q.y+29});t1.textContent=a;name.appendChild(t1);
+     if(b){const t2=el('tspan',{x:q.x+CARD_W/2,y:q.y+48});t2.textContent=b;name.appendChild(t2);}
+   }
+   g.appendChild(name);
+   const gen=el('text',{x:q.x+CARD_W/2,y:q.y+68,'text-anchor':'middle','font-size':11,'font-weight':'700',fill:'#718096','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
+   gen.textContent='Generation '+(p.generation||1);g.appendChild(gen);
+   g.addEventListener('click',()=>focusAdminTreePerson(String(p._id)));
+   svg.appendChild(g);
+ });
+ window.__treePositions=Object.fromEntries([...positions].map(([id,q])=>[id,q]));
 }
 function searchAdminTree(value,focus=false){
  const term=(value||'').trim().toLowerCase();
@@ -1146,51 +765,8 @@ async function loadHtml2Canvas(){
             const ok=await checkAdmin();
             if(ok){showAdminApp();await loadFamilies();}else{localStorage.removeItem('adminKey');key='';showLogin();}
         })();
-    </script>
+    
 
-<div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()">
-  <div class="photo-choice-box">
-    <h3>📷 Photo ઉમેરો</h3>
-    <p>Photo ક્યાંથી લેવી છે?</p>
-    <div class="photo-choice-actions">
-      <button type="button" class="photo-choice-btn photo-camera" onclick="chooseCamera()">📷 Camera</button>
-      <button type="button" class="photo-choice-btn photo-gallery" onclick="chooseGallery()">🖼️ Gallery</button>
-    </div>
-    <button type="button" class="photo-choice-btn photo-cancel" onclick="closePhotoChoice()">Cancel</button>
-    <input id="photoCameraInput" class="photo-choice-input" type="file" accept="image/*" capture="environment">
-    <input id="photoGalleryInput" class="photo-choice-input" type="file" accept="image/*">
-  </div>
-</div>
-
-
-<div id="photoCropOverlay" class="photo-crop-overlay">
-  <div class="photo-crop-box">
-    <h3>✂️ Round Photo Crop</h3>
-    <p>Photo ને drag કરો અને zoom કરીને circle ની અંદર proper set કરો.</p>
-    <div class="photo-crop-stage"><canvas id="photoCropCanvas" width="360" height="360"></canvas><div class="photo-crop-circle"></div></div>
-    <div class="photo-crop-controls">
-      <button type="button" class="btn" onclick="cropZoom(-0.1)">➖</button>
-      <input id="photoCropZoom" type="range" min="1" max="3" step="0.01" value="1" oninput="cropSetZoom(this.value)">
-      <button type="button" class="btn" onclick="cropZoom(0.1)">➕</button>
-    </div>
-    <div class="photo-crop-actions">
-      <button type="button" class="btn danger" onclick="cancelPhotoCrop()">Cancel</button>
-      <button type="button" class="btn" onclick="applyPhotoCrop()">✅ Crop & Set Photo</button>
-    </div>
-  </div>
-</div>
-<style id="photoCropStyle">
-.photo-crop-overlay{display:none;position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.72);align-items:center;justify-content:center;padding:14px}
-.photo-crop-overlay.show{display:flex}
-.photo-crop-box{width:min(440px,100%);background:#fff;border-radius:20px;padding:18px;box-shadow:0 20px 70px rgba(0,0,0,.4);text-align:center}
-.photo-crop-box h3{margin:0 0 5px;font-size:20px}.photo-crop-box p{margin:0 0 14px;color:#666;font-size:13px}
-.photo-crop-stage{width:min(360px,90vw);height:min(360px,90vw);margin:auto;position:relative;overflow:hidden;background:#111;border-radius:12px;touch-action:none}
-#photoCropCanvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}.photo-crop-circle{position:absolute;left:50%;top:50%;width:78%;height:78%;transform:translate(-50%,-50%);border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 9999px rgba(0,0,0,.48);pointer-events:none}
-.photo-crop-controls{display:flex;align-items:center;gap:8px;margin:14px 0}.photo-crop-controls input{flex:1}.photo-crop-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px}
-@media(max-width:480px){.photo-crop-box{padding:13px}.photo-crop-actions .btn{font-size:12px;padding:10px 6px}}
-</style>
-
-<script id="photoChoicePopupScript">
 let photoChoiceTargetInput = null;
 
 function openPhotoChoice(input){
@@ -1223,10 +799,8 @@ function chooseGallery(){
   i.onchange=()=>forwardPhoto(i.files && i.files[0]);
   i.click();
 }
-</script>
 
 
-<script id="adminPhotoChoiceScript">
 function openPhotoChoice(input){
   photoChoiceTargetInput=input||null;
   const o=document.getElementById('photoChoiceOverlay');
@@ -1259,10 +833,8 @@ function chooseGallery(){
   i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
   i.click();
 }
-</script>
 
 
-<script id="roundPhotoCropScript">
 let cropState=null;
 
 function openPhotoCrop(file){
@@ -1340,11 +912,8 @@ function forwardPhoto(file){
     try{target.value='';target.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}
   });
 }
-</script>
-</body>
-</html>
 
-<script id="adminTreeAddChildHelper">
+
 function adminTreeAddChild(parentId){
   if(typeof window.addChild==='function'){ window.addChild(parentId); return; }
   if(typeof window.openAddChild==='function'){ window.openAddChild(parentId); return; }
@@ -1352,4 +921,3 @@ function adminTreeAddChild(parentId){
   alert('Add Child form તૈયાર નથી.');
 }
         initTreeZoomTouch();
-</script>
