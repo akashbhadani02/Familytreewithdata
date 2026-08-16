@@ -448,7 +448,44 @@
         }
 </style>
 
-</head>
+<style>
+/* ===== REAL TREE PAN + ZOOM + SCROLL FIX ===== */
+.real-tree-open #treebox{
+  overflow:auto !important;
+  overflow-x:auto !important;
+  overflow-y:auto !important;
+  touch-action:none !important;
+  -webkit-overflow-scrolling:touch !important;
+  overscroll-behavior:contain !important;
+  cursor:grab !important;
+}
+.real-tree-open #treebox.dragging{cursor:grabbing !important;}
+.real-tree-open #treebox > #canvas{
+  overflow:visible !important;
+}
+.real-tree-open .tree-zoom-controls,
+.real-tree-open .treeZoomControls{
+  display:flex !important;
+  position:sticky !important;
+  top:0 !important;
+  z-index:100000 !important;
+  justify-content:center !important;
+  align-items:center !important;
+  gap:8px !important;
+  padding:8px !important;
+  margin:0 0 8px 0 !important;
+  background:rgba(255,255,255,.96) !important;
+  border-radius:12px !important;
+  box-shadow:0 3px 14px rgba(0,0,0,.12) !important;
+}
+.real-tree-open .tree-zoom-controls button,
+.real-tree-open .treeZoomControls button{
+  min-width:42px !important;
+  min-height:40px !important;
+  cursor:pointer !important;
+  touch-action:manipulation !important;
+}
+</style></head>
 
 <body>
     <header>
@@ -1150,24 +1187,27 @@ async function editName(id){
  const availH=Math.max(1,box.clientHeight-8);
  const fit=Math.max(.02,Math.min(1,availW/w,availH/h));
  treeZoom=fit;
- // The transformed layer itself is the only scaled object. The canvas keeps
- // its real drawing resolution, so the complete tree cannot be clipped.
  layer.style.transformOrigin='0 0';
  layer.style.transform='scale('+fit+')';
  layer.style.width=w+'px';
  layer.style.height=h+'px';
  canvas.style.width=w+'px';
  canvas.style.height=h+'px';
- // Center the complete scaled layer in the viewport.
- const sw=w*fit, sh=h*fit;
- const left=Math.max(0,(box.clientWidth-sw)/2);
- const top=Math.max(0,(box.clientHeight-sh)/2);
- layer.style.left=left+'px';
- layer.style.top=top+'px';
+ canvas.dataset.baseWidth=String(w);
+ canvas.dataset.baseHeight=String(h);
  const base=box.querySelector('#canvas');
- if(base){base.style.width=box.clientWidth+'px';base.style.height=box.clientHeight+'px';}
+ if(base){
+   base.style.width=Math.max(box.clientWidth,w*fit)+'px';
+   base.style.height=Math.max(box.clientHeight,h*fit)+'px';
+   base.dataset.baseWidth=String(w);
+   base.dataset.baseHeight=String(h);
+ }
+ const sw=w*fit, sh=h*fit;
+ layer.style.left=Math.max(0,(box.clientWidth-sw)/2)+'px';
+ layer.style.top=Math.max(0,(box.clientHeight-sh)/2)+'px';
  updateTreeZoomLabel();
- box.scrollLeft=0;box.scrollTop=0;
+ box.scrollLeft=0;
+ box.scrollTop=0;
 }
 
 function __rerenderFullRealTree(){
