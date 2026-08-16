@@ -15,7 +15,7 @@
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
 <div id="rootBox" class="panel hidden"><div class="center title">પરિવારની શરૂઆત કરો</div><div class="center sub">સૌથી પહેલા પરિવારના સૌથી મોટા/જૂના સભ્યનું પૂરું નામ લખો. પછી તેમને મળેલી link તેમના દીકરા/આગળના સભ્યને મોકલો.</div><div class="form"><label class="label">પૂરું નામ</label><input id="rootName" type="text" placeholder="ઉદાહરણ: રમેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 50MB સુધી)</label><input id="rootPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'rootPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('rootPhoto')">📷 Photo પસંદ કરો</button></div><img id="rootPreview" class="preview"><button class="btn" onclick="createRoot()">✅ પરિવાર વૃક્ષ શરૂ કરો</button><div id="rootSuccess" class="success"></div></div></div>
-<div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 50MB સુધી)</label><input id="addPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'addPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('addPhoto')">📷 Photo પસંદ કરો</button></div><img id="addPreview" class="preview"><button id="addPersonBtn" class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div><button id="viewTreeBtn" type="button" class="treeViewBtn" onclick="showReadOnlyTree()">🌳 Family Tree જુઓ</button></div></div>
+<div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 50MB સુધી)</label><input id="addPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'addPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('addPhoto')">📷 Photo પસંદ કરો</button></div><img id="addPreview" class="preview"><button id="addPersonBtn" class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div><button id="viewTreeBtn" type="button" class="treeViewBtn" onclick="showReadOnlyRealTree()">🌳 Real Tree View જુઓ</button></div></div>
 <div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub viewSubtitle">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્ય માટે છે.</div><div class="topActions viewControls"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treeSearch"><input id="treeSearchInput" type="text" placeholder="🔎 તમારું નામ શોધો..." autocomplete="off" oninput="searchTreePerson(this.value)" onkeydown="if(event.key==='Enter')searchTreePerson(this.value,true)"><button type="button" onclick="clearTreeSearch()">Clear</button></div><div id="treeSearchHint" class="searchHint">તમારું નામ લખો — તમારું card light green થશે.</div><div class="treeZoomControls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="treeZoomLabel">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div><div class="real-tree-tools"><button id="userRealTreeBtn" type="button" class="treeViewBtn" onclick="toggleUserRealTree()">🌳 Real Tree View</button></div><div class="treebox"><div id="canvas" class="canvas"><div id="treeLayer" class="treeLayer"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div><div id="userRealTreeClose" class="real-tree-bottom-close"><button type="button" class="btn danger" onclick="toggleUserRealTree()">✕ Close Tree View</button></div>
 </div>
 <script>
@@ -130,6 +130,20 @@ function showFamilyTree(){
  $('currentLink').textContent='Family Tree';
  loadFamily();
  window.scrollTo({top:0,behavior:'smooth'});
+}
+function showReadOnlyRealTree(){
+ if(!familyId)return alert('Family Tree હજુ તૈયાર નથી.');
+ document.body.classList.add('readonly-view');
+ $('addBox').classList.add('hidden');
+ $('rootBox').classList.add('hidden');
+ $('viewBox').classList.remove('hidden');
+ history.replaceState({},'', '/?family='+encodeURIComponent(familyId)+'&readonly=1'+(focusPersonId?'&focus='+encodeURIComponent(focusPersonId):''));
+ $('currentLink').textContent='Family Tree';
+ loadFamily().then(()=>{
+   requestAnimationFrame(()=>{
+     if(typeof toggleUserRealTree==='function' && !document.body.classList.contains('real-tree-open')) toggleUserRealTree();
+   });
+ });
 }
 function showReadOnlyTree(){
  if(!familyId)return alert('Family Tree હજુ તૈયાર નથી.');

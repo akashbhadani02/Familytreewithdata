@@ -76,7 +76,7 @@ app.get("/api/add/:token",async(req,res)=>{
     await connectDB();
     const p=await Person.findOne({addToken:req.params.token}).lean();
     if(!p) return res.status(404).json({ok:false,error:"This link is not valid"});
-    res.json({ok:true,parent:{name:p.name,generation:p.generation,familyId:p.familyId}});
+    res.json({ok:true,parent:{_id:p._id,name:p.name,generation:p.generation,familyId:p.familyId}});
   }catch(e){res.status(400).json({ok:false,error:e.message})}
 });
 
