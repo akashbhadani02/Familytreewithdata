@@ -377,16 +377,14 @@
             font-size: 13px
         }
     
-/* SVG Family Tree: all members and connections are generated inside one scalable SVG. */
-/* Stable SVG tree renderer */
-#svg{position:absolute!important;left:0!important;top:0!important;display:block!important;visibility:visible!important;overflow:visible!important;z-index:10!important;min-width:1px;min-height:1px}
-#treeLayer{position:relative!important;min-width:1px;min-height:1px}
-
-#svg{display:block;overflow:visible;pointer-events:auto}
-#svg .svg-person-node{transition:filter .15s ease}
-#svg .svg-person-node:hover{filter:drop-shadow(0 6px 10px rgba(49,95,145,.22))}
-#svg .svg-person-node text{user-select:none}
-#cards{display:none!important}
+/* SVG family tree labels: photos are optional; names are always visible. */
+.card{width:240px!important;min-height:112px!important;height:112px!important;padding:14px 10px!important;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:5!important;background:#fff!important}
+.card .nameOnly{font-size:18px!important;font-weight:900!important;line-height:1.3!important;overflow-wrap:anywhere!important;word-break:break-word!important;color:#203047!important;max-width:220px!important}
+.card .relation{margin-top:6px!important}
+.card img{display:none!important}
+.treeLayer{min-width:1100px;min-height:900px}
+#svg{z-index:1!important;display:block!important;position:absolute!important;left:0!important;top:0!important;overflow:visible!important;pointer-events:none!important}
+#cards{z-index:5!important}
 </style>
 
 <style id="photoChoicePopupStyle">
@@ -573,25 +571,98 @@ async function createFamily(){
         }
 
         async function renderTree(){
- const svg=$('svg'),canvas=$('canvas'),cards=$('cards');
- if(!svg||!canvas||!cards)return;
- svg.innerHTML='';cards.innerHTML='';
- if(!Array.isArray(people)||!people.length){svg.setAttribute('width','900');svg.setAttribute('height','500');svg.setAttribute('viewBox','0 0 900 500');return;}
- const NS='http://www.w3.org/2000/svg',W=220,H=86,HGap=36,VGap=115,Pad=70;
- const kids=new Map(),roots=[];people.forEach(p=>{const pid=p.parentId?String(p.parentId):null;if(!kids.has(pid))kids.set(pid,[]);kids.get(pid).push(p);if(!p.parentId)roots.push(p);});kids.forEach(a=>a.sort((x,y)=>new Date(x.createdAt||0)-new Date(y.createdAt||0)));
- const cache=new Map();function sw(id){id=String(id);if(cache.has(id))return cache.get(id);const a=kids.get(id)||[];const w=a.length?Math.max(W,a.reduce((n,c)=>n+sw(c._id),0)+HGap*(a.length-1)):W;cache.set(id,w);return w;}
- const pos=new Map();function place(p,cx,y){const id=String(p._id),a=kids.get(id)||[],w=sw(id);pos.set(id,{x:cx-W/2,y});let cur=cx-w/2;a.forEach(c=>{const cw=sw(c._id);place(c,cur+cw/2,y+H+VGap);cur+=cw+HGap;});}
- let cursor=Pad;roots.forEach(r=>{const w=sw(r._id);place(r,cursor+w/2,Pad);cursor+=w+HGap;});people.forEach(p=>{if(!pos.has(String(p._id))){place(p,cursor+W/2,Pad);cursor+=W+HGap;}});
- const all=[...pos.values()],maxX=Math.max(900,cursor+Pad),maxY=Math.max(520,...all.map(q=>q.y+H+Pad));canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;applyTreeZoom(maxX,maxY);svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);svg.setAttribute('preserveAspectRatio','xMinYMin meet');svg.style.display='block';svg.style.visibility='visible';
- window.__treePositions=Object.fromEntries([...pos].map(([id,q])=>[id,q]));
- const el=(tag,a={})=>{const n=document.createElementNS(NS,tag);Object.entries(a).forEach(([k,v])=>n.setAttribute(k,String(v)));return n;};
- people.forEach(p=>{if(!p.parentId)return;const pa=pos.get(String(p.parentId)),ch=pos.get(String(p._id));if(!pa||!ch)return;const x1=pa.x+W/2,y1=pa.y+H,x2=ch.x+W/2,y2=ch.y,mid=(y1+y2)/2;svg.appendChild(el('path',{d:`M${x1} ${y1} V${mid} H${x2} V${y2}`,fill:'none',stroke:'#6b7f93','stroke-width':4,'stroke-linecap':'round','stroke-linejoin':'round'}));});
- const fills=['#eaf4ff','#eefbf2','#fff8e7','#f6efff','#fff0f0'];
- people.forEach((p,i)=>{const q=pos.get(String(p._id));if(!q)return;const g=el('g',{class:'svg-person-node','data-person-id':String(p._id),cursor:'pointer'});g.appendChild(el('rect',{x:q.x+4,y:q.y+5,width:W,height:H,rx:15,fill:'#203047',opacity:.12}));g.appendChild(el('rect',{x:q.x,y:q.y,width:W,height:H,rx:15,fill:fills[i%fills.length],stroke:'#315f91','stroke-width':2}));const t=el('text',{x:q.x+W/2,y:q.y+34,'text-anchor':'middle','font-size':16,'font-weight':800,fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});let line='',lines=[];for(const word of String(p.name||'Unnamed').split(/\s+/)){const n=(line+' '+word).trim();if(n.length>24&&line){lines.push(line);line=word;}else line=n;}if(line)lines.push(line);lines.slice(0,2).forEach((ln,k)=>{const sp=el('tspan',{x:q.x+W/2,y:q.y+30+k*19});sp.textContent=ln;t.appendChild(sp);});g.appendChild(t);const gen=el('text',{x:q.x+W/2,y:q.y+70,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#718096','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});gen.textContent=`Generation ${p.generation||1}`;g.appendChild(gen);g.addEventListener('click',()=>focusAdminTreePerson(String(p._id)));svg.appendChild(g);});
- // Hidden search index only; visible member cards are SVG.
- people.forEach(p=>{const d=document.createElement('div');d.className='card';d.dataset.personId=String(p._id);d.dataset.personName=(p.name||'').toLowerCase();d.style.display='none';cards.appendChild(d);});
-}
-function searchAdminTree(value,focus=false){
+            const cards=$('cards'), svg=$('svg'), canvas=$('canvas');
+            cards.innerHTML=''; svg.innerHTML='';
+            if(!people.length){cards.innerHTML='<div class="empty">આ Family માં member નથી.</div>';return;}
+            const byId=new Map(people.map(p=>[String(p._id),p]));
+            const children=new Map();
+            people.forEach(p=>{const pid=p.parentId?String(p.parentId):'root'; if(!children.has(pid))children.set(pid,[]); children.get(pid).push(p);});
+            children.forEach(a=>a.sort((x,y)=>(x.generation-y.generation)||new Date(x.createdAt)-new Date(y.createdAt)));
+            const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>a.generation-b.generation)[0];
+            if(!root){return;}
+
+            const CARD_W=210, CARD_H=245, H_GAP=38, V_GAP=95, PAD_X=80, PAD_Y=50;
+            const widths=new Map();
+            function width(id){
+                id=String(id); if(widths.has(id))return widths.get(id);
+                const kids=children.get(id)||[];
+                const w=kids.length?kids.reduce((sum,k)=>sum+width(k._id),0)+H_GAP*(kids.length-1):CARD_W;
+                widths.set(id,w); return w;
+            }
+            const positions=new Map();
+            function place(node,cx,y){
+                const id=String(node._id), kids=children.get(id)||[], w=width(id);
+                const left=cx-w/2;
+                positions.set(id,{x:cx-CARD_W/2,y,w});
+                if(kids.length){
+                    let cur=left;
+                    kids.forEach(k=>{const kw=width(k._id);place(k,cur+kw/2,y+CARD_H+V_GAP);cur+=kw+H_GAP;});
+                }
+            }
+            place(root,PAD_X+width(root._id)/2,PAD_Y);
+            const all=[...positions.values()];
+            const maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X));
+            const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
+            canvas.dataset.baseWidth=maxX; canvas.dataset.baseHeight=maxY; applyTreeZoom(maxX,maxY);
+            svg.setAttribute('width',maxX); svg.setAttribute('height',maxY);
+
+            const localized={};
+            people.forEach(p=>{localized[String(p._id)]=p.name});
+            people.forEach(p=>{
+                const q=positions.get(String(p._id)); if(!q)return;
+                const d=document.createElement('div'); d.className='card'; d.dataset.personId=String(p._id); d.dataset.personName=(p.name||'').toLowerCase(); d.style.left=q.x+'px'; d.style.top=q.y+'px';
+                const shown=localized[String(p._id)]||p.name;
+                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tree-card-actions">
+<button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Son</button>
+<button type="button" class="btn" onclick="editName('${escAttr(p._id)}')">✏️ Name</button>
+<button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button>
+<button type="button" class="btn" onclick="updateMemberPhoto('${escAttr(p._id)}')">📷 Photo</button>
+<button type="button" class="btn" onclick="deleteMemberPhoto('${escAttr(p._id)}')">📷 remove</button>
+<button type="button" class="btn" onclick="deleteMember('${escAttr(p._id)}')">🔴 Delete</button>
+</div>`;
+                d.onpointerdown=e=>{if(e.target.closest('button,input,a'))e.stopPropagation()};cards.appendChild(d);
+            });
+
+            // Card-to-card joined connectors: every line touches the exact bottom/top edge.
+            // For multiple children, one horizontal bus joins all child branches.
+            const grouped=new Map();
+            people.forEach(p=>{
+                if(!p.parentId)return;
+                const pid=String(p.parentId);
+                if(!grouped.has(pid))grouped.set(pid,[]);
+                grouped.get(pid).push(p);
+            });
+            grouped.forEach((kids,pid)=>{
+                const parent=positions.get(pid);
+                if(!parent)return;
+                const px=parent.x+CARD_W/2, py=parent.y+CARD_H;
+                const childData=kids.map(k=>positions.get(String(k._id))).filter(Boolean);
+                if(!childData.length)return;
+                const childY=childData[0].y;
+                const busY=py+(childY-py)/2;
+                const xs=childData.map(q=>q.x+CARD_W/2);
+                const minX=Math.min(...xs), maxX=Math.max(...xs);
+                drawLine(svg,px,py,px,busY);
+                if(childData.length>1) drawLine(svg,minX,busY,maxX,busY);
+                childData.forEach(q=>drawLine(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY));
+            });
+            renderMemberLinks();
+        }
+
+        function drawLine(svg,x1,y1,x2,y2){
+            const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');
+            p.setAttribute('d',`M${x1} ${y1} L${x2} ${y2}`);
+            p.setAttribute('fill','none');
+            p.setAttribute('stroke','#64748b');
+            p.setAttribute('stroke-width','5');
+            p.setAttribute('stroke-linecap','butt');
+            p.setAttribute('stroke-linejoin','miter');
+            svg.appendChild(p);
+        }
+
+        function updateTreeZoomLabel(){const el=$('treeZoomLabel');if(el)el.textContent=Math.round(treeZoom*100)+'%'}
+        function applyTreeZoom(baseW,baseH){const canvas=$('canvas'),layer=$('treeLayer');if(!canvas||!layer)return;const w=Number(baseW||canvas.dataset.baseWidth||canvas.offsetWidth||1000),h=Number(baseH||canvas.dataset.baseHeight||canvas.offsetHeight||900);canvas.dataset.baseWidth=w;canvas.dataset.baseHeight=h;canvas.style.width=(w*treeZoom)+'px';canvas.style.height=(h*treeZoom)+'px';layer.style.width=w+'px';layer.style.height=h+'px';layer.style.transform='scale('+treeZoom+')';updateTreeZoomLabel()}
+        function searchAdminTree(value,focus=false){
  const term=(value||'').trim().toLowerCase();
  const cards=[...document.querySelectorAll('#cards .card')]; cards.forEach(c=>c.classList.remove('selfFound'));
  if(!term){$('treeSearchHint').textContent='તમારું નામ લખો — તમારું card light green થશે.';return;}

@@ -11,16 +11,14 @@
 .real-tree-tools{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}.real-tree-tools .btn{width:auto;margin:0}.real-tree-open .treebox{height:650px;overflow:auto!important;position:relative;touch-action:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.real-tree-open #realTreeCanvas{display:block!important;position:absolute!important;left:0!important;top:0!important;z-index:20!important;pointer-events:none!important}.real-tree-open #cards{display:none!important}.real-tree-bottom-close{display:none;text-align:center;padding:18px 10px 6px}.real-tree-open .real-tree-bottom-close{display:block}.real-tree-open #userRealTreeBtn{display:none}.real-tree-open .treeSearch,.real-tree-open .treeZoomControls{display:none}.real-tree-open #currentLink{display:none}.real-tree-open .viewSubtitle{display:none}.real-tree-open .viewControls{display:none}
 @media(max-width:600px){.real-tree-open .treebox{height:72vh;min-height:420px}.real-tree-bottom-close .btn{width:min(92vw,320px)!important}}
 
-/* SVG Family Tree: all members and connections are generated inside one scalable SVG. */
-/* Stable SVG tree renderer */
-#svg{position:absolute!important;left:0!important;top:0!important;display:block!important;visibility:visible!important;overflow:visible!important;z-index:10!important;min-width:1px;min-height:1px}
-#treeLayer{position:relative!important;min-width:1px;min-height:1px}
-
-#svg{display:block;overflow:visible;pointer-events:auto}
-#svg .svg-person-node{transition:filter .15s ease}
-#svg .svg-person-node:hover{filter:drop-shadow(0 6px 10px rgba(49,95,145,.22))}
-#svg .svg-person-node text{user-select:none}
-#cards{display:none!important}
+/* SVG family tree labels: photos are optional; names are always visible. */
+.card{width:240px!important;min-height:112px!important;height:112px!important;padding:14px 10px!important;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:5!important;background:#fff!important}
+.card .nameOnly{font-size:18px!important;font-weight:900!important;line-height:1.3!important;overflow-wrap:anywhere!important;word-break:break-word!important;color:#203047!important;max-width:220px!important}
+.card .relation{margin-top:6px!important}
+.card img{display:none!important}
+.treeLayer{min-width:1100px;min-height:900px}
+#svg{z-index:1!important;display:block!important;position:absolute!important;left:0!important;top:0!important;overflow:visible!important;pointer-events:none!important}
+#cards{z-index:5!important}
 </style></head>
 <body>
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
@@ -169,40 +167,60 @@ function showReadOnlyTree(){
 }
 async function loadFamily(){if(!familyId)return;const r=await fetch('/api/family/'+encodeURIComponent(familyId));const d=await r.json();if(d.ok){people=d.people;renderTree()}}
 async function renderTree(){
- const svg=$('svg'),canvas=$('canvas'),layer=$('treeLayer');
- if(!svg||!canvas||!layer)return;
- svg.innerHTML='';
- if(!Array.isArray(people)||!people.length){svg.setAttribute('width','900');svg.setAttribute('height','500');svg.setAttribute('viewBox','0 0 900 500');return;}
- const NS='http://www.w3.org/2000/svg';
- const W=220,H=86,HGap=36,VGap=115,Pad=70;
- const kids=new Map(), roots=[];
- people.forEach(p=>{const pid=p.parentId?String(p.parentId):null;if(!kids.has(pid))kids.set(pid,[]);kids.get(pid).push(p);if(!p.parentId)roots.push(p);});
- const seen=new Set();
- function sort(a){a.sort((x,y)=>new Date(x.createdAt||0)-new Date(y.createdAt||0));}
- kids.forEach(sort);
- if(!roots.length){
-   // Safety fallback for legacy/broken records: show all members instead of a blank tree.
-   people.forEach(p=>{if(!seen.has(String(p._id))){roots.push(p);if(!kids.has(null))kids.set(null,[]);}});
+ const cards=$('cards'),svg=$('svg'),canvas=$('canvas');
+ cards.innerHTML='';svg.innerHTML='';if(!people.length)return;
+ const byId=new Map(people.map(p=>[String(p._id),p]));
+ const children=new Map(),roots=[];
+ people.forEach((p,i)=>{
+   const pid=p.parentId?String(p.parentId):'';
+   if(pid&&byId.has(pid)){if(!children.has(pid))children.set(pid,[]);children.get(pid).push({...p,__order:i});}
+   else roots.push({...p,__order:i});
+ });
+ const sortKids=a=>a.sort((x,y)=>(Number(x.generation)||0)-(Number(y.generation)||0)||x.__order-y.__order);
+ children.forEach(sortKids);
+ roots.sort((a,b)=>(Number(a.generation)||0)-(Number(b.generation)||0)||a.__order-b.__order);
+
+ const CARD_W=240,CARD_H=112,H_GAP=45,V_GAP=105,ROOT_GAP=90,PAD_X=80,PAD_Y=60;
+ const widths=new Map(),visiting=new Set();
+ function width(id){
+   id=String(id);if(widths.has(id))return widths.get(id);
+   if(visiting.has(id))return CARD_W;
+   visiting.add(id);const kids=children.get(id)||[];
+   const w=kids.length?kids.reduce((s,k)=>s+width(k._id),0)+H_GAP*(kids.length-1):CARD_W;
+   widths.set(id,Math.max(CARD_W,w));visiting.delete(id);return widths.get(id);
  }
- const widthCache=new Map();
- function subtreeWidth(id){id=String(id);if(widthCache.has(id))return widthCache.get(id);const a=kids.get(id)||[];const w=a.length?Math.max(W,a.reduce((n,c)=>n+subtreeWidth(c._id),0)+HGap*(a.length-1)):W;widthCache.set(id,w);return w;}
- const pos=new Map();
- function place(p,cx,y){const id=String(p._id),a=kids.get(id)||[],sw=subtreeWidth(id);pos.set(id,{x:cx-W/2,y});let cur=cx-sw/2;a.forEach(ch=>{const cw=subtreeWidth(ch._id);place(ch,cur+cw/2,y+H+VGap);cur+=cw+HGap;});}
- let cursor=Pad;roots.forEach(r=>{const rw=subtreeWidth(r._id);place(r,cursor+rw/2,Pad);cursor+=rw+HGap;});
- // Add any disconnected/orphaned members so the tree never silently loses names.
- people.forEach(p=>{const id=String(p._id);if(!pos.has(id)){const rw=W;place(p,cursor+rw/2,Pad);cursor+=rw+HGap;}});
- const all=[...pos.values()];
- const maxX=Math.max(900,cursor+Pad),maxY=Math.max(520,...all.map(q=>q.y+H+Pad));
+ roots.forEach(r=>width(r._id));
+ const pos={};window.__treePositions=pos;
+ function place(node,cx,y){
+   const id=String(node._id),kids=children.get(id)||[],w=width(id);
+   pos[id]={x:cx-CARD_W/2,y};
+   if(kids.length){let cur=cx-w/2;kids.forEach(k=>{const kw=width(k._id);place(k,cur+kw/2,y+CARD_H+V_GAP);cur+=kw+H_GAP;});}
+ }
+ let cursor=PAD_X;
+ roots.forEach(r=>{const w=width(r._id);place(r,cursor+w/2,PAD_Y);cursor+=w+ROOT_GAP;});
+ const all=Object.values(pos),maxX=Math.max(1100,cursor+PAD_X),maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
  canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;applyTreeZoom(maxX,maxY);
- svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);svg.setAttribute('preserveAspectRatio','xMinYMin meet');svg.style.display='block';svg.style.visibility='visible';
- window.__treePositions=Object.fromEntries([...pos].map(([id,q])=>[id,q]));
- const el=(tag,a={})=>{const n=document.createElementNS(NS,tag);Object.entries(a).forEach(([k,v])=>n.setAttribute(k,String(v)));return n;};
- // Connectors first.
- people.forEach(p=>{if(!p.parentId)return;const pa=pos.get(String(p.parentId)),ch=pos.get(String(p._id));if(!pa||!ch)return;const x1=pa.x+W/2,y1=pa.y+H,x2=ch.x+W/2,y2=ch.y,mid=(y1+y2)/2;svg.appendChild(el('path',{d:`M${x1} ${y1} V${mid} H${x2} V${y2}`,fill:'none',stroke:'#6b7f93','stroke-width':4,'stroke-linecap':'round','stroke-linejoin':'round'}));});
- const fills=['#eaf4ff','#eefbf2','#fff8e7','#f6efff','#fff0f0'];
- function addName(g,p,q){const text=String(p.name||'Unnamed');const t=el('text',{x:q.x+W/2,y:q.y+34,'text-anchor':'middle','font-size':16,'font-weight':800,fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});let words=text.split(/\s+/),line='',lines=[];for(const word of words){const next=(line+' '+word).trim();if(next.length>24&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines=lines.slice(0,2);lines.forEach((ln,i)=>{const sp=el('tspan',{x:q.x+W/2,y:q.y+30+i*19});sp.textContent=ln;t.appendChild(sp);});g.appendChild(t);}
- people.forEach((p,i)=>{const q=pos.get(String(p._id));if(!q)return;const g=el('g',{class:'svg-person-node','data-person-id':String(p._id),cursor:'pointer'});g.appendChild(el('rect',{x:q.x+4,y:q.y+5,width:W,height:H,rx:15,fill:'#203047',opacity:.12}));g.appendChild(el('rect',{x:q.x,y:q.y,width:W,height:H,rx:15,fill:fills[i%fills.length],stroke:'#315f91','stroke-width':2}));addName(g,p,q);const gen=el('text',{x:q.x+W/2,y:q.y+70,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#718096','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});gen.textContent=`Generation ${p.generation||1}`;g.appendChild(gen);g.addEventListener('click',()=>focusTreePerson(String(p._id)));svg.appendChild(g);});
- window.__treeSvgNodes=svg.querySelectorAll('.svg-person-node');
+ svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);
+ const ns='http://www.w3.org/2000/svg';
+ const line=d=>{const p=document.createElementNS(ns,'path');p.setAttribute('d',d);p.setAttribute('fill','none');p.setAttribute('stroke','#64748b');p.setAttribute('stroke-width','5');p.setAttribute('stroke-linecap','round');p.setAttribute('stroke-linejoin','round');svg.appendChild(p)};
+ children.forEach((kids,pid)=>{
+   const parent=pos[String(pid)];if(!parent)return;
+   const data=kids.map(k=>pos[String(k._id)]).filter(Boolean);if(!data.length)return;
+   const px=parent.x+CARD_W/2,py=parent.y+CARD_H,childY=data[0].y,busY=py+(childY-py)/2;
+   const xs=data.map(q=>q.x+CARD_W/2);
+   line(`M ${px} ${py} V ${busY}`);if(data.length>1)line(`M ${Math.min(...xs)} ${busY} H ${Math.max(...xs)}`);
+   data.forEach(q=>line(`M ${q.x+CARD_W/2} ${busY} V ${childY}`));
+ });
+ const readonly=document.body.classList.contains('readonly-view');
+ people.forEach(p=>{
+   const q=pos[String(p._id)];if(!q)return;
+   const d=document.createElement('div');d.className='card';d.dataset.personId=String(p._id);d.dataset.personName=(p.name||'').toLowerCase();d.style.left=q.x+'px';d.style.top=q.y+'px';
+   const shown=p.name||'Unnamed Member';
+   const link=absoluteLink('/add/'+p.addToken);
+   d.innerHTML='<div class="nameOnly">'+safe(shown)+'</div><small class="relation">Generation '+(Number(p.generation)||1)+'</small>'+(readonly?'':'<span class="personLink" data-link="'+safe(link)+'">🔗 '+(children.has(String(p._id))?'આગળનું નામ ઉમેરો':'આ સભ્યનું નામ ઉમેરવા link')+'</span>');
+   if(!readonly){const pl=d.querySelector('.personLink');pl.onclick=()=>copyText(link);pl.onpointerdown=e=>e.stopPropagation();pl.ontouchstart=e=>e.stopPropagation();}
+   d.onpointerdown=e=>{if(e.target.closest('button,input,a,.personLink'))e.stopPropagation()};cards.appendChild(d);
+ });
  if(focusPersonId)requestAnimationFrame(()=>focusTreePerson(focusPersonId));
 }
 function searchTreePerson(value,focus=false){
