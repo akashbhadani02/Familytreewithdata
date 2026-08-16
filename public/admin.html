@@ -185,6 +185,7 @@
         }
 
 
+        .tree-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}.tree-card-actions .btn{width:100%;padding:8px 5px;font-size:11px}.tree-card-actions .btn.danger{grid-column:1/-1}
         .member-tools { margin-top:8px; padding-top:8px; border-top:1px solid #edf1f5; }
         .member-link { width:100%; font-size:11px; padding:8px; border:1px solid #d8e1eb; border-radius:8px; background:#f7f9fc; }
         .tool-row { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
@@ -403,7 +404,7 @@ async function createFamily(){
                 const q=positions.get(String(p._id)); if(!q)return;
                 const d=document.createElement('div'); d.className='card'; d.dataset.personId=String(p._id); d.dataset.personName=(p.name||'').toLowerCase(); d.style.left=q.x+'px'; d.style.top=q.y+'px';
                 const shown=localized[String(p._id)]||p.name;
-                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><button class="btn" style="width:100%;margin-top:10px;padding:9px 8px;font-size:12px" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Child</button>`;
+                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tree-card-actions"><button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add</button><button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button><button type="button" class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
                 d.onpointerdown=e=>{if(e.target.closest('button,input,a'))e.stopPropagation()};cards.appendChild(d);
             });
 
@@ -485,6 +486,12 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         }
         function addLink(token){return location.origin+'/add/'+token;}
         async function copyLink(link){try{await navigator.clipboard.writeText(link);alert('Link copy થઈ ગઈ.');}catch(e){prompt('Link copy કરો:',link);}}
+
+        function openAdminMemberLink(token){
+            if(!token) return alert('આ member ની link ઉપલબ્ધ નથી.');
+            const link=location.origin+'/add/'+encodeURIComponent(token);
+            window.open(link,'_blank','noopener,noreferrer');
+        }
 
         async function adminAddChild(parentId,parentName,btn){
             if(btn && btn.disabled) return;
