@@ -10,14 +10,7 @@
 /* ===== USER REAL TREE VIEW (same as Admin) ===== */
 .real-tree-tools{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}.real-tree-tools .btn{width:auto;margin:0}.real-tree-open .treebox{height:650px;overflow:auto!important;position:relative;touch-action:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.real-tree-open #realTreeCanvas{display:block!important;position:absolute!important;left:0!important;top:0!important;z-index:20!important;pointer-events:none!important}.real-tree-open #cards{display:none!important}.real-tree-bottom-close{display:none;text-align:center;padding:18px 10px 6px}.real-tree-open .real-tree-bottom-close{display:block}.real-tree-open #userRealTreeBtn{display:none}.real-tree-open .treeSearch,.real-tree-open .treeZoomControls{display:none}.real-tree-open #currentLink{display:none}.real-tree-open .viewSubtitle{display:none}.real-tree-open .viewControls{display:none}
 @media(max-width:600px){.real-tree-open .treebox{height:72vh;min-height:420px}.real-tree-bottom-close .btn{width:min(92vw,320px)!important}}
-</style>
-<style>
-.real-tree-open #treeLayer.real-natural-tree #svg{display:none!important}
-.real-tree-open #treeLayer.real-natural-tree #cards{display:none!important}
-.real-tree-open #treeLayer.real-natural-tree #realTreeCanvas{display:block!important;visibility:visible!important;opacity:1!important}
-.real-tree-open #treeLayer.real-natural-tree{background:transparent!important;overflow:visible!important}
-</style>
-</head>
+</style></head>
 <body>
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
@@ -220,330 +213,224 @@ function treeZoomOut(){setTreeZoom(treeZoom-0.1)}
 function treeZoomReset(){setTreeZoom(1)}
 function treeZoomDistance(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}
 function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2}}
-        
-/* ===== CLEAN REAL FAMILY TREE =====
-   One person = one name.
-   Gen-1 = one central trunk.
-   Gen-2+ = curved branches from the real parent.
-   Terminal/last child = small leaf beside the name.
-*/
-function buildCleanRealTree(people, host, baseCanvas){
-    if(!Array.isArray(people)||!people.length||!host||!baseCanvas)return;
-
-    const id=p=>String(p._id??p.id??p.key);
-    const parentId=p=>String(p.parentId??p.fatherId??p.parent??'');
+        function drawUserRealTreeStructure(){
+    const layer = $('treeLayer'), normalSvg = $('svg'), baseCanvas = $('canvas');
+    if(!layer || !baseCanvas || !people.length) return;
+    layer.classList.add('real-natural-tree');
+    if(normalSvg) normalSvg.style.display='none';
+    const cards=$('cards'); if(cards) cards.style.display='none';
+    let tc=$('realTreeCanvas');
+    if(!tc){tc=document.createElement('canvas');tc.id='realTreeCanvas';layer.appendChild(tc);}
     const generation=p=>Number(p.generation)||1;
+    /* ---------- FAMILY TREE LAYOUT ----------
+       Generation 1 is one continuous vertical trunk.
+       Every Gen-1 member is stacked bottom -> top in insertion order.
+       Generation 2+ branches are created from the correct parent. */
+    const gen1 = people.filter(p=>generation(p)===1);
+    if(!gen1.length) return;
 
-    const byId=new Map(people.map(p=>[id(p),p]));
-    const order=new Map(people.map((p,i)=>[id(p),i]));
-    const children=new Map();
+    // Keep API/insertion order. If createdAt exists, use it as the most reliable
+    // insertion order, with the original array position as the final fallback.
+    const orderMap = new Map(people.map((p,i)=>[String(p._id),i]));
+    gen1.sort((a,b)=>{
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : NaN;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : NaN;
+        if(Number.isFinite(ta) && Number.isFinite(tb) && ta!==tb) return ta-tb;
+        return (orderMap.get(String(a._id))||0)-(orderMap.get(String(b._id))||0);
+    });
 
+    // Parent -> children. Gen-1 members are the trunk members, not separate roots.
+    const generationChildren = new Map();
     people.forEach(p=>{
-        const pid=parentId(p);
-        if(pid && byId.has(pid)){
-            if(!children.has(pid))children.set(pid,[]);
-            children.get(pid).push(p);
+        const pid = p.parentId ? String(p.parentId) : '';
+        if(pid){
+            if(!generationChildren.has(pid)) generationChildren.set(pid,[]);
+            generationChildren.get(pid).push(p);
         }
     });
-    children.forEach(a=>a.sort((a,b)=>(order.get(id(a))??0)-(order.get(id(b))??0)));
+    generationChildren.forEach(list=>list.sort((a,b)=>{
+        const ia=orderMap.get(String(a._id))||0, ib=orderMap.get(String(b._id))||0;
+        return ia-ib;
+    }));
 
-    // Real roots / Generation 1. All of them share the same trunk.
-    let gen1=people.filter(p=>generation(p)===1);
-    if(!gen1.length)gen1=people.filter(p=>!parentId(p)||!byId.has(parentId(p)));
-    if(!gen1.length)gen1=[people[0]];
-    gen1.sort((a,b)=>(order.get(id(a))??0)-(order.get(id(b))??0));
+    const maxGen = Math.max(...people.map(generation),1);
+    const plaqueW = 230;
+    const plaqueH = 158;
+    const gen1Gap = 190;
+    const levelGap = 245;
+    const sideGap = 300;
+    const topPad = 150;
+    const bottomPad = 120;
 
-    const GAP=10;
-    const TRUNK_STEP=Math.max(88,Math.min(118,104));
-    const LEVEL_STEP=122;
-    const SIDE_PAD=70;
-    const TOP_PAD=90;
-    const BOTTOM_PAD=110;
-
-    function labelWidth(p){
-        const n=String(p.name||'').trim();
-        return Math.max(55,Math.min(180,18+n.length*7));
+    // Measure each Gen-1 branch horizontally so Gen-2/3 siblings never overlap.
+    const branchWidth = new Map();
+    function measureBranch(p){
+        const id=String(p._id);
+        if(branchWidth.has(id)) return branchWidth.get(id);
+        const kids=generationChildren.get(id)||[];
+        if(!kids.length){ branchWidth.set(id,plaqueW+80); return plaqueW+80; }
+        let total=0;
+        kids.forEach((c,i)=>{ total+=measureBranch(c); if(i<kids.length-1) total+=sideGap; });
+        total=Math.max(total,plaqueW+80);
+        branchWidth.set(id,total);
+        return total;
     }
+    gen1.forEach(measureBranch);
 
-    // Width of each actual descendant subtree.
-    const subtree=new Map();
-    function measure(p){
-        const cs=children.get(id(p))||[];
-        if(!cs.length){
-            const w=labelWidth(p);
-            subtree.set(id(p),w);
-            return w;
-        }
-        let w=0;
-        cs.forEach((c,i)=>{
-            w+=measure(c);
-            if(i<cs.length-1)w+=GAP;
-        });
-        w=Math.max(labelWidth(p),w);
-        subtree.set(id(p),w);
-        return w;
-    }
-    gen1.forEach(measure);
+    const maxBranchWidth=Math.max(...gen1.map(p=>branchWidth.get(String(p._id))||plaqueW+80), plaqueW+80);
+    const treeWidth=Math.max(2200, Math.min(14000, Math.max(maxBranchWidth+800, gen1.length*260+1200)));
+    const trunkTopY=topPad;
+    const trunkBottomY=topPad + (gen1.length-1)*gen1Gap;
+    const trunkX=treeWidth/2;
+    const pos=new Map();
 
-    // Each Gen-1 member gets a compact vertical point on the same trunk.
-    const positions=new Map();
-    const gen1StartY=TOP_PAD+(gen1.length-1)*TRUNK_STEP;
+    // Gen-1: first entered is lowest, newest is highest.
     gen1.forEach((p,i)=>{
-        positions.set(id(p),{
-            x:0,
-            y:gen1StartY-i*TRUNK_STEP,
-            depth:1
-        });
+        pos.set(String(p._id),{x:trunkX,y:trunkBottomY-i*gen1Gap});
     });
 
-    // Put descendants above their parent. Their subtree stays compact and
-    // naturally fans left/right instead of forcing generation rows.
-    function placeDescendants(p, preferredSide){
-        const pp=positions.get(id(p));
-        const cs=children.get(id(p))||[];
-        if(!pp||!cs.length)return;
-
-        const total=cs.reduce((sum,c)=>sum+subtree.get(id(c)),0)+GAP*(cs.length-1);
+    // Put descendants above their parent and spread siblings horizontally.
+    function placeDescendants(parent){
+        const pp=pos.get(String(parent._id));
+        if(!pp) return;
+        const kids=generationChildren.get(String(parent._id))||[];
+        if(!kids.length) return;
+        let total=kids.reduce((s,c)=>s+measureBranch(c),0)+sideGap*Math.max(0,kids.length-1);
         let cursor=pp.x-total/2;
-
-        cs.forEach((c,i)=>{
-            const w=subtree.get(id(c));
-            let x=cursor+w/2;
-
-            // Slight side preference keeps branches from all stacking on one line.
-            const side=(i%2===0?preferredSide:-preferredSide);
-            if(cs.length===1)x=pp.x+side*Math.max(82,w*.42);
-            else x+=side*8;
-
-            positions.set(id(c),{
-                x:x,
-                y:pp.y-LEVEL_STEP,
-                depth:generation(c)
-            });
-
-            placeDescendants(c, -preferredSide);
-            cursor+=w+GAP;
+        kids.forEach(c=>{
+            const w=measureBranch(c);
+            const x=cursor+w/2;
+            const y=pp.y-levelGap;
+            pos.set(String(c._id),{x,y});
+            placeDescendants(c);
+            cursor+=w+sideGap;
         });
     }
+    gen1.forEach(placeDescendants);
 
-    gen1.forEach((p,i)=>placeDescendants(p,i%2===0?-1:1));
-
-    const vals=[...positions.values()];
-    let minX=Math.min(...vals.map(v=>v.x)), maxX=Math.max(...vals.map(v=>v.x));
-    let minY=Math.min(...vals.map(v=>v.y)), maxY=Math.max(...vals.map(v=>v.y));
-
-    const shiftX=-minX+SIDE_PAD;
-    const shiftY=-minY+TOP_PAD;
-    positions.forEach(v=>{v.x+=shiftX;v.y+=shiftY;});
-
-    const W=Math.max(760,Math.ceil(maxX-minX+SIDE_PAD*2));
-    const H=Math.max(620,Math.ceil(maxY-minY+TOP_PAD+BOTTOM_PAD));
+    // Fit the tree tightly to the actual data: move the complete tree down
+    // only enough to keep the highest generation inside the canvas. This
+    // removes the large empty area above/below the tree while preserving the
+    // bottom-up Gen-1 trunk layout.
+    const placed=[...pos.values()];
+    const minPlacedY=Math.min(...placed.map(q=>q.y));
+    const shiftY=Math.max(0, topPad-minPlacedY);
+    if(shiftY){ pos.forEach(q=>{q.y+=shiftY;}); }
+    const shiftedGen1Bottom=Math.max(...gen1.map(p=>pos.get(String(p._id)).y));
+    const shiftedMaxY=Math.max(...[...pos.values()].map(q=>q.y));
+    const groundYTarget=shiftedGen1Bottom+190;
+    const treeHeight=Math.max(900, Math.ceil(Math.max(groundYTarget+bottomPad, shiftedMaxY+bottomPad)));
 
     const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
-    host.width=Math.ceil(W*dpr);
-    host.height=Math.ceil(H*dpr);
-    host.style.width=W+'px';
-    host.style.height=H+'px';
-    host.style.position='absolute';
-    host.style.left='0';
-    host.style.top='0';
-    host.style.display='block';
-    host.style.visibility='visible';
-    host.style.opacity='1';
-    host.style.pointerEvents='none';
-    host.style.zIndex='30';
+    tc.width=Math.round(treeWidth*dpr);
+    tc.height=Math.round(treeHeight*dpr);
+    tc.style.width=treeWidth+'px'; tc.style.height=treeHeight+'px';
+    tc.style.position='absolute'; tc.style.left='0'; tc.style.top='0';
+    tc.style.zIndex='2'; tc.style.display='block'; tc.style.visibility='visible';
+    tc.style.opacity='1'; tc.style.pointerEvents='none'; tc.style.maxWidth='none'; tc.style.maxHeight='none';
+    layer.style.width=treeWidth+'px'; layer.style.minWidth=treeWidth+'px';
+    layer.style.minHeight=treeHeight+'px'; layer.style.height=treeHeight+'px';
+    baseCanvas.style.width=treeWidth+'px'; baseCanvas.style.height=treeHeight+'px';
+    baseCanvas.dataset.baseWidth=treeWidth; baseCanvas.dataset.baseHeight=treeHeight;
+    const treebox=$('treebox');
+    if(treebox){ treebox.style.height=''; treebox.style.minHeight=''; treebox.style.maxHeight=''; treebox.style.overflow='auto'; treebox.style.webkitOverflowScrolling='touch'; treebox.scrollTop=0; treebox.scrollLeft=0; }
+    layer.style.transform='scale('+treeZoom+')'; updateTreeZoomLabel();
+    const ctx=tc.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,treeWidth,treeHeight);
 
-    baseCanvas.style.width=W+'px';
-    baseCanvas.style.height=H+'px';
-    baseCanvas.dataset.baseWidth=W;
-    baseCanvas.dataset.baseHeight=H;
+    /* ---------- background ---------- */
+    const sky=ctx.createLinearGradient(0,0,0,treeHeight);
+    sky.addColorStop(0,'#9bd8f5'); sky.addColorStop(.48,'#dff1d0'); sky.addColorStop(1,'#8fb65c');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,treeWidth,treeHeight);
+    function cloud(x,y,s){ctx.save();ctx.fillStyle='rgba(255,255,255,.58)';[0,35,70].forEach((dx,i)=>{ctx.beginPath();ctx.arc(x+dx*s,y+(i%2?8:0),28*s,0,Math.PI*2);ctx.fill();});ctx.restore();}
+    cloud(treeWidth*.16,120,1); cloud(treeWidth*.78,170,.9);
+    const groundY=shiftedGen1Bottom+150; ctx.fillStyle='#5f9345'; ctx.fillRect(0,groundY,treeWidth,treeHeight-groundY);
 
-    const layer=host.parentElement;
-    if(layer){
-        layer.style.width=W+'px';
-        layer.style.height=H+'px';
-        layer.style.minWidth=W+'px';
-        layer.style.minHeight=H+'px';
-    }
+    function woodGradient(x1,y1,x2,y2){const g=ctx.createLinearGradient(x1,y1,x2,y2);g.addColorStop(0,'#35190c');g.addColorStop(.18,'#63361a');g.addColorStop(.42,'#9a5b2a');g.addColorStop(.58,'#c27a3d');g.addColorStop(.78,'#74401e');g.addColorStop(1,'#2d1409');return g;}
+    function strokeCurve(x1,y1,c1x,c1y,c2x,c2y,x2,y2,width){ctx.save();ctx.beginPath();ctx.moveTo(x1,y1);ctx.bezierCurveTo(c1x,c1y,c2x,c2y,x2,y2);ctx.strokeStyle='rgba(45,20,8,.30)';ctx.lineWidth=width+10;ctx.lineCap='round';ctx.stroke();ctx.beginPath();ctx.moveTo(x1,y1);ctx.bezierCurveTo(c1x,c1y,c2x,c2y,x2,y2);ctx.strokeStyle=woodGradient(x1,y1,x2,y2);ctx.lineWidth=width;ctx.lineCap='round';ctx.stroke();ctx.beginPath();ctx.moveTo(x1-width*.08,y1);ctx.bezierCurveTo(c1x-width*.04,c1y-3,c2x-width*.04,c2y-3,x2-width*.03,y2-2);ctx.strokeStyle='rgba(239,174,101,.38)';ctx.lineWidth=Math.max(2,width*.11);ctx.stroke();ctx.restore();}
+    function twig(x1,y1,x2,y2,width){ctx.save();ctx.beginPath();ctx.moveTo(x1,y1);ctx.quadraticCurveTo((x1+x2)/2+20,(y1+y2)/2-20,x2,y2);ctx.strokeStyle='#4b2814';ctx.lineWidth=width;ctx.lineCap='round';ctx.stroke();ctx.restore();}
+    function leaf(x,y,rx,ry,angle,color){ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+    function foliage(x,y,scale=1){const colors=['#2e6e2d','#3f8736','#5da447','#78b84f','#98c95a'];const pts=[[-45,12,30,18,-.5],[-25,-25,35,20,-.25],[8,-38,38,21,.05],[40,-15,33,19,.35],[52,15,27,17,.55],[5,15,45,24,.1],[-2,-70,27,17,-.15]];pts.forEach((p,i)=>leaf(x+p[0]*scale,y+p[1]*scale,p[2]*scale,p[3]*scale,p[4],colors[i%colors.length]));}
 
-    const ctx=host.getContext('2d');
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle='#fff';
-    ctx.fillRect(0,0,W,H);
+    const realPhotoCache=window.__realTreePhotoCache||(window.__realTreePhotoCache=new Map());
+    let realPhotoRedrawQueued=false;
+    function queueRealTreePhotoRedraw(){if(realPhotoRedrawQueued)return;realPhotoRedrawQueued=true;requestAnimationFrame(()=>{realPhotoRedrawQueued=false;if(document.body.classList.contains('real-tree-open')||document.getElementById('viewer')?.classList.contains('real-tree-open'))drawUserRealTreeStructure();});}
+    function drawMemberPhoto(person,x,y,radius=34){const src=String(person.photo||'').trim();ctx.save();ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fillStyle='#eef2f5';ctx.fill();ctx.clip();if(src){let entry=realPhotoCache.get(src);if(!entry){const img=new Image();entry={img,loaded:false,failed:false};realPhotoCache.set(src,entry);img.onload=()=>{entry.loaded=true;queueRealTreePhotoRedraw()};img.onerror=()=>{entry.failed=true;queueRealTreePhotoRedraw()};img.src=src;}if(entry.loaded&&!entry.failed){const img=entry.img,iw=img.naturalWidth||img.width||1,ih=img.naturalHeight||img.height||1,ratio=Math.max(radius*2/iw,radius*2/ih),dw=iw*ratio,dh=ih*ratio;ctx.drawImage(img,x-dw/2,y-dh/2,dw,dh);}else{ctx.fillStyle='#e5ebef';ctx.fill();ctx.fillStyle='#78909c';ctx.font='700 28px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((String(person.name||'?')[0]||'?').toUpperCase(),x,y);}}else{ctx.fillStyle='#e5ebef';ctx.fill();ctx.fillStyle='#78909c';ctx.font='700 28px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((String(person.name||'?')[0]||'?').toUpperCase(),x,y);}ctx.restore();ctx.save();ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.strokeStyle='#f2c879';ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle='#5b3218';ctx.lineWidth=2;ctx.stroke();ctx.restore();}
 
-    function woodPath(a,b,width,main=false){
-        const dx=b.x-a.x, dy=b.y-a.y;
-        const bend=Math.max(35,Math.min(115,Math.abs(dx)*.42));
-        const side=dx>=0?1:-1;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(a.x,a.y);
-        ctx.bezierCurveTo(
-            a.x+side*bend*.30,a.y+dy*.18,
-            b.x-side*bend,b.y-dy*.38,
-            b.x,b.y
-        );
-        ctx.strokeStyle=main?'#55300f':'#654019';
-        ctx.lineWidth=width;
-        ctx.lineCap='round';
-        ctx.lineJoin='round';
-        ctx.stroke();
-        ctx.restore();
-    }
-
-    function leaf(x,y,angle,scale=1){
-        ctx.save();
-        ctx.translate(x,y);
-        ctx.rotate(angle);
-        ctx.fillStyle='#5c8e32';
-        ctx.beginPath();
-        ctx.ellipse(0,0,10*scale,5*scale,0,0,Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-    }
-
-    function drawName(p,x,y,terminal=false){
-        const text=String(p.name||'').trim();
-        if(!text)return;
-
-        ctx.save();
-        ctx.font='700 13px Arial, "Noto Sans Gujarati", sans-serif';
-        ctx.textBaseline='middle';
-        ctx.fillStyle='#21170d';
-
-        // Name is printed ONCE at the actual node.
-        ctx.textAlign='center';
-        ctx.fillText(text,x,y);
-
-        if(terminal){
-            const tw=ctx.measureText(text).width;
-            leaf(x+tw/2+13,y-2,.25,1.05);
-        }
-        ctx.restore();
-    }
-
-    // Main trunk: one continuous trunk, no separate Gen-1 mini trunks.
-    const trunkX=positions.get(id(gen1[0])).x;
-    const trunkBottom=Math.max(...gen1.map(p=>positions.get(id(p)).y))+55;
-    const trunkTop=Math.min(...gen1.map(p=>positions.get(id(p)).y))-55;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(trunkX-18,trunkBottom);
-    ctx.bezierCurveTo(
-        trunkX-26,trunkBottom-90,
-        trunkX-13,(trunkBottom+trunkTop)/2,
-        trunkX,trunkTop
-    );
-    ctx.strokeStyle='#4b2a0c';
-    ctx.lineWidth=34;
-    ctx.lineCap='round';
-    ctx.stroke();
-
-    // Slight highlight makes the trunk look organic without becoming a card.
-    ctx.beginPath();
-    ctx.moveTo(trunkX-4,trunkBottom-8);
-    ctx.bezierCurveTo(trunkX-9,trunkBottom-100,trunkX-2,(trunkBottom+trunkTop)/2,trunkX+2,trunkTop+5);
-    ctx.strokeStyle='#704319';
-    ctx.lineWidth=7;
-    ctx.stroke();
-    ctx.restore();
-
-    // Gen-1 names: each is drawn once, attached to the same trunk.
-    gen1.forEach((p,i)=>{
-        const q=positions.get(id(p));
-        const side=i%2===0?-1:1;
-        drawName(p,q.x+side*58,q.y,false);
-    });
-
-    // Parent -> child branches and descendant names.
-    people.forEach(p=>{
-        const pp=positions.get(id(p));
-        if(!pp)return;
-
-        const cs=children.get(id(p))||[];
-        cs.forEach((c,i)=>{
-            const cp=positions.get(id(c));
-            if(!cp)return;
-
-            const dx=cp.x-pp.x;
-            const dy=cp.y-pp.y;
-            const side=dx>=0?1:-1;
-            const thickness=Math.max(5,13-(generation(c)-2)*1.4);
-
-            woodPath(
-                {x:pp.x+side*10,y:pp.y-5},
-                {x:cp.x-side*4,y:cp.y+8},
-                thickness,
-                false
-            );
-
-            // Small twig before the name.
-            const tx=cp.x+side*26;
-            const ty=cp.y-24;
-            woodPath(
-                {x:cp.x,y:cp.y+4},
-                {x:tx,y:ty},
-                Math.max(3.5,thickness*.42),
-                false
-            );
-
-            const terminal=(children.get(id(c))||[]).length===0;
-            drawName(c,cp.x+side*48,cp.y-22,terminal);
+    function wrapName(name,maxWidth,font){
+        ctx.font=font;
+        const words=String(name||'').trim().split(/\s+/).filter(Boolean);
+        if(!words.length) return [''];
+        const lines=[]; let line='';
+        words.forEach(word=>{
+            const test=line?line+' '+word:word;
+            if(ctx.measureText(test).width<=maxWidth || !line){line=test;}
+            else{lines.push(line);line=word;}
         });
+        if(line) lines.push(line);
+        return lines.slice(0,3);
+    }
+    function plaque(p,x,y,small=false){
+        const name=String(p.name||'').trim(); if(!name)return;
+        const cardW=230, cardH=164, top=y-cardH/2;
+        ctx.save();ctx.shadowColor='rgba(30,15,5,.32)';ctx.shadowBlur=10;ctx.shadowOffsetY=5;ctx.fillStyle='#c98543';ctx.strokeStyle='#5b3218';ctx.lineWidth=4;ctx.beginPath();ctx.roundRect(x-cardW/2,top,cardW,cardH,14);ctx.fill();ctx.stroke();ctx.restore();
+        drawMemberPhoto(p,x,top+42,31);
+        const font='800 '+(small?15:17)+'px Arial, "Noto Sans Gujarati", sans-serif';
+        const lines=wrapName(name,195,font);
+        ctx.save();ctx.fillStyle='#2d1609';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=font;
+        const start=top+88-(lines.length-1)*9;lines.forEach((line,i)=>ctx.fillText(line,x,start+i*20));
+        ctx.font='700 11px Arial';ctx.fillStyle='#5b3218';ctx.fillText('Generation '+generation(p),x,top+139);ctx.restore();
+    }
+
+    /* ---------- ONE LARGE CONTINUOUS GEN-1 TRUNK ---------- */
+    strokeCurve(trunkX-115,groundY+10,trunkX-170,groundY-190,trunkX-120,trunkBottomY+170,trunkX-52,trunkTopY,105);
+    strokeCurve(trunkX+115,groundY+10,trunkX+170,groundY-190,trunkX+120,trunkBottomY+170,trunkX+52,trunkTopY,105);
+    strokeCurve(trunkX,groundY,trunkX-40,groundY-260,trunkX-30,trunkBottomY+120,trunkX,trunkTopY-5,120);
+    // A central spine runs behind every Gen-1 plaque, so all Gen-1 members visibly belong to one trunk.
+    strokeCurve(trunkX,trunkBottomY+55,trunkX-18,trunkBottomY-20,trunkX+18,trunkTopY+90,trunkX,trunkTopY-20,92);
+    for(let i=-6;i<=6;i++){ctx.beginPath();ctx.moveTo(trunkX+i*12,groundY-10);ctx.quadraticCurveTo(trunkX+i*15,(groundY+trunkTopY)/2,trunkX+i*7,trunkTopY+35);ctx.strokeStyle='rgba(46,21,8,.25)';ctx.lineWidth=3;ctx.stroke();}
+
+    // IMPORTANT: draw every branch/twig BEFORE any member plaque.
+    // This keeps branches physically behind the cards, so no branch/wood line
+    // can ever appear across a name card. The branch becomes visible only
+    // outside the card and visually joins the trunk/parent edge.
+    function drawDescendantBranches(parent){
+        const pp=pos.get(String(parent._id)); if(!pp)return;
+        const kids=generationChildren.get(String(parent._id))||[];
+        kids.forEach(child=>{
+            const cp=pos.get(String(child._id)); if(!cp)return;
+            const dx=cp.x-pp.x, side=dx>=0?1:-1, distance=Math.abs(dx);
+            const width=Math.max(10,34-(generation(parent)-1)*4);
+            // Never start a branch inside a card. Cards are 164px tall, so
+            // the branch starts just above the parent's top edge and ends
+            // just below the child's bottom edge. This also applies to Gen-1.
+            const CARD_H = 164;
+            const parentEdgeY = pp.y - CARD_H/2 - 3;
+            const childEdgeY  = cp.y + CARD_H/2 + 3;
+            strokeCurve(pp.x,parentEdgeY,
+                pp.x+side*Math.max(80,Math.min(260,distance*.42)),pp.y-110,
+                cp.x-side*Math.max(70,Math.min(240,distance*.30)),cp.y+110,
+                cp.x,childEdgeY,width);
+            const childKids = generationChildren.get(String(child._id)) || [];
+            // ONLY the last generation gets twigs/leaves. Intermediate generations stay clean.
+            if(childKids.length === 0){
+                twig(cp.x,cp.y+20,cp.x+side*65,cp.y-65,6);
+                foliage(cp.x+side*78,cp.y-85,.72);
+            }
+            drawDescendantBranches(child);
+        });
+    }
+    gen1.forEach(p=>drawDescendantBranches(p));
+
+    // Paint ALL plaques last. Cards therefore sit cleanly on top of the trunk/branches.
+    // No branch, twig or wood stroke can cover any card or name.
+    people.forEach(p=>{
+        const pp=pos.get(String(p._id));
+        if(pp) plaque(p,pp.x,pp.y,false);
     });
 
-    // Roots only at the bottom of the main trunk.
-    ctx.save();
-    ctx.strokeStyle='#4b2a0c';
-    ctx.lineWidth=8;
-    ctx.lineCap='round';
-    [-1,1].forEach(side=>{
-        ctx.beginPath();
-        ctx.moveTo(trunkX+side*8,trunkBottom-5);
-        ctx.quadraticCurveTo(trunkX+side*42,trunkBottom+15,trunkX+side*88,trunkBottom+25);
-        ctx.stroke();
-    });
-    ctx.restore();
-
-    if(typeof treeZoom!=='undefined'){
-        layer.style.transform='scale('+treeZoom+')';
-        if(typeof updateTreeZoomLabel==='function')updateTreeZoomLabel();
-    }
-}
-
-function drawRealTreeStructure(){
-    const layer=$('treeLayer'), svg=$('svg'), base=$('canvas');
-    if(!layer||!base||!people.length)return;
-    layer.classList.add('real-natural-tree');
-    if(svg)svg.style.display='none';
-    const cards=$('cards');if(cards)cards.style.display='none';
-
-    let tc=$('realTreeCanvas');
-    if(!tc){
-        tc=document.createElement('canvas');
-        tc.id='realTreeCanvas';
-        layer.appendChild(tc);
-    }
-    buildCleanRealTree(people,tc,base);
-}
-
-function drawUserRealTreeStructure(){
-    const layer=$('treeLayer'), svg=$('svg'), base=$('canvas');
-    if(!layer||!base||!people.length)return;
-    layer.classList.add('real-natural-tree');
-    if(svg)svg.style.display='none';
-    const cards=$('cards');if(cards)cards.style.display='none';
-
-    let tc=$('realTreeCanvas');
-    if(!tc){
-        tc=document.createElement('canvas');
-        tc.id='realTreeCanvas';
-        layer.appendChild(tc);
-    }
-    buildCleanRealTree(people,tc,base);
+    // Small foliage at the top and side of the real tree.
+    // Leaves are shown ONLY on the final (last) generation. No leaves on the trunk/top.
 }
 
 function toggleUserRealTree(){
