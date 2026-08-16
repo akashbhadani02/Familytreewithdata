@@ -150,7 +150,7 @@ async function renderTree(){
  window.__treePositions=pos;
  function place(node,cx,y){const id=String(node._id),kids=children[id]||[],w=width(id),left=cx-w/2;pos[id]={x:cx-CARD_W/2,y,w};if(kids.length){let cur=left;kids.forEach(k=>{const kw=width(k._id);place(k,cur+kw/2,y+CARD_H+V_GAP);cur+=kw+H_GAP})}}
  place(root,PAD_X+width(root._id)/2,PAD_Y);
- const all=Object.values(pos),maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X)),maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
+ const all=Object.values(pos),maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X)),maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y+60));
  canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;applyTreeZoom(maxX,maxY);svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
  const readonly=document.body.classList.contains('readonly-view');
  const localized={}; people.forEach(p=>localized[String(p._id)]=p.name);
@@ -236,10 +236,10 @@ function focusTreePerson(id){
  if(!treebox||!person)return;
  const q=window.__treePositions&&window.__treePositions[String(id)];
  if(q){
-   treebox.scrollLeft=Math.max(0,(q.x+CARD_W/2)*treeZoom-treebox.clientWidth/2);
+   treebox.scrollLeft=Math.max(0,(q.x+210/2)*treeZoom-treebox.clientWidth/2);
    treebox.scrollTop=Math.max(0,(q.y+145/2)*treeZoom-treebox.clientHeight/2);
  }else if(card){
-   treebox.scrollLeft=Math.max(0,(card.offsetLeft+CARD_W/2)*treeZoom-treebox.clientWidth/2);
+   treebox.scrollLeft=Math.max(0,(card.offsetLeft+105)*treeZoom-treebox.clientWidth/2);
    treebox.scrollTop=Math.max(0,(card.offsetTop+145/2)*treeZoom-treebox.clientHeight/2);
  }
 }
