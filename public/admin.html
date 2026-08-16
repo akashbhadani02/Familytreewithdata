@@ -376,7 +376,52 @@
             color: #315f91;
             font-size: 13px
         }
-    </style>
+    
+/* FINAL FULL TREE FIT FIX */
+.real-tree-open #treebox{
+  position:relative!important;
+  width:100%!important;
+  height:calc(100vh - 150px)!important;
+  min-height:320px!important;
+  max-height:none!important;
+  overflow:hidden!important;
+  background:#eaf4e4!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0!important;
+}
+.real-tree-open #treebox > #canvas{
+  position:absolute!important;
+  left:0!important;top:0!important;
+  margin:0!important;padding:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+}
+.real-tree-open #treebox #treeLayer.real-natural-tree{
+  position:absolute!important;
+  left:0!important;top:0!important;
+  margin:0!important;padding:0!important;
+  transform-origin:0 0!important;
+  overflow:visible!important;
+  background:transparent!important;
+}
+.real-tree-open #treebox #realTreeCanvas{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:absolute!important;
+  left:0!important;top:0!important;
+  margin:0!important;padding:0!important;
+  max-width:none!important;max-height:none!important;
+  background:transparent!important;
+  z-index:100!important;
+}
+@media(max-width:700px){
+ .real-tree-open #treebox{height:calc(100vh - 105px)!important;min-height:280px!important}
+}
+
+</style>
 
 <style id="photoChoicePopupStyle">
 .photo-choice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:99999;align-items:center;justify-content:center;padding:20px}
@@ -605,11 +650,11 @@ async function createFamily(){
                 const shown=localized[String(p._id)]||p.name;
                 d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tree-card-actions">
 <button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Son</button>
-<button type="button" class="btn" onclick="editName('${escAttr(p._id)}')">✏️ Name</button>
+<button type="button" class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button>
 <button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button>
 <button type="button" class="btn" onclick="updateMemberPhoto('${escAttr(p._id)}')">📷 Photo</button>
 <button type="button" class="btn" onclick="deleteMemberPhoto('${escAttr(p._id)}')">📷 remove</button>
-<button type="button" class="btn" onclick="deleteMember('${escAttr(p._id)}')">🔴 Delete</button>
+<button type="button" class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button>
 </div>`;
                 d.onpointerdown=e=>{if(e.target.closest('button,input,a'))e.stopPropagation()};cards.appendChild(d);
             });
@@ -985,7 +1030,7 @@ async function editName(id){
     tc.style.position='absolute'; tc.style.left='0'; tc.style.top='0';
     tc.style.zIndex='2'; tc.style.display='block'; tc.style.visibility='visible';
     tc.style.opacity='1'; tc.style.pointerEvents='none'; tc.style.maxWidth='none'; tc.style.maxHeight='none';
-    layer.style.width=treeWidth+'px'; layer.style.minWidth=treeWidth+'px';
+    layer.style.width=treeWidth+'px'; layer.style.minWidth=treeWidth+'px'; layer.dataset.realWidth=String(treeWidth); layer.dataset.realHeight=String(treeHeight);
     layer.style.minHeight=treeHeight+'px'; layer.style.height=treeHeight+'px';
     baseCanvas.style.width=treeWidth+'px'; baseCanvas.style.height=treeHeight+'px';
     baseCanvas.dataset.baseWidth=treeWidth; baseCanvas.dataset.baseHeight=treeHeight;
@@ -1095,29 +1140,48 @@ async function editName(id){
  const layer=document.querySelector('#treeLayer.real-natural-tree');
  const canvas=document.querySelector('#realTreeCanvas');
  if(!box||!layer||!canvas)return;
- const w=Number(layer.style.width||canvas.style.width||canvas.width||0);
- const h=Number(layer.style.height||canvas.style.height||canvas.height||0);
- if(!w||!h)return;
- const availW=Math.max(80,box.clientWidth-24);
- const availH=Math.max(80,box.clientHeight-24);
- // Always fit the complete real tree inside the visible viewport.
- // It is intentionally allowed to become very small for large families.
- const fit=Math.max(0.05,Math.min(1,availW/w,availH/h));
+ const w=parseFloat(layer.dataset.realWidth||canvas.style.width||canvas.width||0);
+ const h=parseFloat(layer.dataset.realHeight||canvas.style.height||canvas.height||0);
+ if(!(w>0&&h>0))return;
+ const availW=Math.max(1,box.clientWidth-8);
+ const availH=Math.max(1,box.clientHeight-8);
+ const fit=Math.max(.02,Math.min(1,availW/w,availH/h));
  treeZoom=fit;
+ // The transformed layer itself is the only scaled object. The canvas keeps
+ // its real drawing resolution, so the complete tree cannot be clipped.
  layer.style.transformOrigin='0 0';
  layer.style.transform='scale('+fit+')';
- layer.style.width=(w*fit)+'px';
- layer.style.height=(h*fit)+'px';
+ layer.style.width=w+'px';
+ layer.style.height=h+'px';
  canvas.style.width=w+'px';
  canvas.style.height=h+'px';
+ // Center the complete scaled layer in the viewport.
+ const sw=w*fit, sh=h*fit;
+ const left=Math.max(0,(box.clientWidth-sw)/2);
+ const top=Math.max(0,(box.clientHeight-sh)/2);
+ layer.style.left=left+'px';
+ layer.style.top=top+'px';
+ const base=box.querySelector('#canvas');
+ if(base){base.style.width=box.clientWidth+'px';base.style.height=box.clientHeight+'px';}
  updateTreeZoomLabel();
- requestAnimationFrame(()=>{
-   box.scrollLeft=Math.max(0,(box.scrollWidth-box.clientWidth)/2);
-   box.scrollTop=Math.max(0,(box.scrollHeight-box.clientHeight)/2);
- });
+ box.scrollLeft=0;box.scrollTop=0;
 }
 
-async function toggleRealTreeView(){
+function __rerenderFullRealTree(){
+ if(!document.body.classList.contains('real-tree-open'))return;
+ try{
+   if(typeof drawRealTreeStructure==='function')drawRealTreeStructure();
+   else if(typeof drawUserRealTreeStructure==='function')drawUserRealTreeStructure();
+   requestAnimationFrame(fitRealTreeToViewport);
+ }catch(e){console.error('Full Real Tree render error:',e);}
+}
+
+window.addEventListener('resize',()=>{
+ clearTimeout(window.__realTreeResizeTimer);
+ window.__realTreeResizeTimer=setTimeout(__rerenderFullRealTree,120);
+});
+
+function toggleRealTreeView(){
     const viewer=$('viewer'), btn=$('realTreeBtn');
     if(!viewer) return;
 
