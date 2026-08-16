@@ -625,97 +625,130 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 if(!children.has(pid)) children.set(pid,[]);
                 children.get(pid).push(p);
             });
+            children.forEach(a=>a.sort((x,y)=>(Number(x.generation)||1)-(Number(y.generation)||1)));
+
             const positions=new Map([...document.querySelectorAll('#cards .card')].map(el=>[
                 String(el.dataset.personId),{x:parseFloat(el.style.left)||0,y:parseFloat(el.style.top)||0,w:el.offsetWidth||210,h:el.offsetHeight||245}
             ]));
-            const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>a.generation-b.generation)[0];
+            const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>(Number(a.generation)||1)-(Number(b.generation)||1))[0];
             if(!root) return;
             const rootQ=positions.get(String(root._id)); if(!rootQ) return;
+
             const NS='http://www.w3.org/2000/svg';
             svg.setAttribute('preserveAspectRatio','none');
             const defs=document.createElementNS(NS,'defs');
             defs.innerHTML=`
               <linearGradient id="realTrunkGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stop-color="#4b2b18"/><stop offset=".28" stop-color="#7a4727"/><stop offset=".52" stop-color="#9a5b31"/><stop offset=".78" stop-color="#6a3d23"/><stop offset="1" stop-color="#3e2517"/>
+                <stop offset="0" stop-color="#3b2112"/><stop offset=".22" stop-color="#6b3d20"/><stop offset=".48" stop-color="#a06436"/><stop offset=".68" stop-color="#704322"/><stop offset="1" stop-color="#351e11"/>
               </linearGradient>
               <linearGradient id="realBranchGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stop-color="#4b2b18"/><stop offset=".5" stop-color="#80502d"/><stop offset="1" stop-color="#5b351f"/>
+                <stop offset="0" stop-color="#3e2414"/><stop offset=".5" stop-color="#80502c"/><stop offset="1" stop-color="#4d2c19"/>
               </linearGradient>
-              <radialGradient id="leafGrad" cx="35%" cy="30%">
-                <stop offset="0" stop-color="#8fd35a"/><stop offset=".55" stop-color="#4f9d3b"/><stop offset="1" stop-color="#246b2c"/>
+              <radialGradient id="leafGrad" cx="35%" cy="28%">
+                <stop offset="0" stop-color="#b3e66e"/><stop offset=".42" stop-color="#63ad43"/><stop offset="1" stop-color="#1f662b"/>
               </radialGradient>
-              <filter id="realShadow"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".22"/></filter>`;
+              <filter id="realShadow"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".25"/></filter>
+              <filter id="barkShadow"><feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-opacity=".28"/></filter>`;
             svg.appendChild(defs);
-            const add=(tag,attrs)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));svg.appendChild(e);return e;};
+
+            const add=(tag,attrs,parent=svg)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));parent.appendChild(e);return e;};
             const path=(d,stroke,width,extra={})=>add('path',{d,fill:'none',stroke,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',...extra});
-            const leaf=(x,y,r=34,op=.92)=>add('circle',{cx:x,cy:y,r,fill:'url(#leafGrad)',opacity:op,filter:'url(#realShadow)'});
-            const rootCenter={x:rootQ.x+rootQ.w/2,y:rootQ.y+rootQ.h};
-            const maxGen=Math.max(...people.map(p=>Number(p.generation)||1));
-            const genYs=[];
-            for(let g=1;g<=maxGen;g++){
+            const leaf=(x,y,rx=32,ry=24,rot=0,op=.9)=>add('ellipse',{cx:x,cy:y,rx,ry,fill:'url(#leafGrad)',opacity:op,transform:`rotate(${rot} ${x} ${y})`,filter:'url(#realShadow)'});
+
+            // A small wooden name plaque sitting on the branch itself.
+            const branchName=(x,y,text,scale=1)=>{
+                if(!text) return;
+                const g=add('g',{transform:`translate(${x} ${y}) rotate(-2) scale(${scale})`});
+                const w=Math.max(92,Math.min(190,String(text).length*9+38));
+                add('rect',{x:-w/2,y:-15,width:w,height:30,rx:9,fill:'#8b5a32',stroke:'#4a2a18','stroke-width':2,filter:'url(#barkShadow)'},g);
+                add('text',{x:0,y:5,'text-anchor':'middle','font-family':'Arial,sans-serif','font-size':'13','font-weight':'900',fill:'#fff8e8'},g).textContent=text;
+            };
+            const generationTag=(x,y,text)=>{
+                const g=add('g',{transform:`translate(${x} ${y})`});
+                add('rect',{x:-70,y:-14,width:140,height:28,rx:14,fill:'#355e2e',opacity:.9},g);
+                add('text',{x:0,y:5,'text-anchor':'middle','font-family':'Arial,sans-serif','font-size':'12','font-weight':'900',fill:'#fff'},g).textContent=text;
+            };
+
+            // Keep the original cards exactly where the normal tree placed them.
+            // The SVG behind them becomes the real wooden tree.
+            const rootCx=rootQ.x+rootQ.w/2;
+            const rootTop=rootQ.y;
+            const rootBottom=rootQ.y+rootQ.h;
+            const groundY=rootBottom+155;
+
+            // Deep roots / base flare.
+            path(`M ${rootCx} ${groundY-12} C ${rootCx-35} ${groundY+12}, ${rootCx-115} ${groundY+18}, ${rootCx-190} ${groundY+42}`,'url(#realTrunkGrad)',24);
+            path(`M ${rootCx} ${groundY-8} C ${rootCx+38} ${groundY+15}, ${rootCx+120} ${groundY+22}, ${rootCx+205} ${groundY+48}`,'url(#realTrunkGrad)',25);
+            path(`M ${rootCx-10} ${groundY} C ${rootCx-75} ${groundY+32}, ${rootCx-150} ${groundY+55}, ${rootCx-240} ${groundY+66}`,'url(#realBranchGrad)',11);
+            path(`M ${rootCx+10} ${groundY} C ${rootCx+80} ${groundY+35}, ${rootCx+155} ${groundY+58}, ${rootCx+245} ${groundY+72}`,'url(#realBranchGrad)',12);
+            generationTag(rootCx,groundY+38,`Generation ${root.generation||1} • ${root.name||''}`);
+
+            // Main trunk is behind every generation. It is deliberately thick and curved.
+            const levels=[...new Set(people.map(p=>Number(p.generation)||1))].sort((a,b)=>a-b);
+            let trunkX=rootCx, trunkY=groundY-5;
+            levels.forEach((g,i)=>{
                 const qs=people.filter(p=>(Number(p.generation)||1)===g).map(p=>positions.get(String(p._id))).filter(Boolean);
-                if(qs.length) genYs.push({g,y:Math.min(...qs.map(q=>q.y))});
-            }
-            // Ground/root flare: broad roots under generation-1 card.
-            const baseY=rootCenter.y+8;
-            path(`M ${rootCenter.x} ${baseY} C ${rootCenter.x-18} ${baseY+35}, ${rootCenter.x-90} ${baseY+48}, ${rootCenter.x-155} ${baseY+62}`,'#4b2b18',18,{opacity:.95});
-            path(`M ${rootCenter.x} ${baseY} C ${rootCenter.x+20} ${baseY+35}, ${rootCenter.x+95} ${baseY+50}, ${rootCenter.x+165} ${baseY+64}`,'#4b2b18',18,{opacity:.95});
-            path(`M ${rootCenter.x} ${baseY} C ${rootCenter.x-5} ${baseY+45}, ${rootCenter.x+8} ${baseY+65}, ${rootCenter.x} ${baseY+92}`,'#5c351e',22,{opacity:.98});
+                if(!qs.length) return;
+                const targetY=Math.max(rootTop+15,Math.min(...qs.map(q=>q.y+q.h*.72)));
+                const nextX=rootCx + Math.sin(i*1.35)*Math.min(48,18+i*8);
+                const width=Math.max(32-i*3.2,10);
+                path(`M ${trunkX} ${trunkY} C ${trunkX-28} ${trunkY-55}, ${nextX+34} ${targetY+70}, ${nextX} ${targetY}`,'url(#realTrunkGrad)',width,{opacity:.98});
+                trunkX=nextX; trunkY=targetY;
+            });
 
-            // Main trunk grows downward through every generation and gets thinner toward the top.
-            let tx=rootCenter.x, ty=baseY+8;
-            for(let i=0;i<genYs.length;i++){
-                const gy=genYs[i].y-10;
-                if(gy<=ty+5) continue;
-                const nextY=gy;
-                const sway=(i%2===0?-1:1)*Math.min(28,18+i*4);
-                const width=Math.max(18-i*2.1,6);
-                path(`M ${tx} ${ty} C ${tx+sway} ${ty+55}, ${tx-sway} ${nextY-55}, ${tx+sway*.45} ${nextY}`,'url(#realTrunkGrad)',width,{opacity:.98});
-                tx=tx+sway*.45; ty=nextY;
-            }
-
-            // Every parent grows a real brown branch, with a fork for multiple children.
+            // Each parent gets EXACTLY one natural fork for each child.
+            // No generic horizontal lines: every child has its own brown branch.
             people.forEach(parent=>{
                 const kids=children.get(String(parent._id))||[];
                 const pq=positions.get(String(parent._id));
                 if(!pq||!kids.length) return;
-                const px=pq.x+pq.w/2, py=pq.y+pq.h-4;
-                const kidsQ=kids.map(k=>({k,q:positions.get(String(k._id))})).filter(v=>v.q);
-                if(!kidsQ.length) return;
-                const branchY=py+(Math.min(...kidsQ.map(v=>v.q.y))-py)*.38;
-                const minX=Math.min(...kidsQ.map(v=>v.q.x+v.q.w/2)), maxX=Math.max(...kidsQ.map(v=>v.q.x+v.q.w/2));
-                if(kidsQ.length>1){
-                    path(`M ${px} ${py} C ${px} ${py+18}, ${px} ${branchY-18}, ${px} ${branchY}`,'url(#realBranchGrad)',11);
-                    path(`M ${minX} ${branchY} C ${minX+(px-minX)*.25} ${branchY+2}, ${maxX-(maxX-px)*.25} ${branchY+2}, ${maxX} ${branchY}`,'url(#realBranchGrad)',8);
-                }
-                kidsQ.forEach(({q,k})=>{
-                    const cx=q.x+q.w/2, cy=q.y+6;
-                    const dx=cx-px, dir=dx>=0?1:-1;
-                    const bend=Math.max(35,Math.min(115,Math.abs(dx)*.28));
-                    const startY=kidsQ.length>1?branchY:py;
-                    const bw=Math.max(8-(Number(k.generation)||1)*.45,3.5);
-                    path(`M ${px} ${startY} C ${px+dir*bend} ${startY+12}, ${cx-dir*bend*.55} ${cy-35}, ${cx} ${cy}`,'url(#realBranchGrad)',bw);
-                    // Small green foliage clusters beside each branch tip, behind the member card.
-                    const side=dir;
-                    leaf(cx+side*58,cy-30,29,.86); leaf(cx-side*46,cy-42,25,.82); leaf(cx+side*20,cy-62,24,.8);
+                const px=pq.x+pq.w/2;
+                const py=pq.y+pq.h+8;
+                const childQs=kids.map(k=>({k,q:positions.get(String(k._id))})).filter(v=>v.q);
+                if(!childQs.length) return;
+
+                // Parent name is written on the wood at the fork: this is the papa/dada label.
+                branchName(px,py+28,`${parent.name||''}`,0.92);
+
+                childQs.forEach(({k,q},idx)=>{
+                    const cx=q.x+q.w/2;
+                    const cy=q.y+8;
+                    const dx=cx-px;
+                    const dir=dx>=0?1:-1;
+                    const dist=Math.abs(dx);
+                    const bend=Math.max(45,Math.min(145,dist*.34));
+                    const forkY=py+Math.min(85,Math.max(34,Math.abs(q.y-py)*.22));
+                    const bw=Math.max(12-(Number(k.generation)||1)*.55,4.5);
+                    const curve=`M ${px} ${py} C ${px+dir*bend*.22} ${py+10}, ${cx-dir*bend*.72} ${forkY-12}, ${cx} ${forkY} C ${cx+dir*16} ${forkY+18}, ${cx-dir*12} ${cy-28}, ${cx} ${cy}`;
+                    path(curve,'url(#realBranchGrad)',bw,{filter:'url(#barkShadow)'});
+
+                    // A smaller side twig makes the fork look organic, not diagrammatic.
+                    path(`M ${px+dir*8} ${py+10} C ${px+dir*35} ${py+28}, ${px+dir*50} ${py+34}, ${px+dir*72} ${py+28}`,'url(#realBranchGrad)',Math.max(3,bw*.45),{opacity:.85});
+                    leaf(cx+dir*48,cy-35,28,21,dir*12,.84);
+                    leaf(cx-dir*42,cy-48,25,19,dir*-18,.8);
+                    leaf(cx+dir*12,cy-67,24,18,dir*6,.78);
+
+                    // Each child fork carries the parent's name; the child card itself carries the child's name.
+                    if(childQs.length===1){
+                        branchName((px+cx)/2+dir*10,(py+cy)/2-18,`${parent.name||''}`,0.78);
+                    }
                 });
             });
 
-            // Green canopy clusters around the whole tree, but never over the cards.
-            const leaves=[];
-            people.forEach(p=>{
-                const q=positions.get(String(p._id)); if(!q) return;
-                const cx=q.x+q.w/2, cy=q.y+8;
-                leaves.push([cx-78,cy-34,27],[cx+82,cy-28,30],[cx-45,cy-75,25],[cx+48,cy-78,27]);
-            });
-            leaves.forEach(v=>leaf(v[0],v[1],v[2],.72));
-
-            // Natural small twigs for the final generation.
+            // Leaf/twig endpoints for the last generation. No missing final branches.
             people.filter(p=>(children.get(String(p._id))||[]).length===0).forEach(p=>{
                 const q=positions.get(String(p._id)); if(!q)return;
-                const x=q.x+q.w/2, y=q.y+q.h;
-                path(`M ${x} ${y-4} C ${x-6} ${y+18}, ${x+14} ${y+30}, ${x+2} ${y+50}`,'url(#realBranchGrad)',4.5);
-                leaf(x-22,y+34,18,.75); leaf(x+25,y+42,20,.78);
+                const x=q.x+q.w/2, y=q.y+q.h+4;
+                const g=Number(p.generation)||1;
+                // The last generation is a REAL endpoint too: it gets its own
+                // brown twig, leaves, and a wooden name plaque on that twig.
+                const endY=y+78;
+                const sway=(String(p._id).length%2?1:-1);
+                path(`M ${x} ${y} C ${x+sway*10} ${y+22}, ${x-sway*18} ${y+48}, ${x+sway*5} ${endY}`,'url(#realBranchGrad)',5.5,{opacity:.95,filter:'url(#barkShadow)'});
+                path(`M ${x+sway*2} ${y+42} C ${x+sway*22} ${y+50}, ${x+sway*42} ${y+47}, ${x+sway*58} ${y+32}`,'url(#realBranchGrad)',2.8,{opacity:.9});
+                leaf(x-25,y+48,19,14,-12,.8); leaf(x+28,y+58,20,15,15,.82); leaf(x+sway*8,endY+10,22,16,sway*8,.88);
+                branchName(x+sway*22,endY-10,`${p.name||''}`,0.82);
+                generationTag(x,endY+40,`Last • Gen ${g}`);
             });
         }
 
