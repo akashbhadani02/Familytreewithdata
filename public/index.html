@@ -34,10 +34,32 @@
 /* ===== USER REAL TREE VIEW (same as Admin) ===== */
 .real-tree-tools{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}.real-tree-tools .btn{width:auto;margin:0}.real-tree-open .treebox{height:650px;overflow:auto!important;position:relative;touch-action:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.real-tree-open #realTreeCanvas{display:block!important;position:absolute!important;left:0!important;top:0!important;z-index:20!important;pointer-events:none!important}.real-tree-open #cards{display:none!important}.real-tree-bottom-close{display:none;text-align:center;padding:18px 10px 6px}.real-tree-open .real-tree-bottom-close{display:block}.real-tree-open #userRealTreeBtn{display:none}.real-tree-open .treeSearch,.real-tree-open .treeZoomControls{display:none}.real-tree-open #currentLink{display:none}.real-tree-open .viewSubtitle{display:none}.real-tree-open .viewControls{display:none}
 @media(max-width:600px){.real-tree-open .treebox{height:72vh;min-height:420px}.real-tree-bottom-close .btn{width:min(92vw,320px)!important}}
+</style>
+<style id="familyDashboardCss">
+.dashboard{margin-bottom:18px;background:linear-gradient(135deg,#ffffff,#f4f8ff);border:1px solid #d7e3f1;border-radius:22px;padding:22px;box-shadow:0 12px 35px rgba(31,55,82,.08)}
+.dashboardHead{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.dashboardTitle{font-size:25px;font-weight:900;color:#19324d}.dashboardSub{color:#66788c;font-size:13px;margin-top:5px;line-height:1.6}.familyBadge{display:none;background:#eaf5ff;border:1px solid #c8def5;border-radius:12px;padding:9px 12px;font-size:12px;color:#315f91;font-weight:800;word-break:break-all}.familyBadge.show{display:block}
+.dashGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}.dashCard{border:1px solid #dce6f0;background:#fff;border-radius:16px;padding:16px;text-align:left;cursor:pointer;transition:.18s;min-height:122px}.dashCard:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(31,55,82,.09);border-color:#b9cde1}.dashIcon{font-size:26px}.dashCard b{display:block;margin-top:9px;font-size:14px;color:#233b55}.dashCard span{display:block;margin-top:5px;color:#718096;font-size:11px;line-height:1.5}.dashCard.primary{background:#eef6ff;border-color:#c8def5}.dashCard.green{background:#effaf2;border-color:#c9e7d0}.dashCard.gold{background:#fff9e9;border-color:#f0dfad}.dashCard.purple{background:#f7f2ff;border-color:#dfd0f5}
+.dashStatus{margin-top:14px;padding:12px 14px;border-radius:12px;background:#f7f9fc;border:1px solid #e4eaf1;color:#5f7185;font-size:12px}.dashStatus strong{color:#253d56}.dashActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.dashActions button{border:0;border-radius:10px;padding:10px 13px;font-weight:800;cursor:pointer}.dashActions .copyBtn{background:#eaf2fb;color:#315f91}.dashActions .searchBtn{background:#315f91;color:#fff}.dashActions .treeBtn{background:#2e7d32;color:#fff}
+@media(max-width:850px){.dashGrid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.dashboard{padding:16px}.dashGrid{grid-template-columns:1fr}.dashboardTitle{font-size:21px}}
 </style></head>
 <body>
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
+
+<section id="familyDashboard" class="dashboard">
+  <div class="dashboardHead">
+    <div><div class="dashboardTitle">🌳 Family Tree Dashboard</div><div id="dashboardSub" class="dashboardSub">તમારી family tree ને એક જ જગ્યાએથી સરળતાથી manage કરો.</div></div>
+    <div id="familyBadge" class="familyBadge"></div>
+  </div>
+  <div id="dashGrid" class="dashGrid">
+    <button class="dashCard primary" onclick="dashboardCreate()"><div class="dashIcon">➕</div><b>નવી Family બનાવો</b><span>નવી વંશાવળી શરૂ કરો અને Family Link મેળવો.</span></button>
+    <button class="dashCard green" onclick="dashboardAdd()"><div class="dashIcon">👨‍👩‍👧‍👦</div><b>નવો સભ્ય ઉમેરો</b><span>Family Link દ્વારા આગળની પેઢીનું નામ અને photo ઉમેરો.</span></button>
+    <button class="dashCard gold" onclick="dashboardSearch()"><div class="dashIcon">🔎</div><b>મારી વંશાવળી શોધો</b><span>તમારું નામ, પિતા અને દાદાનું નામ નાખીને સીધી lineage શોધો.</span></button>
+    <button class="dashCard purple" onclick="dashboardTree()"><div class="dashIcon">🌳</div><b>મારું Family Tree</b><span>તમારી Family ની સંપૂર્ણ tree જુઓ અને member શોધો.</span></button>
+  </div>
+  <div id="dashStatus" class="dashStatus"><strong>શરૂઆત કરો:</strong> “નવી Family બનાવો” પસંદ કરો.</div>
+  <div id="dashActions" class="dashActions hidden"></div>
+</section>
 
 <div id="lineageSearchPanel" class="panel lineageSearchPanel hidden">
   <div class="center title">🔎 મારી વંશાવળી શોધો</div>
@@ -62,7 +84,47 @@ function familyViewLink(){return familyId?location.origin+'/?family='+encodeURIC
 function showLineageSearch(){if(familyId)$('lineageSearchPanel').classList.remove('hidden')}
 function copyText(text){navigator.clipboard.writeText(text).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',text))}
 function safe(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function dashboardShow(id){
+  ['rootBox','addBox','viewBox'].forEach(x=>$(x).classList.add('hidden'));
+  const el=$(id); if(el) el.classList.remove('hidden');
+  window.scrollTo({top:document.getElementById('familyDashboard').offsetTop-10,behavior:'smooth'});
+}
+function dashboardCreate(){ if(familyId){alert('આ page પહેલેથી Family સાથે જોડાયેલું છે. નવી Family માટે Home ખોલો.');return;} dashboardShow('rootBox'); }
+function dashboardAdd(){
+  if(!familyId){alert('પહેલા Family બનાવો અથવા member ની Family Link ખોલો.');return;}
+  dashboardShow('addBox');
+  $('parentText').textContent='આ Family માં member ઉમેરવા માટે યોગ્ય member link ખોલો.';
+}
+function dashboardSearch(){
+  if(!familyId){alert('પહેલા તમારી Family Link ખોલો.');return;}
+  $('lineageSearchPanel').classList.remove('hidden');
+  $('lineageName').focus();
+  document.getElementById('lineageSearchPanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function dashboardTree(){
+  if(!familyId){alert('હજુ Family બનાવેલી નથી.');return;}
+  dashboardShow('viewBox');
+  $('viewBox').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function updateDashboard(){
+  const badge=$('familyBadge'), status=$('dashStatus'), grid=$('dashGrid'), actions=$('dashActions');
+  if(familyId){
+    badge.classList.add('show'); badge.textContent='Family ID: '+familyId;
+    $('dashboardSub').textContent='તમારી Family ની બધી activity અહીંથી manage કરો — બીજી Family નું data અહીં દેખાશે નહીં.';
+    status.innerHTML='<strong>તમારી Family તૈયાર છે.</strong> '+(people.length?people.length+' સભ્યો હાલમાં tree માં છે.':'હજુ member ઉમેરવાના બાકી છે.');
+    actions.classList.remove('hidden');
+    actions.innerHTML='<button class="treeBtn" onclick="dashboardTree()">🌳 Tree જુઓ</button><button class="searchBtn" onclick="dashboardSearch()">🔎 વંશાવળી શોધો</button><button class="copyBtn" onclick="copyFamilyLink()">🔗 Family Link Copy</button>';
+    grid.querySelector('.dashCard.primary').style.opacity='.65';
+  }else{
+    badge.classList.remove('show'); badge.textContent='';
+    $('dashboardSub').textContent='તમારી family tree ને એક જ જગ્યાએથી સરળતાથી manage કરો.';
+    status.innerHTML='<strong>શરૂઆત કરો:</strong> “નવી Family બનાવો” પસંદ કરો.';
+    actions.classList.add('hidden'); actions.innerHTML='';
+    grid.querySelector('.dashCard.primary').style.opacity='1';
+  }
+}
 async function init(){
+ updateDashboard();
  const m=location.pathname.match(/^\/add\/([^/]+)$/);
  if(m){
    token=m[1];
@@ -80,6 +142,7 @@ async function init(){
        return;
      }
      familyId=d.parent.familyId;
+     updateDashboard();
      showLineageSearch();
      focusPersonId=String(d.parent._id||'');
      const parentDisplay=d.parent.name;
@@ -96,6 +159,7 @@ async function init(){
  if(focus)focusPersonId=focus;
  document.body.classList.toggle('readonly-view',readonly);
  if(familyId){
+   updateDashboard();
    showLineageSearch();
    $('viewBox').classList.remove('hidden');
    $('currentLink').textContent=location.href;
@@ -179,7 +243,7 @@ function showReadOnlyTree(){
  loadFamily();
  window.scrollTo({top:0,behavior:'smooth'});
 }
-async function loadFamily(){if(!familyId)return;const r=await fetch('/api/family/'+encodeURIComponent(familyId));const d=await r.json();if(d.ok){people=d.people;renderTree()}}
+async function loadFamily(){if(!familyId)return;const r=await fetch('/api/family/'+encodeURIComponent(familyId));const d=await r.json();if(d.ok){people=d.people;updateDashboard();renderTree()}}
 async function renderTree(){
  const cards=$('cards'),svg=$('svg'),canvas=$('canvas');
  cards.innerHTML='';svg.innerHTML='';if(!people.length)return;
