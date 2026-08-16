@@ -129,9 +129,21 @@
         .real-tree-open #treeLayer.real-natural-tree .tree-card-actions{grid-template-columns:1fr 1fr 1fr!important;gap:4px!important;margin-top:7px!important}
         .real-tree-open #treeLayer.real-natural-tree .tree-card-actions .btn{padding:5px 3px!important;font-size:9px!important;border-radius:7px!important;background:#2e6b39!important;color:#fff!important}
         .real-tree-open #treeLayer.real-natural-tree .tree-card-actions .btn.danger{grid-column:auto!important;background:#a33d2e!important}
-        .real-tree-open #treeLayer.real-natural-tree #svg{overflow:visible;filter:none}
-        .real-tree-open #treeLayer.real-natural-tree #svg{z-index:5!important;overflow:visible!important;filter:none}
-        .real-tree-open #treeLayer.real-natural-tree #svg path{filter:drop-shadow(0 2px 1px #3c261633)!important}
+        .real-tree-open #treeLayer.real-natural-tree #svg{
+            display:block!important;position:absolute!important;left:0!important;top:0!important;
+            z-index:1!important;overflow:visible!important;filter:none!important;
+            pointer-events:none!important;visibility:visible!important;opacity:1!important;
+        }
+        .real-tree-open #treeLayer.real-natural-tree #svg path{
+            fill:none!important;filter:drop-shadow(0 3px 2px #3c261633)!important;
+        }
+        .real-tree-open #treeLayer.real-natural-tree #svg .rt-trunk,
+        .real-tree-open #treeLayer.real-natural-tree #svg .rt-branch,
+        .real-tree-open #treeLayer.real-natural-tree #svg .rt-root,
+        .real-tree-open #treeLayer.real-natural-tree #svg .rt-twig{
+            vector-effect:non-scaling-stroke!important;
+            stroke-linecap:round!important;stroke-linejoin:round!important;
+        }
         /* Real Tree View overrides the normal connector styling so natural wood stays thick and visible. */
         .real-tree-open #treeLayer.real-natural-tree #svg rect,.real-tree-open #treeLayer.real-natural-tree #svg ellipse,.real-tree-open #treeLayer.real-natural-tree #svg circle,.real-tree-open #treeLayer.real-natural-tree #svg text{pointer-events:none!important}
         .real-tree-open #treeLayer.real-natural-tree #svg text{font-family:Georgia,'Noto Sans Gujarati',Arial,sans-serif}
@@ -692,7 +704,18 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             });
 
             const add=(tag,attrs,parent=svg)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));parent.appendChild(e);return e;};
-            const path=(d,stroke,width,extra={})=>{const e=add('path',{d,fill:'none',stroke,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',...extra});e.style.setProperty('stroke',stroke,'important');e.style.setProperty('stroke-width',String(width),'important');e.style.setProperty('stroke-linecap','round','important');e.style.setProperty('stroke-linejoin','round','important');return e;};
+            const path=(d,stroke,width,extra={})=>{
+                const cls=extra.class || extra.className || 'rt-branch';
+                const attrs={d,fill:'none',stroke,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',...extra,class:cls};
+                delete attrs.className;
+                const e=add('path',attrs);
+                e.style.setProperty('stroke',stroke,'important');
+                e.style.setProperty('stroke-width',String(width),'important');
+                e.style.setProperty('stroke-linecap','round','important');
+                e.style.setProperty('stroke-linejoin','round','important');
+                e.style.setProperty('fill','none','important');
+                return e;
+            };
             const text=(x,y,value,size=15,extra={})=>{const t=add('text',{x,y,'text-anchor':'middle','font-size':size,'font-family':'Noto Sans, Arial, sans-serif','font-weight':'800',fill:'#4a2917',...extra});t.textContent=value;return t;};
             const defs=add('defs');
             defs.innerHTML=`
@@ -713,8 +736,11 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             const trunkTop=rootQ.y+CARD_H*.58;
 
             // Big organic trunk, deliberately much wider than the family branches.
-            path(`M ${cx-110} ${groundY} C ${cx-150} ${groundY-180}, ${cx-85} ${groundY-360}, ${cx-100} ${groundY-610} C ${cx-115} ${groundY-870}, ${cx-65} ${trunkTop+300}, ${cx-34} ${trunkTop}`,'url(#rtWood2)',145,{filter:'url(#rtShadow2)'});
-            path(`M ${cx+110} ${groundY} C ${cx+150} ${groundY-180}, ${cx+85} ${groundY-360}, ${cx+100} ${groundY-610} C ${cx+115} ${groundY-870}, ${cx+65} ${trunkTop+300}, ${cx+34} ${trunkTop}`,'url(#rtWood2)',145,{filter:'url(#rtShadow2)'});
+            path(`M ${cx-110} ${groundY} C ${cx-150} ${groundY-180}, ${cx-85} ${groundY-360}, ${cx-100} ${groundY-610} C ${cx-115} ${groundY-870}, ${cx-65} ${trunkTop+300}, ${cx-34} ${trunkTop}`,'url(#rtWood2)',145,{filter:'url(#rtShadow2)',class:'rt-trunk'});
+            path(`M ${cx+110} ${groundY} C ${cx+150} ${groundY-180}, ${cx+85} ${groundY-360}, ${cx+100} ${groundY-610} C ${cx+115} ${groundY-870}, ${cx+65} ${trunkTop+300}, ${cx+34} ${trunkTop}`,'url(#rtWood2)',145,{filter:'url(#rtShadow2)',class:'rt-trunk'});
+            // Strong central trunk face so it remains clearly visible behind the cards.
+            path(`M ${cx-28} ${groundY-10} C ${cx-48} ${groundY-230}, ${cx-30} ${groundY-430}, ${cx-18} ${trunkTop+35}`,'#a96832',52,{opacity:.92,class:'rt-trunk'});
+            path(`M ${cx+8} ${groundY-10} C ${cx+28} ${groundY-250}, ${cx+25} ${groundY-430}, ${cx+18} ${trunkTop+35}`,'#e0a166',18,{opacity:.55,class:'rt-trunk'});
             for(let i=-7;i<=7;i++){
                 const ox=i*13;
                 path(`M ${cx+ox} ${groundY-30} C ${cx+ox+i*7} ${groundY-240}, ${cx+ox-i*6} ${groundY-470}, ${cx+ox+i*5} ${trunkTop+30}`,'#5b3118',Math.max(2,Math.abs(i)%3+2),{opacity:.36});
@@ -723,7 +749,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             // Roots spreading out from the trunk.
             [-1,-.82,-.63,-.4,.4,.63,.82,1].forEach((dir,i)=>{
                 const ex=cx+dir*(150+i*24);
-                path(`M ${cx+dir*25} ${groundY-45} C ${cx+dir*55} ${groundY-10}, ${cx+dir*105} ${groundY+8}, ${ex} ${groundY+55}`,'url(#rtBranch2)',11-(i%3),{opacity:.95});
+                path(`M ${cx+dir*25} ${groundY-45} C ${cx+dir*55} ${groundY-10}, ${cx+dir*105} ${groundY+8}, ${ex} ${groundY+55}`,'url(#rtBranch2)',11-(i%3),{opacity:.95,class:'rt-root'});
             });
 
             function leafCluster(x,y,dir=1,count=8){
@@ -780,7 +806,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
 
                     // Small twig splitting off the child branch.
                     const twigX=tx-dir*40, twigY=endY-20;
-                    path(`M ${twigX} ${twigY+20} C ${twigX+dir*15} ${twigY-5}, ${twigX+dir*42} ${twigY-18}, ${twigX+dir*65} ${twigY-42}`,'url(#rtBranch2)',Math.max(3,bw*.28),{opacity:.95});
+                    path(`M ${twigX} ${twigY+20} C ${twigX+dir*15} ${twigY-5}, ${twigX+dir*42} ${twigY-18}, ${twigX+dir*65} ${twigY-42}`,'url(#rtBranch2)',Math.max(3,bw*.28),{opacity:.95,class:'rt-twig'});
                     leafCluster(twigX+dir*62,twigY-42,dir,7);
                 });
             }
@@ -803,7 +829,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             people.filter(p=>(children.get(String(p._id))||[]).length===0).forEach((p,i)=>{
                 const q=positions.get(String(p._id));if(!q)return;
                 const x=q.x+CARD_W/2,y=q.y+CARD_H*.9,dir=i%2?-1:1;
-                path(`M ${x} ${y} C ${x+dir*18} ${y+35}, ${x-dir*22} ${y+78}, ${x+dir*5} ${y+118}`,'url(#rtBranch2)',7,{filter:'url(#rtShadow2)'});
+                path(`M ${x} ${y} C ${x+dir*18} ${y+35}, ${x-dir*22} ${y+78}, ${x+dir*5} ${y+118}`,'url(#rtBranch2)',7,{filter:'url(#rtShadow2)',class:'rt-twig'});
                 leafCluster(x+dir*8,y+115,dir,9);
             });
 
