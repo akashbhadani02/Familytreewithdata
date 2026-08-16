@@ -433,7 +433,9 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     // Leaves are shown ONLY on the final (last) generation. No leaves on the trunk/top.
 }
 
-        async function toggleRealTreeView(){
+        
+function toggleUserRealTree(){ return toggleRealTreeView(); }
+async function toggleRealTreeView(){
  const view=$('viewBox'), btn=$('userRealTreeBtn');
  if(!view)return;
  const opening=!document.body.classList.contains('real-tree-open');
