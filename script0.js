@@ -106,95 +106,76 @@ async function createFamily(){
         }
 
         async function renderTree(){
-    const cards=$('cards'), svg=$('svg'), canvas=$('canvas');
-    cards.innerHTML=''; svg.innerHTML='';
-    if(!people.length){cards.innerHTML='<div class="empty">આ Family માં member નથી.</div>';return;}
+            const cards=$('cards'), svg=$('svg'), canvas=$('canvas');
+            cards.innerHTML=''; svg.innerHTML='';
+            if(!people.length){cards.innerHTML='<div class="empty">આ Family માં member નથી.</div>';return;}
+            const byId=new Map(people.map(p=>[String(p._id),p]));
+            const children=new Map();
+            people.forEach(p=>{const pid=p.parentId?String(p.parentId):'root'; if(!children.has(pid))children.set(pid,[]); children.get(pid).push(p);});
+            children.forEach(a=>a.sort((x,y)=>(x.generation-y.generation)||new Date(x.createdAt)-new Date(y.createdAt)));
+            const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>a.generation-b.generation)[0];
+            if(!root){return;}
 
-    // Build a safe parent -> children map. A missing/invalid parent becomes a root.
-    const byId=new Map(people.map(p=>[String(p._id),p]));
-    const children=new Map();
-    const roots=[];
-    people.forEach((p,i)=>{
-        const pid=p.parentId?String(p.parentId):'';
-        if(pid && byId.has(pid)){
-            if(!children.has(pid)) children.set(pid,[]);
-            children.get(pid).push({...p,__order:i});
-        }else{
-            roots.push({...p,__order:i});
+            const CARD_W=210, CARD_H=245, H_GAP=38, V_GAP=95, PAD_X=80, PAD_Y=50;
+            const widths=new Map();
+            function width(id){
+                id=String(id); if(widths.has(id))return widths.get(id);
+                const kids=children.get(id)||[];
+                const w=kids.length?kids.reduce((sum,k)=>sum+width(k._id),0)+H_GAP*(kids.length-1):CARD_W;
+                widths.set(id,w); return w;
+            }
+            const positions=new Map();
+            function place(node,cx,y){
+                const id=String(node._id), kids=children.get(id)||[], w=width(id);
+                const left=cx-w/2;
+                positions.set(id,{x:cx-CARD_W/2,y,w});
+                if(kids.length){
+                    let cur=left;
+                    kids.forEach(k=>{const kw=width(k._id);place(k,cur+kw/2,y+CARD_H+V_GAP);cur+=kw+H_GAP;});
+                }
+            }
+            place(root,PAD_X+width(root._id)/2,PAD_Y);
+            const all=[...positions.values()];
+            const maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X));
+            const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
+            canvas.dataset.baseWidth=maxX; canvas.dataset.baseHeight=maxY; applyTreeZoom(maxX,maxY);
+            svg.setAttribute('width',maxX); svg.setAttribute('height',maxY);
+
+            const localized={};
+            people.forEach(p=>{localized[String(p._id)]=p.name});
+            people.forEach(p=>{
+                const q=positions.get(String(p._id)); if(!q)return;
+                const d=document.createElement('div'); d.className='card'; d.dataset.personId=String(p._id); d.dataset.personName=(p.name||'').toLowerCase(); d.style.left=q.x+'px'; d.style.top=q.y+'px';
+                const shown=localized[String(p._id)]||p.name;
+                d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tree-card-actions"><button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add</button><button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button><button type="button" class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
+                d.onpointerdown=e=>{if(e.target.closest('button,input,a'))e.stopPropagation()};cards.appendChild(d);
+            });
+
+            // Card-to-card joined connectors: every line touches the exact bottom/top edge.
+            // For multiple children, one horizontal bus joins all child branches.
+            const grouped=new Map();
+            people.forEach(p=>{
+                if(!p.parentId)return;
+                const pid=String(p.parentId);
+                if(!grouped.has(pid))grouped.set(pid,[]);
+                grouped.get(pid).push(p);
+            });
+            grouped.forEach((kids,pid)=>{
+                const parent=positions.get(pid);
+                if(!parent)return;
+                const px=parent.x+CARD_W/2, py=parent.y+CARD_H;
+                const childData=kids.map(k=>positions.get(String(k._id))).filter(Boolean);
+                if(!childData.length)return;
+                const childY=childData[0].y;
+                const busY=py+(childY-py)/2;
+                const xs=childData.map(q=>q.x+CARD_W/2);
+                const minX=Math.min(...xs), maxX=Math.max(...xs);
+                drawLine(svg,px,py,px,busY);
+                if(childData.length>1) drawLine(svg,minX,busY,maxX,busY);
+                childData.forEach(q=>drawLine(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY));
+            });
+            renderMemberLinks();
         }
-    });
-    const sortKids=a=>a.sort((x,y)=>{
-        const gx=Number(x.generation)||0, gy=Number(y.generation)||0;
-        return gx-gy || x.__order-y.__order;
-    });
-    children.forEach(sortKids);
-    roots.sort((a,b)=>(Number(a.generation)||0)-(Number(b.generation)||0) || a.__order-b.__order);
-
-    const CARD_W=240, CARD_H=112, H_GAP=45, V_GAP=105, ROOT_GAP=90, PAD_X=80, PAD_Y=60;
-    const widths=new Map(), visiting=new Set();
-    function width(id){
-        id=String(id);
-        if(widths.has(id)) return widths.get(id);
-        if(visiting.has(id)) return CARD_W;
-        visiting.add(id);
-        const kids=children.get(id)||[];
-        let w=kids.length ? kids.reduce((s,k)=>s+width(k._id),0)+H_GAP*(kids.length-1) : CARD_W;
-        widths.set(id,Math.max(CARD_W,w)); visiting.delete(id); return widths.get(id);
-    }
-    roots.forEach(r=>width(r._id));
-
-    const positions=new Map();
-    function place(node,cx,y){
-        const id=String(node._id), kids=children.get(id)||[], w=width(id);
-        positions.set(id,{x:cx-CARD_W/2,y});
-        if(kids.length){
-            let cur=cx-w/2;
-            kids.forEach(k=>{const kw=width(k._id); place(k,cur+kw/2,y+CARD_H+V_GAP); cur+=kw+H_GAP;});
-        }
-    }
-    let cursor=PAD_X;
-    roots.forEach(r=>{const w=width(r._id);place(r,cursor+w/2,PAD_Y);cursor+=w+ROOT_GAP;});
-
-    const all=[...positions.values()];
-    const maxX=Math.max(1100,cursor+PAD_X);
-    const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
-    canvas.dataset.baseWidth=maxX; canvas.dataset.baseHeight=maxY; applyTreeZoom(maxX,maxY);
-    svg.setAttribute('width',maxX); svg.setAttribute('height',maxY);
-    svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);
-
-    // SVG connectors: parent bottom -> shared bus -> every child top.
-    const ns='http://www.w3.org/2000/svg';
-    const addPath=(d)=>{
-        const p=document.createElementNS(ns,'path');
-        p.setAttribute('d',d);p.setAttribute('fill','none');p.setAttribute('stroke','#64748b');
-        p.setAttribute('stroke-width','5');p.setAttribute('stroke-linecap','round');p.setAttribute('stroke-linejoin','round');
-        svg.appendChild(p);
-    };
-    children.forEach((kids,pid)=>{
-        const parent=positions.get(String(pid)); if(!parent)return;
-        const data=kids.map(k=>positions.get(String(k._id))).filter(Boolean); if(!data.length)return;
-        const px=parent.x+CARD_W/2, py=parent.y+CARD_H;
-        const childY=data[0].y, busY=py+(childY-py)/2;
-        const xs=data.map(q=>q.x+CARD_W/2);
-        addPath(`M ${px} ${py} V ${busY}`);
-        if(data.length>1)addPath(`M ${Math.min(...xs)} ${busY} H ${Math.max(...xs)}`);
-        data.forEach(q=>addPath(`M ${q.x+CARD_W/2} ${busY} V ${childY}`));
-    });
-
-    // Cards stay above SVG lines. Names are always visible, photo is optional.
-    people.forEach(p=>{
-        const q=positions.get(String(p._id)); if(!q)return;
-        const d=document.createElement('div');
-        d.className='card'; d.dataset.personId=String(p._id);
-        d.dataset.personName=(p.name||'').toLowerCase();
-        d.style.left=q.x+'px'; d.style.top=q.y+'px';
-        const shown=p.name||'Unnamed Member';
-        d.innerHTML=`<div class="nameOnly">${esc(shown)}</div><small>Generation ${Number(p.generation)||1}</small><div class="tree-card-actions"><button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(shown)}',this)">➕ Add</button><button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken||'')}')">🔗 Open Link</button><button type="button" class="btn danger" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button></div>`;
-        d.onpointerdown=e=>{if(e.target.closest('button,input,a'))e.stopPropagation()};
-        cards.appendChild(d);
-    });
-    renderMemberLinks();
-}
 
         function drawLine(svg,x1,y1,x2,y2){
             const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');
