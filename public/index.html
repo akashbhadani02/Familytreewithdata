@@ -40,24 +40,33 @@ function memberAddLink(person){
   if(!person || !person.addToken) return '';
   return absoluteLink('/add/'+encodeURIComponent(String(person.addToken)));
 }
-async function copyMemberLink(person){
+async function copyMemberLink(person,button){
   const link=memberAddLink(person);
   if(!link) return alert('આ Childની link હજી generate થઈ નથી.');
-  try{
-    const check=await fetch('/api/add/'+encodeURIComponent(String(person.addToken)),{cache:'no-store'});
-    const data=await check.json().catch(()=>({}));
-    if(!check.ok || !data.ok) return alert('આ Childની valid link server પર મળતી નથી. કૃપા કરીને Child ફરી add કરો.');
-  }catch(e){
-    return alert('Link verify થઈ શકી નથી. Internet/server connection ચેક કરો.');
+  const ok=await copyText(link);
+  if(ok && button){
+    const old=button.textContent;
+    button.textContent='✅ Copied!';
+    button.disabled=true;
+    setTimeout(()=>{button.textContent=old;button.disabled=false},1800);
   }
-  copyText(link);
 }
-function copyText(text){
-  if(!text) return;
-  if(navigator.clipboard && window.isSecureContext){
-    navigator.clipboard.writeText(text).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',text));
-  }else{
-    const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');alert('Link copy થઈ ગઈ')}catch(e){prompt('આ link copy કરો:',text)}ta.remove();
+async function copyText(text){
+  if(!text) return false;
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+    }else{
+      const ta=document.createElement('textarea');
+      ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.focus();ta.select();
+      const ok=document.execCommand('copy');ta.remove();
+      if(!ok) throw new Error('copy failed');
+    }
+    return true;
+  }catch(e){
+    prompt('આ link copy કરો:',text);
+    return false;
   }
 }
 function safe(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -73,8 +82,13 @@ async function init(){
    try{
      const r=await fetch('/api/add/'+encodeURIComponent(token),{cache:'no-store'});
      const d=await r.json();
+     if(r.status===404){
+       $('parentText').innerHTML='<b style="color:#b42318">આ link સાચી નથી અથવા databaseમાં મળતી નથી.</b>';
+       $('addName').disabled=true;$('addPhoto').disabled=true;
+       return;
+     }
      if(!r.ok || !d.ok){
-       $('parentText').innerHTML='<b style="color:#b42318">આ link સાચી નથી અથવા expire થઈ ગઈ છે.</b>';
+       $('parentText').innerHTML='<b style="color:#b42318">Server તરફથી link ચેક થઈ શકી નથી. થોડા સમય પછી ફરી પ્રયત્ન કરો.</b>';
        $('addName').disabled=true;$('addPhoto').disabled=true;
        return;
      }
@@ -144,7 +158,7 @@ function renderChildStatus(){
   const kids=people.filter(p=>p.parentId && String(p.parentId)===String(focusPersonId)).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
   if(!kids.length){box.style.display='block';box.innerHTML='<b>👦 તમારા Child/પુત્રની સ્થિતિ</b><div style="margin-top:5px;color:#68778a">હજુ સુધી કોઈ Childનું નામ add થયું નથી.</div>';return;}
   box.style.display='block';
-  box.innerHTML='<b>👦 તમારા Childનું નામ add થઈ ગયું છે</b><div style="margin-top:5px;color:#68778a">નીચેના નામ તમારા Father/Parent link હેઠળ સફળતાપૂર્વક ઉમેરાયા છે:</div>'+kids.map(k=>{const link=memberAddLink(k);return '<div class="child-row"><span class="child-name">✅ '+safe(k.name)+'</span><button type="button" class="btn mini-copy" onclick="copyMemberLink('+JSON.stringify(k).replace(/</g,'\\u003c')+')">🔗 Child Link Copy</button></div>'}).join('');
+  box.innerHTML='<b>👦 તમારા Childનું નામ add થઈ ગયું છે</b><div style="margin-top:5px;color:#68778a">નીચેના નામ તમારા Father/Parent link હેઠળ સફળતાપૂર્વક ઉમેરાયા છે:</div>'+kids.map(k=>{const link=memberAddLink(k);return '<div class="child-row"><span class="child-name">✅ '+safe(k.name)+'</span><button type="button" class="btn mini-copy" onclick="copyMemberLink('+JSON.stringify(k).replace(/</g,'\\u003c')+',this)">🔗 Child Link Copy</button></div>'}).join('');
 }
 function prepareLineageFields(){
   if(!people.length || !focusPersonId)return;
