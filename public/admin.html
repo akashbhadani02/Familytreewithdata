@@ -1268,61 +1268,94 @@ async function loadHtml2Canvas(){
 
         async function downloadTreePDF(){
     if(!people.length) return alert('પહેલા Family Tree ખોલો.');
+    const oldZoom=(typeof treeZoom==='number')?treeZoom:1;
     const btns=[...document.querySelectorAll('.tree-card-actions,.links-panel')];
     const oldDisplay=btns.map(el=>el.style.display);
-    const oldZoom=(typeof treeZoom==='number')?treeZoom:1;
+    let tempCanvas=null;
     try{
-        await loadHtml2Canvas();
         await loadJsPDF();
         btns.forEach(el=>el.style.display='none');
-        if(typeof treeZoom==='number'){ treeZoom=1; if(typeof applyTreeZoom==='function') applyTreeZoom(); }
-        await new Promise(r=>setTimeout(r,250));
 
-        let sourceCanvas;
+        // Always export the REAL tree when it is open. This avoids html2canvas
+        // clipping the large treebox and gives PDF a stable source image.
         const realCanvas=document.querySelector('#realTreeCanvas');
         const realOpen=document.body.classList.contains('real-tree-open');
-        if(realOpen && realCanvas && realCanvas.width>0 && realCanvas.height>0){
-            sourceCanvas=realCanvas;
-        }else{
-            const node=document.querySelector('#canvas');
-            if(!node) throw new Error('Tree canvas not found');
-            sourceCanvas=await html2canvas(node,{scale:1.25,backgroundColor:'#fbfcfe',useCORS:true,allowTaint:true,logging:false});
+        let sourceCanvas=realOpen ? realCanvas : null;
+
+        if(!sourceCanvas || !(sourceCanvas.width>0 && sourceCanvas.height>0)){
+            if(typeof drawRealTreeStructure==='function') drawRealTreeStructure();
+            sourceCanvas=document.querySelector('#realTreeCanvas');
+            if(!sourceCanvas || !(sourceCanvas.width>0 && sourceCanvas.height>0))
+                throw new Error('Real Tree તૈયાર નથી. પહેલા Real Tree View ખોલો.');
         }
 
+        // Render the tree at a safe print resolution. The full source canvas is
+        // preserved, but oversized browser canvases are reduced before PDF export.
         const sw=Number(sourceCanvas.width), sh=Number(sourceCanvas.height);
-        if(!Number.isFinite(sw)||!Number.isFinite(sh)||sw<=0||sh<=0) throw new Error('Tree image has invalid size');
+        if(!Number.isFinite(sw)||!Number.isFinite(sh)||sw<2||sh<2)
+            throw new Error('Tree image size invalid છે.');
 
-        // Downsample very large Real Tree canvases before giving the image to jsPDF.
-        // This prevents huge/NaN coordinates and keeps the PDF reliable on phones too.
-        const MAX_W=2400, MAX_H=1800;
-        const exportScale=Math.min(1,MAX_W/sw,MAX_H/sh);
-        const ew=Math.max(1,Math.floor(sw*exportScale));
-        const eh=Math.max(1,Math.floor(sh*exportScale));
-        const exportCanvas=document.createElement('canvas');
-        exportCanvas.width=ew; exportCanvas.height=eh;
-        const ctx=exportCanvas.getContext('2d');
-        if(!ctx) throw new Error('Unable to create PDF image');
+        const MAX_W=3600, MAX_H=2600;
+        const scale=Math.min(1,MAX_W/sw,MAX_H/sh);
+        const ew=Math.max(2,Math.round(sw*scale));
+        const eh=Math.max(2,Math.round(sh*scale));
+        tempCanvas=document.createElement('canvas');
+        tempCanvas.width=ew; tempCanvas.height=eh;
+        const ctx=tempCanvas.getContext('2d',{alpha:false});
+        if(!ctx) throw new Error('PDF canvas બની શક્યું નથી.');
         ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,ew,eh);
+        ctx.imageSmoothingEnabled=true;
+        ctx.imageSmoothingQuality='high';
         ctx.drawImage(sourceCanvas,0,0,sw,sh,0,0,ew,eh);
-        const dataUrl=exportCanvas.toDataURL('image/jpeg',0.92);
+
+        const dataUrl=tempCanvas.toDataURL('image/jpeg',0.94);
+        if(!dataUrl || dataUrl.length<100) throw new Error('Tree image export થઈ નથી.');
 
         const {jsPDF}=window.jspdf;
-        // Create a print-oriented custom landscape page that follows the tree's
-        // aspect ratio. The whole tree stays on ONE PDF page; the printer can
-        // then scale it to A4/A3/plotter paper without cutting branches.
+        // Create a large print sheet with the SAME aspect ratio as the tree.
+        // This is intentional: the whole tree is kept on one PDF page and the
+        // printer can scale the sheet to A3/A2/A1 without cutting branches.
+        const MAX_PAGE_MM=1100;
+        const MIN_PAGE_MM=250;
         const aspect=ew/eh;
-        const LONG=420; // A3 long side in mm
-        const SHORT=297; // A3 short side in mm
-        let pageW, pageH;
-        if(aspect>=1){ pageW=LONG; pageH=Math.max(100,Math.min(SHORT, LONG/aspect)); }
-        else { pageH=LONG; pageW=Math.max(100,Math.min(SHORT, LONG*aspect)); }
-        const pdf=new jsPDF({orientation:pageW>=pageH?'landscape':'portrait',unit:'mm',format:[pageW,pageH],compress:true});
-        const margin=4;
-        const maxW=Math.max(1,pageW-margin*2), maxH=Math.max(1,pageH-margin*2);
-        const ratio=Math.min(maxW/ew,maxH/eh);
-        const w=Number(ew*ratio), h=Number(eh*ratio);
-        const x=Number((pageW-w)/2), y=Number((pageH-h)/2);
-        if(![x,y,w,h].every(Number.isFinite)||w<=0||h<=0) throw new Error('Invalid PDF image coordinates');
+        let pageW,pageH;
+        if(aspect>=1){
+            pageW=MAX_PAGE_MM;
+            pageH=pageW/aspect;
+            if(pageH<MIN_PAGE_MM){pageH=MIN_PAGE_MM; pageW=pageH*aspect;}
+        }else{
+            pageH=MAX_PAGE_MM;
+            pageW=pageH*aspect;
+            if(pageW<MIN_PAGE_MM){pageW=MIN_PAGE_MM; pageH=pageW/aspect;}
+        }
+        pageW=Math.min(MAX_PAGE_MM,Math.max(MIN_PAGE_MM,pageW));
+        pageH=Math.min(MAX_PAGE_MM,Math.max(MIN_PAGE_MM,pageH));
+
+        const pdf=new jsPDF({
+            orientation:pageW>=pageH?'landscape':'portrait',
+            unit:'mm',
+            format:[pageW,pageH],
+            compress:true,
+            putOnlyUsedFonts:true
+        });
+
+        const margin=8;
+        const maxW=Math.max(1,pageW-margin*2);
+        const maxH=Math.max(1,pageH-margin*2);
+        const fit=Math.min(maxW/ew,maxH/eh);
+        const w=ew*fit, h=eh*fit;
+        const x=(pageW-w)/2, y=(pageH-h)/2;
+        if(![pageW,pageH,x,y,w,h].every(Number.isFinite)||
+           pageW<=0||pageH<=0||w<=0||h<=0||
+           x<0||y<0||x+w>pageW+0.01||y+h>pageH+0.01){
+            throw new Error('PDF page coordinates invalid છે.');
+        }
+
+        pdf.setProperties({
+            title:'Family Tree',
+            subject:'Printable Family Tree',
+            creator:'Family Tree'
+        });
         pdf.addImage(dataUrl,'JPEG',x,y,w,h,undefined,'FAST');
         pdf.save('family-tree-print.pdf');
     }catch(e){
@@ -1330,225 +1363,10 @@ async function loadHtml2Canvas(){
         alert('PDF download error: '+(e&&e.message?e.message:e));
     }finally{
         btns.forEach((el,i)=>el.style.display=oldDisplay[i]);
-        if(typeof treeZoom==='number'){ treeZoom=oldZoom; if(typeof applyTreeZoom==='function') applyTreeZoom(); }
+        if(tempCanvas) tempCanvas.width=tempCanvas.height=1;
+        if(typeof treeZoom==='number'){
+            treeZoom=oldZoom;
+            if(typeof applyTreeZoom==='function') applyTreeZoom();
+        }
     }
 }
-        async function downloadPNG(){
-            if(!people.length)return;
-            await loadHtml2Canvas();
-            const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe',useCORS:true});
-            const a=document.createElement('a');a.download='family-tree-admin.png';a.href=c.toDataURL('image/png');a.click();
-        }
-
-        (async function restoreAdminSession(){
-            if(!key)return;
-            const ok=await checkAdmin();
-            if(ok){showAdminApp();await loadFamilies();}else{localStorage.removeItem('adminKey');key='';showLogin();}
-        })();
-    </script>
-
-<div id="photoChoiceOverlay" class="photo-choice-overlay" onclick="if(event.target===this)closePhotoChoice()">
-  <div class="photo-choice-box">
-    <h3>📷 Photo ઉમેરો</h3>
-    <p>Photo ક્યાંથી લેવી છે?</p>
-    <div class="photo-choice-actions">
-      <button type="button" class="photo-choice-btn photo-camera" onclick="chooseCamera()">📷 Camera</button>
-      <button type="button" class="photo-choice-btn photo-gallery" onclick="chooseGallery()">🖼️ Gallery</button>
-    </div>
-    <button type="button" class="photo-choice-btn photo-cancel" onclick="closePhotoChoice()">Cancel</button>
-    <input id="photoCameraInput" class="photo-choice-input" type="file" accept="image/*" capture="environment">
-    <input id="photoGalleryInput" class="photo-choice-input" type="file" accept="image/*">
-  </div>
-</div>
-
-
-<div id="photoCropOverlay" class="photo-crop-overlay">
-  <div class="photo-crop-box">
-    <h3>✂️ Round Photo Crop</h3>
-    <p>Photo ને drag કરો અને zoom કરીને circle ની અંદર proper set કરો.</p>
-    <div class="photo-crop-stage"><canvas id="photoCropCanvas" width="360" height="360"></canvas><div class="photo-crop-circle"></div></div>
-    <div class="photo-crop-controls">
-      <button type="button" class="btn" onclick="cropZoom(-0.1)">➖</button>
-      <input id="photoCropZoom" type="range" min="1" max="3" step="0.01" value="1" oninput="cropSetZoom(this.value)">
-      <button type="button" class="btn" onclick="cropZoom(0.1)">➕</button>
-    </div>
-    <div class="photo-crop-actions">
-      <button type="button" class="btn danger" onclick="cancelPhotoCrop()">Cancel</button>
-      <button type="button" class="btn" onclick="applyPhotoCrop()">✅ Crop & Set Photo</button>
-    </div>
-  </div>
-</div>
-<style id="photoCropStyle">
-.photo-crop-overlay{display:none;position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.72);align-items:center;justify-content:center;padding:14px}
-.photo-crop-overlay.show{display:flex}
-.photo-crop-box{width:min(440px,100%);background:#fff;border-radius:20px;padding:18px;box-shadow:0 20px 70px rgba(0,0,0,.4);text-align:center}
-.photo-crop-box h3{margin:0 0 5px;font-size:20px}.photo-crop-box p{margin:0 0 14px;color:#666;font-size:13px}
-.photo-crop-stage{width:min(360px,90vw);height:min(360px,90vw);margin:auto;position:relative;overflow:hidden;background:#111;border-radius:12px;touch-action:none}
-#photoCropCanvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}.photo-crop-circle{position:absolute;left:50%;top:50%;width:78%;height:78%;transform:translate(-50%,-50%);border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 9999px rgba(0,0,0,.48);pointer-events:none}
-.photo-crop-controls{display:flex;align-items:center;gap:8px;margin:14px 0}.photo-crop-controls input{flex:1}.photo-crop-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px}
-@media(max-width:480px){.photo-crop-box{padding:13px}.photo-crop-actions .btn{font-size:12px;padding:10px 6px}}
-</style>
-
-<script id="photoChoicePopupScript">
-let photoChoiceTargetInput = null;
-
-function openPhotoChoice(input){
-  photoChoiceTargetInput = input || null;
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.add('show');
-}
-function closePhotoChoice(){
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.remove('show');
-  photoChoiceTargetInput=null;
-}
-function forwardPhoto(file){
-  if(!photoChoiceTargetInput || !file){ closePhotoChoice(); return; }
-  const dt=new DataTransfer();
-  dt.items.add(file);
-  photoChoiceTargetInput.files=dt.files;
-  photoChoiceTargetInput.dispatchEvent(new Event('change',{bubbles:true}));
-  closePhotoChoice();
-}
-function chooseCamera(){
-  const i=document.getElementById('photoCameraInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files && i.files[0]);
-  i.click();
-}
-function chooseGallery(){
-  const i=document.getElementById('photoGalleryInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files && i.files[0]);
-  i.click();
-}
-</script>
-
-
-<script id="adminPhotoChoiceScript">
-function openPhotoChoice(input){
-  photoChoiceTargetInput=input||null;
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.add('show');
-}
-function closePhotoChoice(){
-  const o=document.getElementById('photoChoiceOverlay');
-  if(o)o.classList.remove('show');
-  photoChoiceTargetInput=null;
-}
-function forwardPhoto(file){
-  if(!photoChoiceTargetInput||!file){closePhotoChoice();return;}
-  try{
-    const dt=new DataTransfer();
-    dt.items.add(file);
-    photoChoiceTargetInput.files=dt.files;
-    photoChoiceTargetInput.dispatchEvent(new Event('change',{bubbles:true}));
-  }catch(e){}
-  closePhotoChoice();
-}
-function chooseCamera(){
-  const i=document.getElementById('photoCameraInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
-  i.click();
-}
-function chooseGallery(){
-  const i=document.getElementById('photoGalleryInput');
-  i.value='';
-  i.onchange=()=>forwardPhoto(i.files&&i.files[0]);
-  i.click();
-}
-</script>
-
-
-<script id="roundPhotoCropScript">
-let cropState=null;
-
-function openPhotoCrop(file){
-  return new Promise((resolve,reject)=>{
-    const img=new Image(), url=URL.createObjectURL(file);
-    img.onload=()=>{
-      URL.revokeObjectURL(url);
-      const overlay=document.getElementById('photoCropOverlay');
-      const canvas=document.getElementById('photoCropCanvas');
-      const stage=document.querySelector('.photo-crop-stage');
-      cropState={img,canvas,stage,zoom:1,x:0,y:0,startX:0,startY:0,dragging:false,resolve,reject};
-      document.getElementById('photoCropZoom').value=1;
-      overlay.classList.add('show');
-      drawPhotoCrop();
-    };
-    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Invalid photo'))};
-    img.src=url;
-  });
-}
-function drawPhotoCrop(){
-  if(!cropState)return;
-  const {img,canvas}=cropState, ctx=canvas.getContext('2d'), S=canvas.width;
-  ctx.clearRect(0,0,S,S); ctx.fillStyle='#111';ctx.fillRect(0,0,S,S);
-  const base=Math.max(S/img.naturalWidth,S/img.naturalHeight);
-  const scale=base*cropState.zoom;
-  const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
-  const cx=S/2+cropState.x,cy=S/2+cropState.y;
-  ctx.drawImage(img,cx-w/2,cy-h/2,w,h);
-}
-function cropSetZoom(v){if(!cropState)return;cropState.zoom=Math.max(1,Math.min(3,Number(v)||1));drawPhotoCrop()}
-function cropZoom(d){if(!cropState)return;cropSetZoom(cropState.zoom+d);document.getElementById('photoCropZoom').value=cropState.zoom}
-function closeCrop(){const o=document.getElementById('photoCropOverlay');if(o)o.classList.remove('show')}
-function cancelPhotoCrop(){if(!cropState)return;const r=cropState.reject;cropState=null;closeCrop();r(new Error('Crop cancelled.'))}
-function applyPhotoCrop(){
-  if(!cropState)return;
-  const s=cropState, src=s.canvas, out=document.createElement('canvas'); out.width=800;out.height=800;
-  const o=out.getContext('2d'); const ratio=800/src.width;
-  o.drawImage(src,0,0,800,800);
-  out.toBlob(blob=>{
-    if(!blob){const r=s.reject;cropState=null;closeCrop();r(new Error('Crop failed.'));return}
-    const r=s.resolve;cropState=null;closeCrop();r(new File([blob],'family-photo.jpg',{type:'image/jpeg'}));
-  },'image/jpeg',.92);
-}
-function cropPointerStart(e){
-  if(!cropState)return;cropState.dragging=true;cropState.startX=e.clientX-cropState.x;cropState.startY=e.clientY-cropState.y;
-  e.currentTarget.setPointerCapture?.(e.pointerId);
-}
-function cropPointerMove(e){
-  if(!cropState||!cropState.dragging)return;
-  cropState.x=e.clientX-cropState.startX;cropState.y=e.clientY-cropState.startY;
-  const S=cropState.canvas.width, max=S*.7;
-  cropState.x=Math.max(-max,Math.min(max,cropState.x));cropState.y=Math.max(-max,Math.min(max,cropState.y));drawPhotoCrop();
-}
-function cropPointerEnd(){if(cropState)cropState.dragging=false}
-(function(){
-  const c=document.getElementById('photoCropCanvas');
-  if(c){c.addEventListener('pointerdown',cropPointerStart);c.addEventListener('pointermove',cropPointerMove);c.addEventListener('pointerup',cropPointerEnd);c.addEventListener('pointercancel',cropPointerEnd)}
-})();
-function cropAdminPhoto(file){return openPhotoCrop(file)}
-
-/* Every Camera/Gallery selection now goes through the round cropper first. */
-function forwardPhoto(file){
-  const target=photoChoiceTargetInput;
-  closePhotoChoice();
-  if(!target||!file){
-    if(target){try{target.value='';target.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}}
-    return;
-  }
-  openPhotoCrop(file).then(cropped=>{
-    try{
-      const dt=new DataTransfer();dt.items.add(cropped);target.files=dt.files;
-      target.dispatchEvent(new Event('change',{bubbles:true}));
-    }catch(e){}
-  }).catch(()=>{
-    try{target.value='';target.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}
-  });
-}
-</script>
-</body>
-</html>
-
-<script id="adminTreeAddChildHelper">
-function adminTreeAddChild(parentId){
-  if(typeof window.addChild==='function'){ window.addChild(parentId); return; }
-  if(typeof window.openAddChild==='function'){ window.openAddChild(parentId); return; }
-  if(typeof window.showAddChild==='function'){ window.showAddChild(parentId); return; }
-  alert('Add Child form તૈયાર નથી.');
-}
-        initTreeZoomTouch();
-</script>
