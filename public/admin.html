@@ -485,6 +485,24 @@
   cursor:pointer !important;
   touch-action:manipulation !important;
 }
+</style><style>
+/* ===== MANUAL TREE ZOOM / PAN ===== */
+.tree-zoom-viewport, .real-tree-viewport, #realTreeViewport, #treeViewport {
+  position:relative !important;
+  overflow:auto !important;
+  touch-action:none !important;
+  -webkit-overflow-scrolling:touch;
+}
+.tree-zoom-content, #realTreeCanvas, canvas.real-tree-canvas {
+  transform-origin: 0 0 !important;
+  will-change: transform;
+}
+.tree-zoom-controls {
+  position:sticky; top:8px; z-index:9999;
+  display:flex; gap:6px; justify-content:center;
+  padding:6px; pointer-events:none;
+}
+.tree-zoom-controls button { pointer-events:auto; min-width:42px; min-height:38px; }
 </style></head>
 
 <body>
@@ -1421,5 +1439,89 @@ async function loadHtml2Canvas(){
     }
 }
 </script>
-</body>
+<script>
+/* ===== MANUAL TREE ZOOM / PAN (wheel + pinch + buttons + drag) ===== */
+(function(){
+  function setupTreeZoom(){
+    const vp = document.querySelector('.tree-zoom-viewport,#realTreeViewport,#treeViewport,.real-tree-viewport,.tree-scroll,.tree-viewport');
+    const content = document.querySelector('#realTreeCanvas,.tree-zoom-content,canvas.real-tree-canvas,.tree-canvas,#treeCanvas');
+    if(!vp || !content || content.__manualZoomReady) return;
+    content.__manualZoomReady = true;
+
+    let scale = 1, minScale = .15, maxScale = 4;
+    let dragging = false, startX=0, startY=0, startL=0, startT=0;
+    let pinchStart = 0, pinchScale = 1;
+
+    function apply(){
+      content.style.transformOrigin='0 0';
+      content.style.transform='scale('+scale+')';
+      // Make scrolling area match the transformed content.
+      const w = Math.max(content.scrollWidth || content.width || 1, 1);
+      const h = Math.max(content.scrollHeight || content.height || 1, 1);
+      content.style.width = (w * scale) + 'px';
+      content.style.height = (h * scale) + 'px';
+    }
+    function zoomAt(factor, cx, cy){
+      const old=scale;
+      scale=Math.max(minScale,Math.min(maxScale,scale*factor));
+      if(scale===old) return;
+      apply();
+      if(cx!=null && cy!=null){
+        vp.scrollLeft = Math.max(0, (vp.scrollLeft+cx)*(scale/old)-cx);
+        vp.scrollTop  = Math.max(0, (vp.scrollTop+cy)*(scale/old)-cy);
+      }
+    }
+    function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
+    function addControls(){
+      if(vp.querySelector('.tree-zoom-controls')) return;
+      const bar=document.createElement('div');
+      bar.className='tree-zoom-controls';
+      bar.innerHTML='<button type="button" data-z="-">−</button><button type="button" data-z="r">100%</button><button type="button" data-z="+">+</button>';
+      vp.parentNode.insertBefore(bar,vp);
+      bar.querySelector('[data-z="-"]').onclick=()=>zoomAt(.8);
+      bar.querySelector('[data-z="+"]').onclick=()=>zoomAt(1.25);
+      bar.querySelector('[data-z="r"]').onclick=()=>{scale=1;apply();};
+    }
+    vp.addEventListener('wheel',e=>{
+      if(!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const r=vp.getBoundingClientRect();
+      zoomAt(e.deltaY<0?1.12:.89,e.clientX-r.left,e.clientY-r.top);
+    },{passive:false});
+
+    vp.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='touch') return;
+      dragging=true; vp.setPointerCapture(e.pointerId);
+      startX=e.clientX; startY=e.clientY; startL=vp.scrollLeft; startT=vp.scrollTop;
+    });
+    vp.addEventListener('pointermove',e=>{
+      if(!dragging) return;
+      vp.scrollLeft=startL-(e.clientX-startX);
+      vp.scrollTop=startT-(e.clientY-startY);
+    });
+    vp.addEventListener('pointerup',()=>dragging=false);
+    vp.addEventListener('pointercancel',()=>dragging=false);
+
+    let touches=[];
+    vp.addEventListener('touchstart',e=>{
+      touches=[...e.touches];
+      if(touches.length===2) pinchStart=dist(touches[0],touches[1]),pinchScale=scale;
+    },{passive:false});
+    vp.addEventListener('touchmove',e=>{
+      if(e.touches.length!==2) return;
+      e.preventDefault();
+      const d=dist(e.touches[0],e.touches[1]);
+      if(pinchStart) {
+        scale=Math.max(minScale,Math.min(maxScale,pinchScale*(d/pinchStart)));
+        apply();
+      }
+    },{passive:false});
+    vp.addEventListener('touchend',()=>{touches=[];pinchStart=0;});
+    addControls(); apply();
+  }
+  window.setupTreeZoom=setupTreeZoom;
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(setupTreeZoom,300));
+  window.addEventListener('load',()=>setTimeout(setupTreeZoom,500));
+})();
+</script></body>
 </html>
