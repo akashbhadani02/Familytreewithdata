@@ -283,6 +283,17 @@
 .photo-gallery{background:#edf9f0;color:#16833b}
 .photo-cancel{margin-top:12px;width:100%;background:#f2f2f2;color:#555}
 .photo-choice-input{display:none!important}
+
+        /* Real Tree: Close button only at the very bottom */
+        #realTreeBottomClose{display:none!important;text-align:center;padding:18px 10px 30px;position:relative;z-index:100;}
+        .real-tree-open #realTreeBottomClose{display:block!important;}
+        .real-tree-open #realTreeBtn{display:none!important;}
+        @media(max-width:700px){
+            .real-tree-open{padding:8px!important;}
+            .real-tree-open #treebox{height:calc(100vh - 155px)!important;min-height:420px!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-x pan-y!important;}
+            .real-tree-open #realTreeBottomClose{padding:22px 10px 40px!important;}
+            .real-tree-open #realTreeBottomClose .btn{width:min(92vw,320px)!important;font-size:15px!important;padding:12px 18px!important;}
+        }
 </style>
 
 </head>
@@ -320,6 +331,7 @@
                     <div style="font-size:13px;color:#718096;margin-top:5px">Admin અહીંથી કોઈપણ member નું નામ બદલી શકે છે અને તેની link copy/share કરી શકે છે. Name બદલવાથી link બદલાશે નહીં.</div>
                     <div id="memberLinks" class="member-list"></div>
                 </div>
+                <div id="realTreeBottomClose" class="real-tree-bottom-close"><button type="button" class="btn danger" onclick="toggleRealTreeView()">✕ Close Tree View</button></div>
             </div>
         </div>
     </div>
