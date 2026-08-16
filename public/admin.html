@@ -130,7 +130,10 @@
         .real-tree-open #treeLayer.real-natural-tree .tree-card-actions .btn{padding:5px 3px!important;font-size:9px!important;border-radius:7px!important;background:#2e6b39!important;color:#fff!important}
         .real-tree-open #treeLayer.real-natural-tree .tree-card-actions .btn.danger{grid-column:auto!important;background:#a33d2e!important}
         .real-tree-open #treeLayer.real-natural-tree #svg{overflow:visible;filter:none}
-        .real-tree-open #treeLayer.real-natural-tree #svg path{filter:drop-shadow(0 2px 1px #3c261633)}
+        .real-tree-open #treeLayer.real-natural-tree #svg{z-index:5!important;overflow:visible!important;filter:none}
+        .real-tree-open #treeLayer.real-natural-tree #svg path{filter:drop-shadow(0 2px 1px #3c261633)!important}
+        /* Real Tree View overrides the normal connector styling so natural wood stays thick and visible. */
+        .real-tree-open #treeLayer.real-natural-tree #svg rect,.real-tree-open #treeLayer.real-natural-tree #svg ellipse,.real-tree-open #treeLayer.real-natural-tree #svg circle,.real-tree-open #treeLayer.real-natural-tree #svg text{pointer-events:none!important}
         .real-tree-open #treeLayer.real-natural-tree #svg text{font-family:Georgia,'Noto Sans Gujarati',Arial,sans-serif}
         .real-tree-close{background:#dc3545!important;color:#fff!important}
 
@@ -689,7 +692,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             });
 
             const add=(tag,attrs,parent=svg)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));parent.appendChild(e);return e;};
-            const path=(d,stroke,width,extra={})=>add('path',{d,fill:'none',stroke,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',...extra});
+            const path=(d,stroke,width,extra={})=>{const e=add('path',{d,fill:'none',stroke,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',...extra});e.style.setProperty('stroke',stroke,'important');e.style.setProperty('stroke-width',String(width),'important');e.style.setProperty('stroke-linecap','round','important');e.style.setProperty('stroke-linejoin','round','important');return e;};
             const text=(x,y,value,size=15,extra={})=>{const t=add('text',{x,y,'text-anchor':'middle','font-size':size,'font-family':'Noto Sans, Arial, sans-serif','font-weight':'800',fill:'#4a2917',...extra});t.textContent=value;return t;};
             const defs=add('defs');
             defs.innerHTML=`
