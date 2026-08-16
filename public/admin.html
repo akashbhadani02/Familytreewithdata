@@ -403,6 +403,60 @@
         }
 </style>
 
+<style>
+
+/* ===== FAMILY TREE FIT-TO-SCREEN PATCH ===== */
+.tree-view, .tree-container, .family-tree-container, #treeView, #treeContainer {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.tree-viewport, .tree-scroll, .tree-wrapper, #treeViewport, #treeScroll {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.tree-canvas, .tree-content, #treeCanvas, #treeContent {
+  box-sizing: border-box;
+  margin: 0 auto;
+  transform-origin: 50% 100%;
+}
+
+/* Keep the tree close to the bottom of its viewport instead of leaving
+   a large blank area underneath it. */
+.tree-viewport, .tree-scroll, #treeViewport, #treeScroll {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Prevent cards/branches from forcing accidental wrapping of the whole tree. */
+.tree-canvas, .tree-content, #treeCanvas, #treeContent {
+  flex: 0 0 auto;
+}
+
+/* Mobile: let the user pinch/scroll naturally, but don't create
+   unnecessary blank height. */
+@media (max-width: 768px) {
+  .tree-viewport, .tree-scroll, #treeViewport, #treeScroll {
+    min-height: 0;
+    max-height: calc(100dvh - 140px);
+  }
+}
+
+/* Desktop: use the available screen without excessive vertical space. */
+@media (min-width: 769px) {
+  .tree-viewport, .tree-scroll, #treeViewport, #treeScroll {
+    max-height: calc(100dvh - 180px);
+  }
+}
+
+</style>
 </head>
 
 <body>
