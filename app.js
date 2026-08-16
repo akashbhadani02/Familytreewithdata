@@ -83,24 +83,26 @@ app.get("/api/add/:token",async(req,res)=>{
 
 // Public lineage search: find a person by name + father's name + grandfather's name,
 // then return the complete ancestor chain from the oldest available generation.
-app.post("/api/family/search-lineage",async(req,res)=>{
+app.post("/api/family/:familyId/search-lineage",async(req,res)=>{
   try{
     await connectDB();
+    const familyId=String(req.params.familyId||"").trim();
     const name=String(req.body.name||"").trim();
     const fatherName=String(req.body.fatherName||"").trim();
     const grandfatherName=String(req.body.grandfatherName||"").trim();
+    if(!familyId) return res.status(400).json({ok:false,error:"Family ID is required."});
     if(!name||!fatherName||!grandfatherName)
       return res.status(400).json({ok:false,error:"Name, father name and grandfather name are required."});
 
     const norm=s=>s.trim().replace(/\s+/g," ").toLowerCase();
-    const candidates=await Person.find({name:{$regex:"^"+name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"$",$options:"i"}})
+    const candidates=await Person.find({familyId,name:{$regex:"^"+name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"$",$options:"i"}})
       .sort({generation:1,createdAt:1}).lean();
 
     const matches=[];
     for(const self of candidates){
-      const father=self.parentId ? await Person.findById(self.parentId).lean() : null;
+      const father=self.parentId ? await Person.findOne({_id:self.parentId,familyId}).lean() : null;
       if(!father || norm(father.name)!==norm(fatherName)) continue;
-      const grandfather=father.parentId ? await Person.findById(father.parentId).lean() : null;
+      const grandfather=father.parentId ? await Person.findOne({_id:father.parentId,familyId}).lean() : null;
       if(!grandfather || norm(grandfather.name)!==norm(grandfatherName)) continue;
 
       const chain=[];
@@ -115,7 +117,7 @@ app.post("/api/family/search-lineage",async(req,res)=>{
           generation:cur.generation
         });
         if(!cur.parentId) break;
-        cur=await Person.findById(cur.parentId).lean();
+        cur=await Person.findOne({_id:cur.parentId,familyId}).lean();
       }
       chain.reverse();
       matches.push({familyId:self.familyId,people:chain});

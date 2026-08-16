@@ -39,7 +39,7 @@
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
 <div class="wrap">
 
-<div id="lineageSearchPanel" class="panel lineageSearchPanel">
+<div id="lineageSearchPanel" class="panel lineageSearchPanel hidden">
   <div class="center title">🔎 મારી વંશાવળી શોધો</div>
   <div class="center sub">તમારું નામ, પિતાનું નામ અને દાદાનું નામ નાખો. અમે તમારી સીધી વંશાવળી સૌથી જૂની ઉપલબ્ધ પેઢીથી તમારા સુધી બતાવીશું.</div>
   <form class="lineageSearchForm" onsubmit="searchMyLineage(event)">
@@ -52,12 +52,14 @@
 </div>
 <div id="rootBox" class="panel hidden"><div class="center title">પરિવારની શરૂઆત કરો</div><div class="center sub">સૌથી પહેલા પરિવારના સૌથી મોટા/જૂના સભ્યનું પૂરું નામ લખો. પછી તેમને મળેલી link તેમના દીકરા/આગળના સભ્યને મોકલો.</div><div class="form"><label class="label">પૂરું નામ</label><input id="rootName" type="text" placeholder="ઉદાહરણ: રમેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 50MB સુધી)</label><input id="rootPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'rootPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('rootPhoto')">📷 Photo પસંદ કરો</button></div><img id="rootPreview" class="preview"><button class="btn" onclick="createRoot()">✅ પરિવાર વૃક્ષ શરૂ કરો</button><div id="rootSuccess" class="success"></div></div></div>
 <div id="addBox" class="panel hidden"><div class="center title">👨‍👦 તમારા દીકરાનું / આગળના સભ્યનું નામ ઉમેરો</div><div class="center sub" id="parentText"></div><div class="form"><label class="label">દીકરાનું / આગળના સભ્યનું પૂરું નામ</label><input id="addName" type="text" placeholder="ઉદાહરણ: મહેશભાઈ પટેલ"><label class="label">ફોટો (ઇચ્છા હોય તો, JPG/PNG/WEBP — 50MB સુધી)</label><input id="addPhoto" class="photo-hidden" type="file" accept="image/jpeg,image/png,image/webp" onchange="showPreview(this,'addPreview')"><div class="photoActions"><button type="button" class="btn secondary" onclick="openPhotoChoice('addPhoto')">📷 Photo પસંદ કરો</button></div><img id="addPreview" class="preview"><button id="addPersonBtn" class="btn" onclick="addPerson()">✅ નામ ઉમેરો</button><div id="addSuccess" class="success"></div><button id="viewTreeBtn" type="button" class="treeViewBtn" onclick="showReadOnlyTree()">🌳 Family Tree જુઓ</button></div></div>
-<div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub viewSubtitle">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્ય માટે છે.</div><div class="topActions viewControls"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treeSearch"><input id="treeSearchInput" type="text" placeholder="🔎 તમારું નામ શોધો..." autocomplete="off" oninput="searchTreePerson(this.value)" onkeydown="if(event.key==='Enter')searchTreePerson(this.value,true)"><button type="button" onclick="clearTreeSearch()">Clear</button></div><div id="treeSearchHint" class="searchHint">તમારું નામ લખો — તમારું card light green થશે.</div><div class="treeZoomControls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="treeZoomLabel">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div><div class="real-tree-tools"><button id="userRealTreeBtn" type="button" class="treeViewBtn" onclick="toggleUserRealTree()">🌳 Real Tree View</button></div><div class="treebox"><div id="canvas" class="canvas"><div id="treeLayer" class="treeLayer"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div><div id="userRealTreeClose" class="real-tree-bottom-close"><button type="button" class="btn danger" onclick="toggleUserRealTree()">✕ Close Tree View</button></div>
+<div id="viewBox" class="panel hidden"><div class="center title">🌳 પરિવાર વૃક્ષ</div><div class="center sub viewSubtitle">દરેક સભ્યના card પરની 🔗 link તે સભ્યના દીકરા/આગળના પરિવાર સભ્ય માટે છે.</div><div class="topActions viewControls"><button class="btn secondary" onclick="copyCurrentLink()">🔗 આ link copy કરો</button><button class="btn secondary" onclick="copyFamilyLink()">🔎 Family Search Link copy કરો</button><button class="btn secondary" onclick="downloadPNG()">🖼️ મોટું ફોટો download કરો</button></div><div id="currentLink" class="linkbox"></div><div class="treeSearch"><input id="treeSearchInput" type="text" placeholder="🔎 તમારું નામ શોધો..." autocomplete="off" oninput="searchTreePerson(this.value)" onkeydown="if(event.key==='Enter')searchTreePerson(this.value,true)"><button type="button" onclick="clearTreeSearch()">Clear</button></div><div id="treeSearchHint" class="searchHint">તમારું નામ લખો — તમારું card light green થશે.</div><div class="treeZoomControls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="treeZoomLabel">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div><div class="real-tree-tools"><button id="userRealTreeBtn" type="button" class="treeViewBtn" onclick="toggleUserRealTree()">🌳 Real Tree View</button></div><div class="treebox"><div id="canvas" class="canvas"><div id="treeLayer" class="treeLayer"><svg id="svg" width="10000" height="5200" style="position:absolute;left:0;top:0;z-index:1"></svg><div id="cards"></div></div></div></div><div id="userRealTreeClose" class="real-tree-bottom-close"><button type="button" class="btn danger" onclick="toggleUserRealTree()">✕ Close Tree View</button></div>
 </div>
 <script>
 const $=id=>document.getElementById(id);let token=null,familyId=null,people=[],focusPersonId=null;let treeZoom=1;let pinchStartDistance=0,pinchStartZoom=1;const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
 function showPreview(input,id){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{$(id).src=e.target.result;$(id).style.display='block'};r.readAsDataURL(f)}
 function absoluteLink(path){return location.origin+path}
+function familyViewLink(){return familyId?location.origin+'/?family='+encodeURIComponent(familyId)+'&readonly=1':''}
+function showLineageSearch(){if(familyId)$('lineageSearchPanel').classList.remove('hidden')}
 function copyText(text){navigator.clipboard.writeText(text).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',text))}
 function safe(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 async function init(){
@@ -78,6 +80,7 @@ async function init(){
        return;
      }
      familyId=d.parent.familyId;
+     showLineageSearch();
      focusPersonId=String(d.parent._id||'');
      const parentDisplay=d.parent.name;
      $('parentText').innerHTML='આ સભ્યનું નામ <b>'+safe(parentDisplay)+'</b>ની નીચે ઉમેરાશે. નામ અને ફોટો ભરીને Add કરો.';
@@ -93,6 +96,7 @@ async function init(){
  if(focus)focusPersonId=focus;
  document.body.classList.toggle('readonly-view',readonly);
  if(familyId){
+   showLineageSearch();
    $('viewBox').classList.remove('hidden');
    $('currentLink').textContent=location.href;
    if(readonly){
@@ -126,7 +130,7 @@ async function preparePhoto(file){
    img.src=url;
  });
 }
-async function createRoot(){const name=$('rootName').value.trim();if(!name)return alert('કૃપા કરીને નામ લખો');const fd=new FormData();fd.append('name',name);try{const photo=await preparePhoto($('rootPhoto').files[0]);if(photo)fd.append('photo',photo);}catch(e){return alert('ફોટો upload માટે તૈયાર થઈ શક્યો નથી. બીજો ફોટો પસંદ કરો.');}const r=await fetch('/api/family/start',{method:'POST',body:fd});const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}if(!r.ok||!d.ok)return alert(d.error||'Upload failed');familyId=d.familyId;token=d.person.addToken;const link=absoluteLink(d.addLink);$('rootSuccess').style.display='block';$('rootSuccess').innerHTML='<b>નામ સાચવાઈ ગયું! 🎉</b><div>હવે આ link '+safe(name)+'ના દીકરા/આગળના સભ્યને મોકલો:</div><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">Link copy કરો</div>';history.replaceState({},'', '/?family='+encodeURIComponent(familyId));$('rootBox').classList.add('hidden');$('viewBox').classList.remove('hidden');$('currentLink').textContent=link;loadFamily()}
+async function createRoot(){const name=$('rootName').value.trim();if(!name)return alert('કૃપા કરીને નામ લખો');const fd=new FormData();fd.append('name',name);try{const photo=await preparePhoto($('rootPhoto').files[0]);if(photo)fd.append('photo',photo);}catch(e){return alert('ફોટો upload માટે તૈયાર થઈ શક્યો નથી. બીજો ફોટો પસંદ કરો.');}const r=await fetch('/api/family/start',{method:'POST',body:fd});const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}if(!r.ok||!d.ok)return alert(d.error||'Upload failed');familyId=d.familyId;token=d.person.addToken;showLineageSearch();const link=absoluteLink(d.addLink), familyLink=familyViewLink();$('rootSuccess').style.display='block';$('rootSuccess').innerHTML='<b>નામ સાચવાઈ ગયું! 🎉</b><div>આ link '+safe(name)+'ના દીકરા/આગળના સભ્યને મોકલો:</div><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">🔗 Member Add Link copy કરો</div><div style="margin-top:12px"><b>🔎 આ Family ની Search/Tree Link:</b><div class="linkbox">'+safe(familyLink)+'</div><div class="copy" onclick="copyText('+JSON.stringify(familyLink)+')">Family Link copy કરો</div></div>';history.replaceState({},'', '/?family='+encodeURIComponent(familyId));$('rootBox').classList.add('hidden');$('viewBox').classList.remove('hidden');$('currentLink').textContent=link;loadFamily()}
 async function addPerson(){
  const btn=$('addPersonBtn');
  const name=$('addName').value.trim();
@@ -141,9 +145,9 @@ async function addPerson(){
    const r=await fetch('/api/add/'+token,{method:'POST',body:fd});
    const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}
    if(!d.ok)throw new Error(d.error||'નામ add થયું નથી');
-   const link=absoluteLink(d.addLink);token=d.person.addToken;
+   const link=absoluteLink(d.addLink);token=d.person.addToken;const familyLink=familyViewLink();
    $('addSuccess').style.display='block';
-   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે આગળનું નામ ઉમેરવા માટે:</b><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">🔗 નવી link copy કરો</div><button type="button" class="btn" onclick="showFamilyTree()">🌳 Family Tree જુઓ</button></div>';
+   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે આગળનું નામ ઉમેરવા માટે:</b><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">🔗 નવી link copy કરો</div><div style="margin-top:10px"><b>🔎 આ Family ની Search/Tree Link:</b><div class="linkbox">'+safe(familyLink)+'</div><div class="copy" onclick="copyText('+JSON.stringify(familyLink)+')">Family Link copy કરો</div></div><button type="button" class="btn" onclick="showFamilyTree()">🌳 Family Tree જુઓ</button></div>';
    $('addName').value='';$('addPhoto').value='';$('addPreview').style.display='none';
    $('parentText').innerHTML='હવે આગળનું નામ <b>'+safe(name)+'</b>ની નીચે ઉમેરાશે.';
    await loadFamily();
@@ -921,6 +925,7 @@ function focusTreePerson(id){
 function draw(svg,x1,y1,x2,y2){const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');p.setAttribute('d',`M${x1} ${y1} L${x2} ${y2}`);p.setAttribute('fill','none');p.setAttribute('stroke','#64748b');p.setAttribute('stroke-width','5');p.setAttribute('stroke-linecap','butt');p.setAttribute('stroke-linejoin','miter');svg.appendChild(p)}
 function avatar(n){return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n||'?')[0].toUpperCase()}</text></svg>`)}
 function copyCurrentLink(){copyText(location.href)}
+function copyFamilyLink(){if(!familyId)return alert('Family ID મળ્યું નથી');copyText(familyViewLink())}
 async function downloadPNG(){if(!people.length)return alert('Tree ખાલી છે');if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r)}const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe'}),a=document.createElement('a');a.download='family-tree.png';a.href=c.toDataURL('image/png');a.click()}
 
 function lineageAvatar(name){
@@ -940,7 +945,7 @@ async function searchMyLineage(event){
   result.className='lineageResult'; result.style.display='block';
   result.innerHTML='<div style="text-align:center;color:#68778a">વંશાવળી શોધી રહ્યા છીએ...</div>';
   try{
-    const r=await fetch('/api/family/search-lineage',{
+    const r=await fetch('/api/family/'+encodeURIComponent(familyId)+'/search-lineage',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({name,fatherName,grandfatherName})
