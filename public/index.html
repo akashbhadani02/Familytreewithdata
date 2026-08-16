@@ -150,7 +150,7 @@ async function renderTree(){
  window.__treePositions=pos;
  function place(node,cx,y){const id=String(node._id),kids=children[id]||[],w=width(id),left=cx-w/2;pos[id]={x:cx-CARD_W/2,y,w};if(kids.length){let cur=left;kids.forEach(k=>{const kw=width(k._id);place(k,cur+kw/2,y+CARD_H+V_GAP);cur+=kw+H_GAP})}}
  place(root,PAD_X+width(root._id)/2,PAD_Y);
- const all=Object.values(pos),maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X)),maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y+60));
+ const all=Object.values(pos),maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X)),maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
  canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;applyTreeZoom(maxX,maxY);svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
  const readonly=document.body.classList.contains('readonly-view');
  const localized={}; people.forEach(p=>localized[String(p._id)]=p.name);
@@ -163,15 +163,9 @@ async function renderTree(){
    const px=parent.x+CARD_W/2,py=parent.y+CARD_H;
    const childY=childData[0].y,busY=py+(childY-py)/2;
    const xs=childData.map(q=>q.x+CARD_W/2),minX=Math.min(...xs),maxX=Math.max(...xs);
-   drawNaturalBranch(svg,px,py,px,busY,'trunk');
-   if(childData.length>1)drawNaturalBranch(svg,minX,busY,maxX,busY,'branch');
-   childData.forEach(q=>drawNaturalBranch(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY,'branch'));
- });
- // Keep a visible branch below the final generation as well.
- people.filter(p=>(children[String(p._id)]||[]).length===0).forEach(p=>{
-   const q=pos[String(p._id)];if(!q)return;
-   const x=q.x+CARD_W/2,y=q.y+CARD_H;
-   drawNaturalBranch(svg,x,y,x,y+38,'branch');
+   draw(svg,px,py,px,busY);
+   if(childData.length>1)draw(svg,minX,busY,maxX,busY);
+   childData.forEach(q=>draw(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY));
  });
  if(focusPersonId){
    requestAnimationFrame(()=>focusTreePerson(focusPersonId));
@@ -236,22 +230,14 @@ function focusTreePerson(id){
  if(!treebox||!person)return;
  const q=window.__treePositions&&window.__treePositions[String(id)];
  if(q){
-   treebox.scrollLeft=Math.max(0,(q.x+210/2)*treeZoom-treebox.clientWidth/2);
+   treebox.scrollLeft=Math.max(0,(q.x+CARD_W/2)*treeZoom-treebox.clientWidth/2);
    treebox.scrollTop=Math.max(0,(q.y+145/2)*treeZoom-treebox.clientHeight/2);
  }else if(card){
-   treebox.scrollLeft=Math.max(0,(card.offsetLeft+105)*treeZoom-treebox.clientWidth/2);
+   treebox.scrollLeft=Math.max(0,(card.offsetLeft+CARD_W/2)*treeZoom-treebox.clientWidth/2);
    treebox.scrollTop=Math.max(0,(card.offsetTop+145/2)*treeZoom-treebox.clientHeight/2);
  }
 }
-function drawNaturalBranch(svg,x1,y1,x2,y2,kind='branch'){
- const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');
- const dx=x2-x1,dy=y2-y1;let d;
- if(Math.abs(dy)<3){const bend=Math.max(18,Math.min(70,Math.abs(dx)*.12));d=`M${x1} ${y1} C${x1+dx*.28} ${y1-bend}, ${x1+dx*.72} ${y2+bend}, ${x2} ${y2}`;}
- else{const bend=Math.max(12,Math.min(55,Math.abs(dx)*.08+Math.abs(dy)*.08));d=`M${x1} ${y1} C${x1+dx*.18} ${y1+dy*.38}, ${x2-dx*.18} ${y2-dy*.38}, ${x2} ${y2}`;}
- p.setAttribute('d',d);p.setAttribute('fill','none');p.setAttribute('stroke',kind==='trunk'?'#7a4b28':'#8b5a2b');p.setAttribute('stroke-width',kind==='trunk'?'18':'9');p.setAttribute('stroke-linecap','round');p.setAttribute('stroke-linejoin','round');svg.appendChild(p);
- const hi=document.createElementNS(ns,'path');hi.setAttribute('d',d);hi.setAttribute('fill','none');hi.setAttribute('stroke',kind==='trunk'?'#a96f3d':'#b77b43');hi.setAttribute('stroke-width',kind==='trunk'?'5':'2.5');hi.setAttribute('stroke-linecap','round');hi.setAttribute('opacity','0.8');svg.appendChild(hi);
-}
-function draw(svg,x1,y1,x2,y2,kind='branch'){const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');p.setAttribute('d',`M${x1} ${y1} L${x2} ${y2}`);p.setAttribute('fill','none');p.setAttribute('stroke',kind==='trunk'?'#8b5e3c':'#71849a');p.setAttribute('stroke-width',kind==='trunk'?'8':'5');p.setAttribute('stroke-linecap','butt');p.setAttribute('stroke-linejoin','miter');svg.appendChild(p)}
+function draw(svg,x1,y1,x2,y2){const ns='http://www.w3.org/2000/svg',p=document.createElementNS(ns,'path');p.setAttribute('d',`M${x1} ${y1} L${x2} ${y2}`);p.setAttribute('fill','none');p.setAttribute('stroke','#64748b');p.setAttribute('stroke-width','5');p.setAttribute('stroke-linecap','butt');p.setAttribute('stroke-linejoin','miter');svg.appendChild(p)}
 function avatar(n){return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n||'?')[0].toUpperCase()}</text></svg>`)}
 function copyCurrentLink(){copyText(location.href)}
 async function downloadPNG(){if(!people.length)return alert('Tree ખાલી છે');if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r)}const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe'}),a=document.createElement('a');a.download='family-tree.png';a.href=c.toDataURL('image/png');a.click()}
