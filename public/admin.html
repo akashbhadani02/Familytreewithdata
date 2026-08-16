@@ -672,189 +672,590 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
         function escAttr(v){return String(v??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
         function drawRealTreeStructure(){
-            const layer=$('treeLayer'), oldSvg=$('svg'), canvas=$('canvas');
-            if(!layer||!canvas||!people.length)return;
-            layer.classList.add('real-natural-tree');
+    const layer = $('treeLayer'), normalSvg = $('svg'), baseCanvas = $('canvas');
+    if(!layer || !baseCanvas || !people.length) return;
 
-            // Real Tree View uses a dedicated HTML canvas. This keeps the natural trunk/branches
-            // completely independent from the normal family-tree SVG connector CSS.
-            let tc=$('realTreeCanvas');
-            if(!tc){
-                tc=document.createElement('canvas');
-                tc.id='realTreeCanvas';
-                layer.appendChild(tc);
-            }
-            if(oldSvg) oldSvg.style.display='none';
-            const cards=$('cards'); if(cards)cards.style.display='none';
+    layer.classList.add('real-natural-tree');
+    if(normalSvg) normalSvg.style.display = 'none';
 
-            const kids=new Map();
-            people.forEach(p=>{
-                if(!p.parentId)return;
-                const id=String(p.parentId);
-                if(!kids.has(id))kids.set(id,[]);
-                kids.get(id).push(p);
-            });
-            kids.forEach(a=>a.sort((a,b)=>(Number(a.generation)||0)-(Number(b.generation)||0)));
-            const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>(Number(a.generation)||1)-(Number(b.generation)||1))[0];
-            if(!root)return;
+    const cards = $('cards');
+    if(cards) cards.style.display = 'none';
 
-            const gen=p=>Number(p.generation)||1;
-            const maxGen=Math.max(...people.map(gen),1);
-            const BASE_GAP=185;
-            const MIN_SPREAD=170;
-            const MAX_SPREAD=360;
-            const worldH=Math.max(1550, maxGen*230+430);
+    let tc = $('realTreeCanvas');
+    if(!tc){
+        tc = document.createElement('canvas');
+        tc.id = 'realTreeCanvas';
+        layer.appendChild(tc);
+    }
 
-            // Calculate a natural width for each family branch.
-            const memo=new Map();
-            function width(p){
-                const id=String(p._id); if(memo.has(id))return memo.get(id);
-                const a=kids.get(id)||[];
-                if(!a.length){memo.set(id,150);return 150;}
-                const w=a.reduce((sum,c)=>sum+width(c),0)+BASE_GAP*(a.length-1);
-                memo.set(id,Math.max(230,w)); return memo.get(id);
-            }
-            const worldW=Math.max(1900,Math.min(9000,width(root)+520));
-            const pos=new Map();
-            function place(p,x,y){
-                pos.set(String(p._id),{x,y});
-                const a=kids.get(String(p._id))||[]; if(!a.length)return;
-                const total=a.reduce((sum,c)=>sum+width(c),0)+BASE_GAP*(a.length-1);
-                let cur=x-total/2;
-                a.forEach(c=>{const w=width(c);place(c,cur+w/2,y-210);cur+=w+BASE_GAP;});
-            }
-            place(root,worldW/2,worldH-250);
+    const children = new Map();
+    people.forEach(p=>{
+        const pid = p.parentId ? String(p.parentId) : '';
+        if(!children.has(pid)) children.set(pid, []);
+        children.get(pid).push(p);
+    });
 
-            // Canvas is deliberately larger than the viewport so zoom/pan works exactly like the normal tree.
-            const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
-            tc.width=Math.round(worldW*dpr); tc.height=Math.round(worldH*dpr);
-            tc.style.width=worldW+'px'; tc.style.height=worldH+'px';
-            tc.style.position='absolute'; tc.style.left='0'; tc.style.top='0'; tc.style.zIndex='6';
-            tc.style.display='block'; tc.style.visibility='visible'; tc.style.pointerEvents='none';
-            layer.style.width=worldW+'px'; layer.style.height=worldH+'px';
-            canvas.style.width=worldW+'px'; canvas.style.height=worldH+'px';
-            canvas.dataset.baseWidth=worldW; canvas.dataset.baseHeight=worldH;
-            layer.style.transform='scale('+treeZoom+')'; updateTreeZoomLabel();
+    const generation = p => Number(p.generation) || 1;
 
-            const ctx=tc.getContext('2d');
-            ctx.setTransform(dpr,0,0,dpr,0,0);
-            ctx.clearRect(0,0,worldW,worldH);
+    /* Find the real root. If several generation-1 people exist,
+       use the first parentless person as the trunk owner. */
+    const root =
+        people.find(p => !p.parentId) ||
+        people.slice().sort((a,b)=>generation(a)-generation(b))[0];
 
-            // Sky, distant hills and grass: a clean natural backdrop.
-            const sky=ctx.createLinearGradient(0,0,0,worldH);
-            sky.addColorStop(0,'#7fc8ec'); sky.addColorStop(.58,'#dff1d3'); sky.addColorStop(1,'#6ea84d');
-            ctx.fillStyle=sky; ctx.fillRect(0,0,worldW,worldH);
-            ctx.fillStyle='rgba(255,255,255,.34)';
-            [[.12,.16,150],[.78,.13,180],[.52,.08,110]].forEach(([rx,ry,r])=>{ctx.beginPath();ctx.arc(worldW*rx,worldH*ry,r,0,Math.PI*2);ctx.fill();});
-            ctx.fillStyle='#75a957'; ctx.beginPath();ctx.moveTo(0,worldH-360);for(let x=0;x<=worldW;x+=120)ctx.quadraticCurveTo(x+60,worldH-430+(x%240),x+120,worldH-360);ctx.lineTo(worldW,worldH);ctx.lineTo(0,worldH);ctx.fill();
+    if(!root) return;
 
-            function woodGradient(x1,y1,x2,y2){
-                const g=ctx.createLinearGradient(x1,y1,x2,y2);
-                g.addColorStop(0,'#3a1b0c');g.addColorStop(.22,'#70401f');g.addColorStop(.45,'#c57a3c');g.addColorStop(.62,'#e0a061');g.addColorStop(.82,'#7b461f');g.addColorStop(1,'#32170a');return g;
-            }
-            function curve(x1,y1,cx1,cy1,cx2,cy2,x2,y2,width){
-                ctx.save();ctx.beginPath();ctx.moveTo(x1,y1);ctx.bezierCurveTo(cx1,cy1,cx2,cy2,x2,y2);
-                ctx.strokeStyle=woodGradient(x1,y1,x2,y2);ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
-                ctx.strokeStyle='rgba(239,166,94,.52)';ctx.lineWidth=Math.max(2,width*.14);ctx.beginPath();ctx.moveTo(x1-width*.05,y1);ctx.bezierCurveTo(cx1-width*.04,cy1-2,cx2-width*.04,cy2-2,x2-width*.02,y2-2);ctx.stroke();ctx.restore();
-            }
-            function bark(x1,y1,cx1,cy1,cx2,cy2,x2,y2){
-                ctx.save();ctx.strokeStyle='rgba(55,25,10,.34)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x1,y1);ctx.bezierCurveTo(cx1,cy1,cx2,cy2,x2,y2);ctx.stroke();ctx.restore();
-            }
-            function leaves(x,y,count=16,scale=1){
-                for(let i=0;i<count;i++){
-                    const a=(i/count)*Math.PI*2+(i%3)*.17, r=18+(i%5)*10;
-                    const lx=x+Math.cos(a)*r,ly=y+Math.sin(a)*r*.7;
-                    ctx.save();ctx.translate(lx,ly);ctx.rotate(a+.35);ctx.fillStyle=['#2e7d32','#4f9d3f','#74b84d','#9dcc59'][i%4];
-                    ctx.beginPath();ctx.ellipse(0,0,11*scale,6*scale,0,0,Math.PI*2);ctx.fill();ctx.restore();
-                }
-            }
-            function plaque(p,x,y){
-                const name=String(p.name||'').trim(); if(!name)return;
-                const label=name.length>26?name.slice(0,25)+'…':name;
-                ctx.save();ctx.font='bold 18px "Noto Sans Gujarati", Arial, sans-serif';
-                const w=Math.max(150,Math.min(280,ctx.measureText(label).width+38)),h=58;
-                ctx.fillStyle='#d79a59';ctx.strokeStyle='#5c3218';ctx.lineWidth=4;
-                ctx.shadowColor='rgba(40,20,5,.35)';ctx.shadowBlur=10;ctx.shadowOffsetY=5;
-                ctx.beginPath();ctx.roundRect(x-w/2,y-h/2,w,h,13);ctx.fill();ctx.stroke();
-                ctx.shadowColor='transparent';ctx.fillStyle='#30180b';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x,y-5);
-                ctx.font='bold 12px Arial';ctx.fillStyle='#633518';ctx.fillText('Generation '+gen(p),x,y+18);ctx.restore();
-            }
+    children.forEach(list=>{
+        list.sort((a,b)=>
+            String(a.name||'').localeCompare(String(b.name||''), 'gu')
+        );
+    });
 
-            const baseX=pos.get(String(root._id)).x, baseY=worldH-80, crownY=pos.get(String(root._id)).y+80;
-            // Massive central trunk with flared base.
-            curve(baseX-105,baseY,baseX-150,baseY-120,baseX-125,crownY+150,baseX-45,crownY,190);
-            curve(baseX+105,baseY,baseX+150,baseY-120,baseX+125,crownY+150,baseX+45,crownY,190);
-            curve(baseX,baseY,baseX-35,baseY-240,baseX-22,crownY+60,baseX,crownY-5,120);
-            for(let i=-6;i<=6;i++)bark(baseX+i*15,baseY,baseX+i*18,baseY-210,baseX+i*8,crownY+50,baseX+i*4,crownY-20);
+    const maxGen = Math.max(...people.map(generation), 1);
 
-            // Roots.
-            for(let i=-9;i<=9;i++){
-                if(!i)continue; const dir=i<0?-1:1, len=100+Math.abs(i)*38;
-                curve(baseX+dir*25,baseY-25,baseX+dir*85,baseY+5,baseX+dir*len*.8,baseY+40,baseX+dir*len,baseY+70,Math.max(7,20-Math.abs(i)));
-            }
+    /*
+      Natural tree layout:
+      - root at the bottom
+      - every generation moves upward
+      - every child gets its own branch
+      - subtree widths keep siblings separated
+    */
+    const levelGap = Math.max(245, Math.min(310, 275 + maxGen*4));
+    const leafGap = 250;
 
-            // Every parent -> child becomes a genuine wooden branch. The last generation also gets a twig.
-            function drawFamily(p){
-                const pp=pos.get(String(p._id)); if(!pp)return;
-                const a=kids.get(String(p._id))||[];
-                if(!a.length){
-                    const dir=(Math.round(pp.x)%2?1:-1), tw=65;
-                    curve(pp.x,pp.y+12,pp.x+dir*25,pp.y-25,pp.x+dir*48,pp.y-55,pp.x+dir*78,pp.y-88,8);
-                    leaves(pp.x+dir*84,pp.y-95,16,1); plaque(p,pp.x,pp.y+70); return;
-                }
-                const parentGen=gen(p), mainW=Math.max(12,46-(parentGen-1)*4);
-                a.forEach((c,i)=>{
-                    const cp=pos.get(String(c._id)); if(!cp)return;
-                    const dir=cp.x>=pp.x?1:-1, dx=Math.abs(cp.x-pp.x);
-                    const sx=pp.x+dir*Math.min(75,Math.max(25,dx*.10)), sy=pp.y-8;
-                    const ex=cp.x, ey=cp.y+28;
-                    const bend=Math.max(90,Math.min(250,dx*.38));
-                    curve(sx,sy,sx+dir*bend,sy-120,ex-dir*bend,ey+95,ex,ey,mainW);
-                    // secondary side twig + foliage, like a real spreading tree.
-                    const side= i%2===0?1:-1;
-                    curve(ex,ey,ex+side*35,ey-42,ex+side*70,ey-62,ex+side*98,ey-105,Math.max(6,mainW*.28));
-                    leaves(ex+side*105,ey-112,13,.9);
-                    plaque(c,(pp.x+ex)/2,(sy+ey)/2-28);
-                    drawFamily(c);
-                });
-            }
+    const subtree = new Map();
 
-            // Main crown branches start from the trunk and fan out to generation 2.
-            const first=kids.get(String(root._id))||[];
-            first.forEach((c,i)=>{
-                const cp=pos.get(String(c._id)); if(!cp)return;
-                const dir=cp.x>=baseX?1:-1, dx=Math.abs(cp.x-baseX);
-                curve(baseX, crownY+20, baseX+dir*Math.min(220,dx*.35), crownY-110, cp.x-dir*Math.min(260,dx*.30), cp.y+150, cp.x,cp.y+28,58);
-                leaves(cp.x-dir*25,cp.y-30,20,1.05);
-                plaque(c,(baseX+cp.x)/2,crownY-80);
-                drawFamily(c);
-            });
-            plaque(root,baseX,crownY+100);
-            leaves(baseX-250,crownY-120,22,1.15); leaves(baseX+250,crownY-120,22,1.15);
+    function measure(p){
+        const id = String(p._id);
+        if(subtree.has(id)) return subtree.get(id);
+
+        const kids = children.get(id) || [];
+        if(!kids.length){
+            subtree.set(id, leafGap);
+            return leafGap;
         }
+
+        let total = 0;
+        kids.forEach((c,i)=>{
+            total += measure(c);
+            if(i < kids.length-1) total += 75;
+        });
+
+        total = Math.max(total, leafGap);
+        subtree.set(id,total);
+        return total;
+    }
+
+    measure(root);
+
+    const treeWidth = Math.max(
+        1800,
+        Math.min(10000, subtree.get(String(root._id)) + 700)
+    );
+
+    const treeHeight = Math.max(
+        1900,
+        620 + maxGen * levelGap
+    );
+
+    const pos = new Map();
+
+    function place(p, x){
+        const g = generation(p);
+        const y = treeHeight - 250 - (g-1)*levelGap;
+
+        pos.set(String(p._id), {x,y});
+
+        const kids = children.get(String(p._id)) || [];
+        if(!kids.length) return;
+
+        let total = 0;
+        kids.forEach((c,i)=>{
+            total += measure(c);
+            if(i < kids.length-1) total += 75;
+        });
+
+        let cursor = x - total/2;
+
+        kids.forEach(c=>{
+            const w = measure(c);
+            place(c, cursor + w/2);
+            cursor += w + 75;
+        });
+    }
+
+    place(root, treeWidth/2);
+
+    /* Canvas sizing */
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    tc.width = Math.round(treeWidth*dpr);
+    tc.height = Math.round(treeHeight*dpr);
+    tc.style.width = treeWidth + 'px';
+    tc.style.height = treeHeight + 'px';
+    tc.style.position = 'absolute';
+    tc.style.left = '0';
+    tc.style.top = '0';
+    tc.style.zIndex = '2';
+    tc.style.display = 'block';
+    tc.style.visibility = 'visible';
+    tc.style.opacity = '1';
+    tc.style.pointerEvents = 'none';
+
+    layer.style.width = treeWidth + 'px';
+    layer.style.height = treeHeight + 'px';
+
+    baseCanvas.style.width = treeWidth + 'px';
+    baseCanvas.style.height = treeHeight + 'px';
+    baseCanvas.dataset.baseWidth = treeWidth;
+    baseCanvas.dataset.baseHeight = treeHeight;
+
+    layer.style.transform = 'scale(' + treeZoom + ')';
+    updateTreeZoomLabel();
+
+    const ctx = tc.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,treeWidth,treeHeight);
+
+    /* ---------- background ---------- */
+    const sky = ctx.createLinearGradient(0,0,0,treeHeight);
+    sky.addColorStop(0,'#9bd8f5');
+    sky.addColorStop(.48,'#dff1d0');
+    sky.addColorStop(1,'#8fb65c');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0,0,treeWidth,treeHeight);
+
+    /* soft clouds */
+    function cloud(x,y,s){
+        ctx.save();
+        ctx.fillStyle='rgba(255,255,255,.58)';
+        [0,35,70].forEach((dx,i)=>{
+            ctx.beginPath();
+            ctx.arc(x+dx*s,y+(i%2?8:0),28*s,0,Math.PI*2);
+            ctx.fill();
+        });
+        ctx.restore();
+    }
+    cloud(treeWidth*.16,120,1.0);
+    cloud(treeWidth*.78,170,.9);
+
+    /* ground */
+    const groundY = treeHeight-115;
+    ctx.fillStyle='#5f9345';
+    ctx.fillRect(0,groundY,treeWidth,treeHeight-groundY);
+
+    /* ---------- drawing helpers ---------- */
+    function woodGradient(x1,y1,x2,y2){
+        const g=ctx.createLinearGradient(x1,y1,x2,y2);
+        g.addColorStop(0,'#35190c');
+        g.addColorStop(.18,'#63361a');
+        g.addColorStop(.42,'#9a5b2a');
+        g.addColorStop(.58,'#c27a3d');
+        g.addColorStop(.78,'#74401e');
+        g.addColorStop(1,'#2d1409');
+        return g;
+    }
+
+    function strokeCurve(x1,y1,c1x,c1y,c2x,c2y,x2,y2,width){
+        ctx.save();
+
+        /* dark outline */
+        ctx.beginPath();
+        ctx.moveTo(x1,y1);
+        ctx.bezierCurveTo(c1x,c1y,c2x,c2y,x2,y2);
+        ctx.strokeStyle='rgba(45,20,8,.30)';
+        ctx.lineWidth=width+10;
+        ctx.lineCap='round';
+        ctx.stroke();
+
+        /* wood */
+        ctx.beginPath();
+        ctx.moveTo(x1,y1);
+        ctx.bezierCurveTo(c1x,c1y,c2x,c2y,x2,y2);
+        ctx.strokeStyle=woodGradient(x1,y1,x2,y2);
+        ctx.lineWidth=width;
+        ctx.lineCap='round';
+        ctx.stroke();
+
+        /* natural highlight */
+        ctx.beginPath();
+        ctx.moveTo(x1-width*.08,y1);
+        ctx.bezierCurveTo(c1x-width*.04,c1y-3,c2x-width*.04,c2y-3,x2-width*.03,y2-2);
+        ctx.strokeStyle='rgba(239,174,101,.38)';
+        ctx.lineWidth=Math.max(2,width*.11);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function twig(x1,y1,x2,y2,width){
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x1,y1);
+        ctx.quadraticCurveTo(
+            (x1+x2)/2 + 20,
+            (y1+y2)/2 - 20,
+            x2,y2
+        );
+        ctx.strokeStyle='#4b2814';
+        ctx.lineWidth=width;
+        ctx.lineCap='round';
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function leaf(x,y,rx,ry,angle,color){
+        ctx.save();
+        ctx.translate(x,y);
+        ctx.rotate(angle);
+        ctx.fillStyle=color;
+        ctx.beginPath();
+        ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function foliage(x,y,scale=1){
+        const colors=['#2e6e2d','#3f8736','#5da447','#78b84f','#98c95a'];
+        const pts=[
+            [-45,12,30,18,-.5],
+            [-25,-25,35,20,-.25],
+            [8,-38,38,21,.05],
+            [40,-15,33,19,.35],
+            [52,15,27,17,.55],
+            [5,15,45,24,.1],
+            [-2,-70,27,17,-.15]
+        ];
+        pts.forEach((p,i)=>{
+            leaf(
+                x+p[0]*scale,
+                y+p[1]*scale,
+                p[2]*scale,
+                p[3]*scale,
+                p[4],
+                colors[i%colors.length]
+            );
+        });
+    }
+
+    function plaque(p,x,y,small=false){
+        const name=String(p.name||'').trim();
+        if(!name) return;
+
+        ctx.save();
+
+        const fontSize = small ? 15 : 18;
+        ctx.font='800 '+fontSize+'px Arial, "Noto Sans Gujarati", sans-serif';
+
+        const label =
+            name.length>24 ? name.slice(0,23)+'…' : name;
+
+        const w=Math.max(
+            145,
+            Math.min(290,ctx.measureText(label).width+42)
+        );
+        const h=small ? 48 : 58;
+
+        ctx.shadowColor='rgba(30,15,5,.35)';
+        ctx.shadowBlur=9;
+        ctx.shadowOffsetY=5;
+
+        ctx.fillStyle='#c98543';
+        ctx.strokeStyle='#5b3218';
+        ctx.lineWidth=4;
+
+        ctx.beginPath();
+        ctx.roundRect(x-w/2,y-h/2,w,h,12);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.shadowColor='transparent';
+
+        ctx.fillStyle='#2d1609';
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(label,x,y-5);
+
+        ctx.font='700 11px Arial';
+        ctx.fillStyle='#5b3218';
+        ctx.fillText('Generation '+generation(p),x,y+17);
+
+        ctx.restore();
+    }
+
+    /* ---------- roots ---------- */
+    const rootPos=pos.get(String(root._id));
+    const trunkBaseX=rootPos.x;
+    const trunkTopY=rootPos.y+75;
+
+    for(let i=0;i<9;i++){
+        const dir=i<4?-1:(i>4?1:0);
+        if(!dir) continue;
+
+        const n=Math.abs(i-4);
+        const endX=trunkBaseX+dir*(130+n*48);
+
+        strokeCurve(
+            trunkBaseX+dir*20,
+            groundY+10,
+            trunkBaseX+dir*60,
+            groundY+20,
+            endX-30*dir,
+            groundY+40,
+            endX,
+            groundY+55,
+            Math.max(7,18-n*2)
+        );
+    }
+
+    /* ---------- main trunk ---------- */
+    strokeCurve(
+        trunkBaseX-105,
+        groundY+10,
+        trunkBaseX-155,
+        groundY-180,
+        trunkBaseX-125,
+        trunkTopY+150,
+        trunkBaseX-42,
+        trunkTopY,
+        95
+    );
+
+    strokeCurve(
+        trunkBaseX+105,
+        groundY+10,
+        trunkBaseX+155,
+        groundY-180,
+        trunkBaseX+125,
+        trunkTopY+150,
+        trunkBaseX+42,
+        trunkTopY,
+        95
+    );
+
+    strokeCurve(
+        trunkBaseX,
+        groundY,
+        trunkBaseX-35,
+        groundY-260,
+        trunkBaseX-28,
+        trunkTopY+80,
+        trunkBaseX,
+        trunkTopY-5,
+        105
+    );
+
+    /* bark texture */
+    for(let i=-5;i<=5;i++){
+        ctx.beginPath();
+        ctx.moveTo(trunkBaseX+i*12,groundY-10);
+        ctx.quadraticCurveTo(
+            trunkBaseX+i*15,
+            (groundY+trunkTopY)/2,
+            trunkBaseX+i*7,
+            trunkTopY+35
+        );
+        ctx.strokeStyle='rgba(46,21,8,.25)';
+        ctx.lineWidth=3;
+        ctx.stroke();
+    }
+
+    /* ---------- recursive branches ---------- */
+    function drawPersonBranch(parent){
+        const pp=pos.get(String(parent._id));
+        if(!pp) return;
+
+        const kids=children.get(String(parent._id))||[];
+
+        /* leaf generation: branch + foliage + name */
+        if(!kids.length){
+            const side=(pp.x>=treeWidth/2?1:-1);
+            twig(
+                pp.x,
+                pp.y+5,
+                pp.x+side*70,
+                pp.y-90,
+                7
+            );
+            foliage(pp.x+side*78,pp.y-105,.85);
+            plaque(parent,pp.x,pp.y+66,true);
+            return;
+        }
+
+        kids.forEach((child,index)=>{
+            const cp=pos.get(String(child._id));
+            if(!cp) return;
+
+            const dx=cp.x-pp.x;
+            const side=dx>=0?1:-1;
+            const distance=Math.abs(dx);
+
+            const startY=pp.y-15;
+            const endY=cp.y+28;
+
+            const curve=Math.max(
+                100,
+                Math.min(300,distance*.42)
+            );
+
+            const width=Math.max(
+                10,
+                34-(generation(parent)-1)*4
+            );
+
+            /*
+              Branch starts from parent and bends naturally
+              toward the child, not as a straight line.
+            */
+            strokeCurve(
+                pp.x,
+                startY,
+                pp.x+side*curve,
+                startY-80,
+                cp.x-side*curve*.55,
+                endY+90,
+                cp.x,
+                endY,
+                width
+            );
+
+            /*
+              Side twig with leaves makes every branch
+              look like a real tree rather than a diagram.
+            */
+            const twigSide=index%2===0?-1:1;
+            const tx=cp.x+twigSide*55;
+            const ty=cp.y-55;
+
+            twig(
+                cp.x,
+                cp.y,
+                tx,
+                ty,
+                Math.max(5,width*.28)
+            );
+
+            foliage(tx,ty-18,.65);
+
+            /* child's name */
+            plaque(
+                child,
+                cp.x,
+                cp.y+72,
+                false
+            );
+
+            drawPersonBranch(child);
+        });
+    }
+
+    /* ---------- root generation branches ---------- */
+    const rootKids=children.get(String(root._id))||[];
+
+    rootKids.forEach((child,index)=>{
+        const cp=pos.get(String(child._id));
+        if(!cp) return;
+
+        const dx=cp.x-trunkBaseX;
+        const side=dx>=0?1:-1;
+        const distance=Math.abs(dx);
+
+        strokeCurve(
+            trunkBaseX,
+            trunkTopY+25,
+            trunkBaseX+side*Math.min(240,distance*.35),
+            trunkTopY-150,
+            cp.x-side*Math.min(300,distance*.28),
+            cp.y+150,
+            cp.x,
+            cp.y+30,
+            50
+        );
+
+        foliage(
+            cp.x-side*30,
+            cp.y-40,
+            1
+        );
+
+        plaque(
+            child,
+            cp.x,
+            cp.y+72,
+            false
+        );
+
+        drawPersonBranch(child);
+    });
+
+    /* Root's own name is placed inside the trunk area. */
+    plaque(
+        root,
+        trunkBaseX,
+        trunkTopY+115,
+        false
+    );
+
+    /* top canopy */
+    const topNodes=people.filter(p=>generation(p)===maxGen);
+    topNodes.forEach(p=>{
+        const pp=pos.get(String(p._id));
+        if(!pp) return;
+        foliage(pp.x,pp.y-125,.95);
+    });
+}
 
         async function toggleRealTreeView(){
-            const viewer=$('viewer'), btn=$('realTreeBtn');
-            if(!viewer) return;
-            const opening=!viewer.classList.contains('real-tree-open');
-            if(opening){
-                viewer.classList.add('real-tree-open');
-                if(btn){btn.textContent='✕ Close Tree View';btn.classList.add('real-tree-close');}
-                document.body.style.overflow='hidden';
-                treeZoom=1; applyTreeZoom();
-                // Real Tree View only: replace the normal straight connectors with a natural trunk/branch structure.
-                setTimeout(()=>{ drawRealTreeStructure(); },50);
-            }else{
-                viewer.classList.remove('real-tree-open');
-                $('treeLayer')?.classList.remove('real-natural-tree');
-                if(btn){btn.textContent='🌳 Real Tree View';btn.classList.remove('real-tree-close');}
-                document.body.style.overflow='';
-                // Restore the original normal tree connectors.
-                renderTree();
-            }
+    const viewer=$('viewer'), btn=$('realTreeBtn');
+    if(!viewer) return;
+
+    const opening=!viewer.classList.contains('real-tree-open');
+
+    if(opening){
+        viewer.classList.add('real-tree-open');
+
+        if(btn){
+            btn.textContent='✕ Close Tree View';
+            btn.classList.add('real-tree-close');
         }
 
-        async function loadHtml2Canvas(){
+        document.body.style.overflow='hidden';
+        treeZoom=1;
+
+        setTimeout(()=>{
+            drawRealTreeStructure();
+        },80);
+
+    }else{
+        viewer.classList.remove('real-tree-open');
+
+        const realCanvas=$('realTreeCanvas');
+        if(realCanvas) realCanvas.remove();
+
+        const layer=$('treeLayer');
+        if(layer){
+            layer.classList.remove('real-natural-tree');
+            layer.style.width='';
+            layer.style.height='';
+            layer.style.transform='scale(1)';
+        }
+
+        const oldSvg=$('svg');
+        if(oldSvg) oldSvg.style.display='';
+
+        const cards=$('cards');
+        if(cards) cards.style.display='';
+
+        if(btn){
+            btn.textContent='🌳 Real Tree View';
+            btn.classList.remove('real-tree-close');
+        }
+
+        document.body.style.overflow='';
+        renderTree();
+    }
+}
+
+async function loadHtml2Canvas(){
             if(window.html2canvas) return;
             const s=document.createElement('script');
             s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
