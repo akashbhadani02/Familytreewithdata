@@ -503,6 +503,18 @@
   padding:6px; pointer-events:none;
 }
 .tree-zoom-controls button { pointer-events:auto; min-width:42px; min-height:38px; }
+</style><style>
+.mobile-zoom-buttons{
+ display:flex!important;justify-content:center;align-items:center;gap:8px;
+ position:relative;z-index:10000;margin:6px auto;padding:4px;
+}
+.mobile-zoom-buttons button{
+ width:46px;height:40px;border:1px solid #ccc;border-radius:9px;
+ background:#fff;font-size:22px;font-weight:700;cursor:pointer;
+}
+@media(max-width:768px){
+ .mobile-zoom-buttons{display:flex!important;position:sticky;top:0}
+}
 </style></head>
 
 <body>
@@ -1522,6 +1534,80 @@ async function loadHtml2Canvas(){
   window.setupTreeZoom=setupTreeZoom;
   document.addEventListener('DOMContentLoaded',()=>setTimeout(setupTreeZoom,300));
   window.addEventListener('load',()=>setTimeout(setupTreeZoom,500));
+})();
+</script><script>
+/* ===== MOBILE PINCH ZOOM FINAL FIX ===== */
+(function(){
+  function initMobilePinch(){
+    const vp=document.querySelector('#realTreeViewport,#treeViewport,.real-tree-viewport,.tree-zoom-viewport,.tree-scroll,.tree-viewport');
+    const target=document.querySelector('#realTreeCanvas,#treeCanvas,.real-tree-canvas,.tree-canvas,.tree-zoom-content');
+    if(!vp || !target || vp.dataset.pinchReady) return;
+    vp.dataset.pinchReady='1';
+
+    let scale=1, startScale=1, startDist=0, lastX=0, lastY=0;
+    let panX=0, panY=0, dragging=false, twoFinger=false;
+
+    const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+    function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
+    function apply(){
+      target.style.transformOrigin='0 0';
+      target.style.transform=`translate(${panX}px,${panY}px) scale(${scale})`;
+    }
+    function setScale(v){
+      scale=clamp(v,.15,5);
+      apply();
+    }
+
+    vp.style.touchAction='none';
+    vp.style.overflow='auto';
+
+    vp.addEventListener('touchstart',e=>{
+      if(e.touches.length===2){
+        e.preventDefault();
+        twoFinger=true;
+        dragging=false;
+        startDist=dist(e.touches[0],e.touches[1]);
+        startScale=scale;
+      } else if(e.touches.length===1){
+        lastX=e.touches[0].clientX;
+        lastY=e.touches[0].clientY;
+        dragging=true;
+      }
+    },{passive:false});
+
+    vp.addEventListener('touchmove',e=>{
+      if(e.touches.length===2){
+        e.preventDefault();
+        const d=dist(e.touches[0],e.touches[1]);
+        if(startDist>0) setScale(startScale*(d/startDist));
+      } else if(e.touches.length===1 && dragging && !twoFinger){
+        e.preventDefault();
+        const t=e.touches[0];
+        const dx=t.clientX-lastX,dy=t.clientY-lastY;
+        vp.scrollLeft-=dx;
+        vp.scrollTop-=dy;
+        lastX=t.clientX; lastY=t.clientY;
+      }
+    },{passive:false});
+
+    vp.addEventListener('touchend',e=>{
+      if(e.touches.length<2) startDist=0;
+      if(e.touches.length===0){twoFinger=false;dragging=false;}
+    },{passive:false});
+
+    // Visible touch controls; guaranteed to work even if pinch is blocked by browser.
+    const box=document.createElement('div');
+    box.className='mobile-zoom-buttons';
+    box.innerHTML='<button type="button" aria-label="Zoom out">−</button><button type="button" aria-label="Reset zoom">100%</button><button type="button" aria-label="Zoom in">+</button>';
+    vp.parentElement.insertBefore(box,vp);
+    box.children[0].onclick=()=>setScale(scale*.8);
+    box.children[1].onclick=()=>{scale=1;panX=0;panY=0;apply();};
+    box.children[2].onclick=()=>setScale(scale*1.25);
+    apply();
+  }
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(initMobilePinch,400));
+  window.addEventListener('load',()=>setTimeout(initMobilePinch,700));
+  window.initMobilePinch=initMobilePinch;
 })();
 </script></body>
 </html>
