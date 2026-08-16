@@ -110,7 +110,7 @@
 
         .tree-search{display:flex;gap:8px;max-width:620px;margin:0 auto 12px}.tree-search input{flex:1;padding:12px 14px;border:1px solid #cbd6e2;border-radius:10px;font-size:15px;outline:none}.tree-search input:focus{border-color:#315f91;box-shadow:0 0 0 3px #315f9118}.tree-search button{border:0;border-radius:10px;padding:12px 16px;background:#315f91;color:#fff;font-weight:800;cursor:pointer}.card.selfFound{background:#dff7e5!important;border-color:#69b77b!important;box-shadow:0 0 0 3px #9ad7a7,0 8px 24px #2e7d3230!important}.search-hint{text-align:center;font-size:12px;color:#718096;margin:-4px 0 10px}.tree-zoom-controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.tree-zoom-controls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.tree-zoom-controls button:hover{background:#f1f5f9}.tree-zoom-label{min-width:58px;text-align:center;font-weight:800;color:#315f91}.tree-layer{position:relative;transform-origin:0 0;will-change:transform}
         .real-tree-open{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;z-index:99999!important;background:#fff!important;border-radius:0!important;border:0!important;padding:18px!important;box-shadow:none!important}
-        .real-tree-open #treebox{height:calc(100vh - 115px)!important;border-radius:14px;background:#b9dcf0;overflow:auto}
+        .real-tree-open #treebox{height:calc(100vh - 115px)!important;border-radius:14px;background:#b9dcf0;overflow-x:auto!important;overflow-y:auto!important;touch-action:pan-x pan-y!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;position:relative!important}
         .real-tree-open .tree-search,.real-tree-open .tree-zoom-controls,.real-tree-open .links-panel{display:flex!important;position:relative;z-index:20}
         .real-tree-open .card{box-shadow:0 7px 24px #24384e24}
         /* Real Tree View only: wooden plaques sit on a natural tree. Normal Tree View is untouched. */
@@ -800,8 +800,12 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
     tc.style.visibility = 'visible';
     tc.style.opacity = '1';
     tc.style.pointerEvents = 'none';
+    tc.style.maxWidth = 'none';
+    tc.style.maxHeight = 'none';
 
     layer.style.width = treeWidth + 'px';
+    layer.style.minWidth = treeWidth + 'px';
+    layer.style.minHeight = treeHeight + 'px';
     layer.style.height = treeHeight + 'px';
 
     baseCanvas.style.width = treeWidth + 'px';
@@ -1066,6 +1070,12 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
 
         const kids=children.get(String(parent._id))||[];
 
+        /* Every person owns exactly one plaque.
+           Root is handled separately below, so skip it here. */
+        if(String(parent._id)!==String(root._id)){
+            plaque(parent,pp.x,pp.y+72,false);
+        }
+
         /* leaf generation: branch + foliage + name */
         if(!kids.length){
             const side=(pp.x>=treeWidth/2?1:-1);
@@ -1077,7 +1087,6 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 7
             );
             foliage(pp.x+side*78,pp.y-105,.85);
-            plaque(parent,pp.x,pp.y+66,true);
             return;
         }
 
@@ -1136,14 +1145,9 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
 
             foliage(tx,ty-18,.65);
 
-            /* child's name */
-            plaque(
-                child,
-                cp.x,
-                cp.y+72,
-                false
-            );
-
+            /* The recursive call owns the child plaque.
+               Drawing it here would create a duplicate card for
+               every child that is also rendered as a leaf. */
             drawPersonBranch(child);
         });
     }
