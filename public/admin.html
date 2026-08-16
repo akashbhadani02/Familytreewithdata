@@ -960,7 +960,7 @@ async function editName(id){
     const plaqueH = 158;
     const gen1Gap = 190;
     const levelGap = 245;
-    const sideGap = 300;
+    const sideGap = 190;
     const topPad = 150;
     const bottomPad = 120;
 
@@ -980,7 +980,10 @@ async function editName(id){
     gen1.forEach(measureBranch);
 
     const maxBranchWidth=Math.max(...gen1.map(p=>branchWidth.get(String(p._id))||plaqueW+80), plaqueW+80);
-    const treeWidth=Math.max(2200, Math.min(14000, Math.max(maxBranchWidth+800, gen1.length*260+1200)));
+    const treeWidth=Math.max(2200, Math.min(9000, Math.max(maxBranchWidth+600, 2200)));
+    // Gen-1 members are stacked vertically on one trunk, so their count must
+    // NOT increase the tree width. This keeps the printable tree compact.
+    // Descendant branches use curved paths to absorb horizontal distance.
     const trunkTopY=topPad;
     const trunkBottomY=topPad + (gen1.length-1)*gen1Gap;
     const trunkX=treeWidth/2;
@@ -1304,16 +1307,24 @@ async function loadHtml2Canvas(){
         const dataUrl=exportCanvas.toDataURL('image/jpeg',0.92);
 
         const {jsPDF}=window.jspdf;
-        const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
-        const pageW=Number(pdf.internal.pageSize.getWidth()), pageH=Number(pdf.internal.pageSize.getHeight());
-        const margin=6;
-        const maxW=pageW-margin*2, maxH=pageH-margin*2;
+        // Create a print-oriented custom landscape page that follows the tree's
+        // aspect ratio. The whole tree stays on ONE PDF page; the printer can
+        // then scale it to A4/A3/plotter paper without cutting branches.
+        const aspect=ew/eh;
+        const LONG=420; // A3 long side in mm
+        const SHORT=297; // A3 short side in mm
+        let pageW, pageH;
+        if(aspect>=1){ pageW=LONG; pageH=Math.max(100,Math.min(SHORT, LONG/aspect)); }
+        else { pageH=LONG; pageW=Math.max(100,Math.min(SHORT, LONG*aspect)); }
+        const pdf=new jsPDF({orientation:pageW>=pageH?'landscape':'portrait',unit:'mm',format:[pageW,pageH],compress:true});
+        const margin=4;
+        const maxW=Math.max(1,pageW-margin*2), maxH=Math.max(1,pageH-margin*2);
         const ratio=Math.min(maxW/ew,maxH/eh);
         const w=Number(ew*ratio), h=Number(eh*ratio);
         const x=Number((pageW-w)/2), y=Number((pageH-h)/2);
         if(![x,y,w,h].every(Number.isFinite)||w<=0||h<=0) throw new Error('Invalid PDF image coordinates');
         pdf.addImage(dataUrl,'JPEG',x,y,w,h,undefined,'FAST');
-        pdf.save('family-tree.pdf');
+        pdf.save('family-tree-print.pdf');
     }catch(e){
         console.error('PDF download error:',e);
         alert('PDF download error: '+(e&&e.message?e.message:e));
