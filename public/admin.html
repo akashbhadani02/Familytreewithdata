@@ -109,6 +109,11 @@
         }
 
         .tree-search{display:flex;gap:8px;max-width:620px;margin:0 auto 12px}.tree-search input{flex:1;padding:12px 14px;border:1px solid #cbd6e2;border-radius:10px;font-size:15px;outline:none}.tree-search input:focus{border-color:#315f91;box-shadow:0 0 0 3px #315f9118}.tree-search button{border:0;border-radius:10px;padding:12px 16px;background:#315f91;color:#fff;font-weight:800;cursor:pointer}.card.selfFound{background:#dff7e5!important;border-color:#69b77b!important;box-shadow:0 0 0 3px #9ad7a7,0 8px 24px #2e7d3230!important}.search-hint{text-align:center;font-size:12px;color:#718096;margin:-4px 0 10px}.tree-zoom-controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.tree-zoom-controls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.tree-zoom-controls button:hover{background:#f1f5f9}.tree-zoom-label{min-width:58px;text-align:center;font-weight:800;color:#315f91}.tree-layer{position:relative;transform-origin:0 0;will-change:transform}
+        .real-tree-open{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;z-index:99999!important;background:#fff!important;border-radius:0!important;border:0!important;padding:18px!important;box-shadow:none!important}
+        .real-tree-open #treebox{height:calc(100vh - 115px)!important;border-radius:14px;background:#fbfcfe}
+        .real-tree-open .tree-search,.real-tree-open .tree-zoom-controls,.real-tree-open .links-panel{display:none!important}
+        .real-tree-open .card{box-shadow:0 7px 24px #24384e24}
+        .real-tree-close{background:#dc3545!important;color:#fff!important}
 
         .canvas {
             position: relative;
@@ -238,7 +243,7 @@
             </div>
             <div id="viewer" class="panel" style="display:none">
                 <div class="row">
-                    <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button class="btn" onclick="downloadPNG()">🖼️ Download PNG</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ આખી Tree Delete</button>
+                    <h2 style="margin:0;flex:1">🌳 Selected Family</h2><button id="realTreeBtn" class="btn" onclick="toggleRealTreeView()">🌳 Real Tree View</button><button class="btn" onclick="downloadPNG()">🖼️ Download PNG</button><button class="btn" onclick="downloadTreePDF()">📄 Download PDF</button><button class="btn danger" onclick="deleteCurrentFamily()">🗑️ આખી Tree Delete</button>
                 </div>
                 <div class="tree-search"><input id="treeSearchInput" type="text" placeholder="🔎 તમારું નામ શોધો..." autocomplete="off" oninput="searchAdminTree(this.value)" onkeydown="if(event.key==='Enter')searchAdminTree(this.value,true)"><button type="button" onclick="clearAdminTreeSearch()">Clear</button></div><div id="treeSearchHint" class="search-hint">તમારું નામ લખો — તમારું card light green થશે.</div><div class="tree-zoom-controls"><button type="button" onclick="treeZoomOut()">➖ Zoom Out</button><span id="treeZoomLabel" class="tree-zoom-label">100%</span><button type="button" onclick="treeZoomIn()">➕ Zoom In</button><button type="button" onclick="treeZoomReset()">↺ Reset</button></div>
                 <div id="treebox" class="treebox">
@@ -603,9 +608,68 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         function avatar(n){return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e7edf5"/><text x="50" y="62" text-anchor="middle" font-size="42" font-family="Arial" font-weight="700" fill="#61758e">${(n||'?')[0].toUpperCase()}</text></svg>`);}
         function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
         function escAttr(v){return String(v??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+        async function toggleRealTreeView(){
+            const viewer=$('viewer'), btn=$('realTreeBtn');
+            if(!viewer) return;
+            const opening=!viewer.classList.contains('real-tree-open');
+            if(opening){
+                viewer.classList.add('real-tree-open');
+                if(btn){btn.textContent='✕ Close Tree View';btn.classList.add('real-tree-close');}
+                document.body.style.overflow='hidden';
+                treeZoom=1; applyTreeZoom();
+                setTimeout(focusTreeRoot,50);
+            }else{
+                viewer.classList.remove('real-tree-open');
+                if(btn){btn.textContent='🌳 Real Tree View';btn.classList.remove('real-tree-close');}
+                document.body.style.overflow='';
+            }
+        }
+
+        async function loadHtml2Canvas(){
+            if(window.html2canvas) return;
+            const s=document.createElement('script');
+            s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+            document.head.appendChild(s);
+            await new Promise((resolve,reject)=>{s.onload=resolve;s.onerror=reject;});
+        }
+
+        async function loadJsPDF(){
+            if(window.jspdf && window.jspdf.jsPDF) return;
+            const s=document.createElement('script');
+            s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+            document.head.appendChild(s);
+            await new Promise((resolve,reject)=>{s.onload=resolve;s.onerror=reject;});
+        }
+
+        async function downloadTreePDF(){
+            if(!people.length) return alert('પહેલા Family Tree ખોલો.');
+            const btns=[...document.querySelectorAll('.tree-card-actions,.links-panel')];
+            const oldDisplay=btns.map(el=>el.style.display);
+            try{
+                await loadHtml2Canvas();
+                await loadJsPDF();
+                btns.forEach(el=>el.style.display='none');
+                const oldZoom=treeZoom;
+                treeZoom=1; applyTreeZoom();
+                await new Promise(r=>setTimeout(r,150));
+                const node=$('canvas');
+                const imageCanvas=await html2canvas(node,{scale:1.5,backgroundColor:'#fbfcfe',useCORS:true,allowTaint:true,logging:false});
+                const {jsPDF}=window.jspdf;
+                const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+                const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
+                const margin=8, maxW=pageW-margin*2, maxH=pageH-margin*2;
+                const ratio=Math.min(maxW/imageCanvas.width,maxH/imageCanvas.height);
+                const w=imageCanvas.width*ratio, h=imageCanvas.height*ratio;
+                pdf.addImage(imageCanvas.toDataURL('image/jpeg',0.92),'JPEG',(pageW-w)/2,(pageH-h)/2,w,h);
+                pdf.save('family-tree.pdf');
+                treeZoom=oldZoom; applyTreeZoom();
+            }catch(e){alert('PDF download error: '+e.message);}
+            finally{btns.forEach((el,i)=>el.style.display=oldDisplay[i]);}
+        }
+
         async function downloadPNG(){
             if(!people.length)return;
-            if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r);}
+            await loadHtml2Canvas();
             const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe',useCORS:true});
             const a=document.createElement('a');a.download='family-tree-admin.png';a.href=c.toDataURL('image/png');a.click();
         }
