@@ -1102,47 +1102,57 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
 
     function drawMemberPhoto(person, x, y, radius=34){
         const src = String(person.photo || '').trim();
-        if(!src) return;
+        const cache = window.__realTreePhotoCache || (window.__realTreePhotoCache = new Map());
 
-        let entry = realPhotoCache.get(src);
-        if(!entry){
-            const img = new Image();
-            entry = {img, loaded:false, failed:false};
-            realPhotoCache.set(src, entry);
-            img.onload = ()=>{ entry.loaded=true; queueRealTreePhotoRedraw(); };
-            img.onerror = ()=>{ entry.failed=true; };
-            img.src = src;
-        }
-
-        if(!entry.loaded || entry.failed) return;
-
-        const img = entry.img;
         ctx.save();
-
-        /* soft shadow */
         ctx.beginPath();
-        ctx.arc(x, y+4, radius+5, 0, Math.PI*2);
-        ctx.fillStyle='rgba(34,18,8,.28)';
+        ctx.arc(x,y,radius,0,Math.PI*2);
+        ctx.fillStyle = '#eef2f5';
         ctx.fill();
-
-        /* circular clip */
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI*2);
         ctx.clip();
 
-        const iw=img.naturalWidth || img.width || 1;
-        const ih=img.naturalHeight || img.height || 1;
-        const ratio=Math.max((radius*2)/iw,(radius*2)/ih);
-        const dw=iw*ratio, dh=ih*ratio;
-        ctx.drawImage(img, x-dw/2, y-dh/2, dw, dh);
+        if(src){
+            let entry = cache.get(src);
+            if(!entry){
+                const img = new Image();
+                entry = {img,loaded:false,failed:false};
+                cache.set(src,entry);
+                img.onload=()=>{entry.loaded=true;queueRealTreePhotoRedraw()};
+                img.onerror=()=>{entry.failed=true;queueRealTreePhotoRedraw()};
+                img.src=src;
+            }
+            if(entry.loaded && !entry.failed){
+                const img=entry.img;
+                const iw=img.naturalWidth||img.width||1;
+                const ih=img.naturalHeight||img.height||1;
+                const ratio=Math.max((radius*2)/iw,(radius*2)/ih);
+                const dw=iw*ratio,dh=ih*ratio;
+                ctx.drawImage(img,x-dw/2,y-dh/2,dw,dh);
+            }else{
+                ctx.fillStyle='#e5ebef';
+                ctx.fill();
+                ctx.fillStyle='#78909c';
+                ctx.font='700 28px Arial';
+                ctx.textAlign='center';
+                ctx.textBaseline='middle';
+                ctx.fillText((String(person.name||'?')[0]||'?').toUpperCase(),x,y);
+            }
+        }else{
+            ctx.fillStyle='#e5ebef';
+            ctx.fill();
+            ctx.fillStyle='#78909c';
+            ctx.font='700 28px Arial';
+            ctx.textAlign='center';
+            ctx.textBaseline='middle';
+            ctx.fillText((String(person.name||'?')[0]||'?').toUpperCase(),x,y);
+        }
         ctx.restore();
 
-        /* wooden/gold photo border */
         ctx.save();
         ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI*2);
-        ctx.strokeStyle='#f1c47a';
-        ctx.lineWidth=6;
+        ctx.arc(x,y,radius,0,Math.PI*2);
+        ctx.strokeStyle='#f2c879';
+        ctx.lineWidth=5;
         ctx.stroke();
         ctx.strokeStyle='#5b3218';
         ctx.lineWidth=2;
@@ -1158,53 +1168,40 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         const name=String(p.name||'').trim();
         if(!name) return;
 
+        const cardW=190;
+        const cardH=150;
+        const top=y-cardH/2;
+        const photoX=x;
+        const photoY=top+45;
+        const photoR=34;
+
         ctx.save();
-
-        const fontSize = small ? 15 : 18;
-        ctx.font='800 '+fontSize+'px Arial, "Noto Sans Gujarati", sans-serif';
-
-        const label =
-            name.length>24 ? name.slice(0,23)+'…' : name;
-
-        const w=Math.max(
-            145,
-            Math.min(290,ctx.measureText(label).width+42)
-        );
-        const h=small ? 48 : 58;
-
-        ctx.shadowColor='rgba(30,15,5,.35)';
-        ctx.shadowBlur=9;
+        ctx.shadowColor='rgba(30,15,5,.32)';
+        ctx.shadowBlur=10;
         ctx.shadowOffsetY=5;
-
         ctx.fillStyle='#c98543';
         ctx.strokeStyle='#5b3218';
         ctx.lineWidth=4;
-
         ctx.beginPath();
-        ctx.roundRect(x-w/2,y-h/2,w,h,12);
+        ctx.roundRect(x-cardW/2,top,cardW,cardH,14);
         ctx.fill();
         ctx.stroke();
+        ctx.restore();
 
-        ctx.shadowColor='transparent';
+        /* Photo is INSIDE the same name card. */
+        drawMemberPhoto(p,photoX,photoY,photoR);
 
+        ctx.save();
         ctx.fillStyle='#2d1609';
         ctx.textAlign='center';
         ctx.textBaseline='middle';
-        ctx.fillText(label,x,y-5);
-
+        ctx.font='800 '+(small?14:16)+'px Arial, "Noto Sans Gujarati", sans-serif';
+        const label=name.length>21?name.slice(0,20)+'…':name;
+        ctx.fillText(label,x,top+94);
         ctx.font='700 11px Arial';
         ctx.fillStyle='#5b3218';
-        ctx.fillText('Generation '+generation(p),x,y+17);
-
+        ctx.fillText('Generation '+generation(p),x,top+119);
         ctx.restore();
-
-        /* Photo has its own protected area below the branch. */
-        drawMemberPhoto(
-            p,
-            x,
-            y - h/2 - 80,
-            small ? 28 : 34
-        );
     }
 
     /* ---------- roots ---------- */
@@ -1294,7 +1291,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         /* Every person owns exactly one plaque.
            Root is handled separately below, so skip it here. */
         if(String(parent._id)!==String(root._id)){
-            plaque(parent,pp.x,pp.y+112,false);
+            plaque(parent,pp.x,pp.y+72,false);
         }
 
         /* leaf generation: branch + foliage + name */
@@ -1302,12 +1299,12 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             const side=(pp.x>=treeWidth/2?1:-1);
             twig(
                 pp.x,
-                pp.y-55,
+                pp.y+5,
                 pp.x+side*70,
-                pp.y-145,
+                pp.y-90,
                 7
             );
-            foliage(pp.x+side*78,pp.y-165,.78);
+            foliage(pp.x+side*78,pp.y-105,.85);
             return;
         }
 
@@ -1344,7 +1341,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 cp.x-side*curve*.55,
                 endY+90,
                 cp.x,
-                endY-105,
+                endY,
                 width
             );
 
@@ -1354,17 +1351,17 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             */
             const twigSide=index%2===0?-1:1;
             const tx=cp.x+twigSide*55;
-            const ty=cp.y-135;
+            const ty=cp.y-55;
 
             twig(
                 cp.x,
-                cp.y-80,
+                cp.y,
                 tx,
                 ty,
                 Math.max(5,width*.28)
             );
 
-            foliage(tx,ty-18,.55);
+            foliage(tx,ty-18,.65);
 
             /* The recursive call owns the child plaque.
                Drawing it here would create a duplicate card for
@@ -1392,7 +1389,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             cp.x-side*Math.min(300,distance*.28),
             cp.y+150,
             cp.x,
-            cp.y-90,
+            cp.y+30,
             50
         );
 
@@ -1411,7 +1408,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
     plaque(
         root,
         trunkBaseX,
-        trunkTopY+145,
+        trunkTopY+115,
         false
     );
 
