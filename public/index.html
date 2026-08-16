@@ -42,10 +42,7 @@ function memberAddLink(person){
   return absoluteLink('/add/'+encodeURIComponent(String(person.addToken)));
 }
 async function copyMemberLink(person,button){
-  return copyMemberLinkValue(memberAddLink(person),button);
-}
-async function copyMemberLinkValue(link,button){
-  link=String(link||'').trim();
+  const link=memberAddLink(person);
   if(!link) return alert('આ Childની link હજી generate થઈ નથી.');
   const ok=await copyText(link);
   if(ok && button){
@@ -54,7 +51,6 @@ async function copyMemberLinkValue(link,button){
     button.disabled=true;
     setTimeout(()=>{button.textContent=old;button.disabled=false},1800);
   }
-  return ok;
 }
 async function copyText(text){
   if(!text) return false;
@@ -167,8 +163,8 @@ function renderChildStatus(){
   box.style.display='block';
   box.innerHTML=kids.map(k=>{
     const link=memberAddLink(k);
-    const safeLink=String(link||'').replace(/\/g,'\\').replace(/'/g,\"\\'\");
-    return '<div class="child-row"><div class="child-name">'+safe(k.name)+'</div><div class="child-link-box"><a class="child-add-link" href="'+safe(link)+'">'+safe(link)+'</a><button type="button" class="btn mini-copy" onclick="copyMemberLinkValue(\''+safeLink+'\',this)">📋 Copy</button></div></div>'
+    const safeJson=JSON.stringify(k).replace(/</g,'\u003c');
+    return '<div class="child-row"><div class="child-name">'+safe(k.name)+'</div><div class="child-link-box"><a class="child-add-link" href="'+safe(link)+'" target="_blank" rel="noopener">'+safe(link)+'</a><button type="button" class="btn mini-copy" onclick="copyMemberLink('+safeJson+',this)">📋 Copy</button></div></div>'
   }).join('');
 }
 function prepareLineageFields(){
@@ -271,7 +267,7 @@ function showReadOnlyTree(){
  loadFamily();
  window.scrollTo({top:0,behavior:'smooth'});
 }
-async function loadFamily(){if(!familyId)return;const r=await fetch('/api/family/'+encodeURIComponent(familyId),{cache:'no-store'});const d=await r.json();if(d.ok){people=d.people;renderTree();renderChildStatus()}}
+async function loadFamily(){if(!familyId)return;try{const r=await fetch('/api/family/'+encodeURIComponent(familyId),{cache:'no-store'});const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(_){throw new Error('Family data load failed ('+r.status+')')}if(!r.ok||!d.ok)throw new Error(d.error||'Family data load failed');people=d.people||[];renderTree();renderChildStatus()}catch(e){console.error('loadFamily:',e);if($('childStatus')){$('childStatus').style.display='block';$('childStatus').innerHTML='<b style="color:#b42318">Family data હાલ load થઈ શક્યો નથી.</b>'}}}
 async function renderTree(){
  const cards=$('cards'),svg=$('svg'),canvas=$('canvas');
  cards.innerHTML='';svg.innerHTML='';if(!people.length)return;
