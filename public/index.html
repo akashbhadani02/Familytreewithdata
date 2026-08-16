@@ -242,8 +242,8 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     const gen1Gap = 190;
     const levelGap = 245;
     const sideGap = 300;
-    const topPad = 260;
-    const bottomPad = 300;
+    const topPad = 150;
+    const bottomPad = 120;
 
     // Measure each Gen-1 branch horizontally so Gen-2/3 siblings never overlap.
     const branchWidth = new Map();
@@ -264,8 +264,6 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     const treeWidth=Math.max(2200, Math.min(14000, Math.max(maxBranchWidth+800, gen1.length*260+1200)));
     const trunkTopY=topPad;
     const trunkBottomY=topPad + (gen1.length-1)*gen1Gap;
-    const treeHeight=Math.max(1900, trunkBottomY + bottomPad + Math.max(0,maxGen-1)*levelGap);
-
     const trunkX=treeWidth/2;
     const pos=new Map();
 
@@ -293,6 +291,18 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     }
     gen1.forEach(placeDescendants);
 
+    // Tight-fit the real tree to the actual data. Descendants can extend above
+    // the first Gen-1 card, so shift the whole layout down just enough to keep
+    // the highest card inside the canvas. The Gen-1 trunk remains near the bottom.
+    const placed=[...pos.values()];
+    const minPlacedY=Math.min(...placed.map(q=>q.y));
+    const shiftY=Math.max(0, topPad-minPlacedY);
+    if(shiftY) pos.forEach(q=>{q.y+=shiftY;});
+    const shiftedGen1Bottom=Math.max(...gen1.map(p=>pos.get(String(p._id)).y));
+    const shiftedMaxY=Math.max(...[...pos.values()].map(q=>q.y));
+    const groundYTarget=shiftedGen1Bottom+190;
+    const treeHeight=Math.max(900,Math.ceil(Math.max(groundYTarget+bottomPad,shiftedMaxY+bottomPad)));
+
     const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
     tc.width=Math.round(treeWidth*dpr);
     tc.height=Math.round(treeHeight*dpr);
@@ -316,7 +326,7 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     ctx.fillStyle=sky; ctx.fillRect(0,0,treeWidth,treeHeight);
     function cloud(x,y,s){ctx.save();ctx.fillStyle='rgba(255,255,255,.58)';[0,35,70].forEach((dx,i)=>{ctx.beginPath();ctx.arc(x+dx*s,y+(i%2?8:0),28*s,0,Math.PI*2);ctx.fill();});ctx.restore();}
     cloud(treeWidth*.16,120,1); cloud(treeWidth*.78,170,.9);
-    const groundY=treeHeight-115; ctx.fillStyle='#5f9345'; ctx.fillRect(0,groundY,treeWidth,treeHeight-groundY);
+    const groundY=shiftedGen1Bottom+150; ctx.fillStyle='#5f9345'; ctx.fillRect(0,groundY,treeWidth,treeHeight-groundY);
 
     function woodGradient(x1,y1,x2,y2){const g=ctx.createLinearGradient(x1,y1,x2,y2);g.addColorStop(0,'#35190c');g.addColorStop(.18,'#63361a');g.addColorStop(.42,'#9a5b2a');g.addColorStop(.58,'#c27a3d');g.addColorStop(.78,'#74401e');g.addColorStop(1,'#2d1409');return g;}
     function strokeCurve(x1,y1,c1x,c1y,c2x,c2y,x2,y2,width){ctx.save();ctx.beginPath();ctx.moveTo(x1,y1);ctx.bezierCurveTo(c1x,c1y,c2x,c2y,x2,y2);ctx.strokeStyle='rgba(45,20,8,.30)';ctx.lineWidth=width+10;ctx.lineCap='round';ctx.stroke();ctx.beginPath();ctx.moveTo(x1,y1);ctx.bezierCurveTo(c1x,c1y,c2x,c2y,x2,y2);ctx.strokeStyle=woodGradient(x1,y1,x2,y2);ctx.lineWidth=width;ctx.lineCap='round';ctx.stroke();ctx.beginPath();ctx.moveTo(x1-width*.08,y1);ctx.bezierCurveTo(c1x-width*.04,c1y-3,c2x-width*.04,c2y-3,x2-width*.03,y2-2);ctx.strokeStyle='rgba(239,174,101,.38)';ctx.lineWidth=Math.max(2,width*.11);ctx.stroke();ctx.restore();}
