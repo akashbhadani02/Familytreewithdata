@@ -605,11 +605,11 @@ async function createFamily(){
                 const shown=localized[String(p._id)]||p.name;
                 d.innerHTML=`<img src="${esc(p.photo||avatar(shown))}" alt=""><b>${esc(shown)}</b><small>Generation ${p.generation}</small><div class="tree-card-actions">
 <button type="button" class="btn" onclick="adminAddChild('${escAttr(p._id)}','${escAttr(p.name)}',this)">➕ Add Son</button>
-<button type="button" class="btn gray" onclick="editName('${escAttr(p._id)}')">✏️ Name</button>
+<button type="button" class="btn" onclick="editName('${escAttr(p._id)}')">✏️ Name</button>
 <button type="button" class="btn" onclick="openAdminMemberLink('${escAttr(p.addToken)}')">🔗 Open Link</button>
 <button type="button" class="btn" onclick="updateMemberPhoto('${escAttr(p._id)}')">📷 Photo</button>
 <button type="button" class="btn" onclick="deleteMemberPhoto('${escAttr(p._id)}')">📷 remove</button>
-<button type="button" class="btn" onclick="deleteMember('${escAttr(p._id)}')">🗑️ Delete</button>
+<button type="button" class="btn" onclick="deleteMember('${escAttr(p._id)}')">🔴 Delete</button>
 </div>`;
                 d.onpointerdown=e=>{if(e.target.closest('button,input,a'))e.stopPropagation()};cards.appendChild(d);
             });
