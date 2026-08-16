@@ -432,10 +432,10 @@ async function createFamily(){
                 const busY=py+(childY-py)/2;
                 const xs=childData.map(q=>q.x+CARD_W/2);
                 const minX=Math.min(...xs), maxX=Math.max(...xs);
-                // Main trunk: always continues from the parent's card toward the next generation.
-                drawLine(svg,px,py,px,busY,'trunk');
-                if(childData.length>1) drawLine(svg,minX,busY,maxX,busY,'branch');
-                childData.forEach(q=>drawLine(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY,'branch'));
+                // Natural tree-style trunk and branches: curved brown wood instead of straight diagram lines.
+                drawNaturalBranch(svg,px,py,px,busY,'trunk');
+                if(childData.length>1) drawNaturalBranch(svg,minX,busY,maxX,busY,'branch');
+                childData.forEach(q=>drawNaturalBranch(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY,'branch'));
             });
 
             // Extend the family-tree trunk/branches below the final generation too,
@@ -445,9 +445,31 @@ async function createFamily(){
                 const q=positions.get(String(p._id));
                 if(!q)return;
                 const x=q.x+CARD_W/2, y=q.y+CARD_H;
-                drawLine(svg,x,y,x,y+34,'branch');
+                drawNaturalBranch(svg,x,y,x,y+38,'branch');
             });
             renderMemberLinks();
+        }
+
+        function drawNaturalBranch(svg,x1,y1,x2,y2,kind='branch'){
+            const ns='http://www.w3.org/2000/svg';
+            const p=document.createElementNS(ns,'path');
+            const dx=x2-x1, dy=y2-y1;
+            let d;
+            if(Math.abs(dy)<3){
+                const bend=Math.max(18,Math.min(70,Math.abs(dx)*0.12));
+                d=`M${x1} ${y1} C${x1+dx*.28} ${y1-bend}, ${x1+dx*.72} ${y2+bend}, ${x2} ${y2}`;
+            }else{
+                const bend=Math.max(12,Math.min(55,Math.abs(dx)*.08+Math.abs(dy)*.08));
+                d=`M${x1} ${y1} C${x1+dx*.18} ${y1+dy*.38}, ${x2-dx*.18} ${y2-dy*.38}, ${x2} ${y2}`;
+            }
+            p.setAttribute('d',d);p.setAttribute('fill','none');
+            p.setAttribute('stroke',kind==='trunk'?'#7a4b28':'#8b5a2b');
+            p.setAttribute('stroke-width',kind==='trunk'?'18':'9');
+            p.setAttribute('stroke-linecap','round');p.setAttribute('stroke-linejoin','round');
+            svg.appendChild(p);
+            const hi=document.createElementNS(ns,'path'); hi.setAttribute('d',d); hi.setAttribute('fill','none');
+            hi.setAttribute('stroke',kind==='trunk'?'#a96f3d':'#b77b43'); hi.setAttribute('stroke-width',kind==='trunk'?'5':'2.5');
+            hi.setAttribute('stroke-linecap','round'); hi.setAttribute('opacity','0.8'); svg.appendChild(hi);
         }
 
         function drawLine(svg,x1,y1,x2,y2,kind='branch'){
