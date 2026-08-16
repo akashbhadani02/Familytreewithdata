@@ -80,6 +80,57 @@ app.get("/api/add/:token",async(req,res)=>{
   }catch(e){res.status(400).json({ok:false,error:e.message})}
 });
 
+
+// Public lineage search: find a person by name + father's name + grandfather's name,
+// then return the complete ancestor chain from the oldest available generation.
+app.post("/api/family/search-lineage",async(req,res)=>{
+  try{
+    await connectDB();
+    const name=String(req.body.name||"").trim();
+    const fatherName=String(req.body.fatherName||"").trim();
+    const grandfatherName=String(req.body.grandfatherName||"").trim();
+    if(!name||!fatherName||!grandfatherName)
+      return res.status(400).json({ok:false,error:"Name, father name and grandfather name are required."});
+
+    const norm=s=>s.trim().replace(/\s+/g," ").toLowerCase();
+    const candidates=await Person.find({name:{$regex:"^"+name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"$",$options:"i"}})
+      .sort({generation:1,createdAt:1}).lean();
+
+    const matches=[];
+    for(const self of candidates){
+      const father=self.parentId ? await Person.findById(self.parentId).lean() : null;
+      if(!father || norm(father.name)!==norm(fatherName)) continue;
+      const grandfather=father.parentId ? await Person.findById(father.parentId).lean() : null;
+      if(!grandfather || norm(grandfather.name)!==norm(grandfatherName)) continue;
+
+      const chain=[];
+      let cur=self;
+      const seen=new Set();
+      while(cur && !seen.has(String(cur._id))){
+        seen.add(String(cur._id));
+        chain.push({
+          _id:cur._id,
+          name:cur.name,
+          photo:cur.photo||"",
+          generation:cur.generation
+        });
+        if(!cur.parentId) break;
+        cur=await Person.findById(cur.parentId).lean();
+      }
+      chain.reverse();
+      matches.push({familyId:self.familyId,people:chain});
+      if(matches.length>=10) break;
+    }
+
+    if(!matches.length)
+      return res.status(404).json({ok:false,error:"આ નામ, પિતાનું નામ અને દાદાનું નામ મુજબ વંશાવળી મળી નથી."});
+
+    res.json({ok:true,matches});
+  }catch(e){
+    res.status(400).json({ok:false,error:e.message});
+  }
+});
+
 app.get("/api/family/:familyId",async(req,res)=>{
   try{
     await connectDB();
