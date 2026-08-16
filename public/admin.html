@@ -1273,41 +1273,55 @@ async function loadHtml2Canvas(){
         await loadJsPDF();
         btns.forEach(el=>el.style.display='none');
         if(typeof treeZoom==='number'){ treeZoom=1; if(typeof applyTreeZoom==='function') applyTreeZoom(); }
-        await new Promise(r=>setTimeout(r,200));
+        await new Promise(r=>setTimeout(r,250));
 
-        let dataUrl=null, imgW=0, imgH=0;
+        let sourceCanvas;
         const realCanvas=document.querySelector('#realTreeCanvas');
         const realOpen=document.body.classList.contains('real-tree-open');
         if(realOpen && realCanvas && realCanvas.width>0 && realCanvas.height>0){
-            // Real Tree is already drawn on this canvas. Export the actual pixels,
-            // not the 7000x5000 outer viewport, which was causing blank/cut PDFs.
-            dataUrl=realCanvas.toDataURL('image/png');
-            imgW=realCanvas.width; imgH=realCanvas.height;
+            sourceCanvas=realCanvas;
         }else{
             const node=document.querySelector('#canvas');
             if(!node) throw new Error('Tree canvas not found');
-            const imageCanvas=await html2canvas(node,{scale:1.25,backgroundColor:'#fbfcfe',useCORS:true,allowTaint:true,logging:false});
-            dataUrl=imageCanvas.toDataURL('image/jpeg',0.92);
-            imgW=imageCanvas.width; imgH=imageCanvas.height;
+            sourceCanvas=await html2canvas(node,{scale:1.25,backgroundColor:'#fbfcfe',useCORS:true,allowTaint:true,logging:false});
         }
+
+        const sw=Number(sourceCanvas.width), sh=Number(sourceCanvas.height);
+        if(!Number.isFinite(sw)||!Number.isFinite(sh)||sw<=0||sh<=0) throw new Error('Tree image has invalid size');
+
+        // Downsample very large Real Tree canvases before giving the image to jsPDF.
+        // This prevents huge/NaN coordinates and keeps the PDF reliable on phones too.
+        const MAX_W=2400, MAX_H=1800;
+        const exportScale=Math.min(1,MAX_W/sw,MAX_H/sh);
+        const ew=Math.max(1,Math.floor(sw*exportScale));
+        const eh=Math.max(1,Math.floor(sh*exportScale));
+        const exportCanvas=document.createElement('canvas');
+        exportCanvas.width=ew; exportCanvas.height=eh;
+        const ctx=exportCanvas.getContext('2d');
+        if(!ctx) throw new Error('Unable to create PDF image');
+        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,ew,eh);
+        ctx.drawImage(sourceCanvas,0,0,sw,sh,0,0,ew,eh);
+        const dataUrl=exportCanvas.toDataURL('image/jpeg',0.92);
 
         const {jsPDF}=window.jspdf;
         const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
-        const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
-        const margin=6, maxW=pageW-margin*2, maxH=pageH-margin*2;
-        const ratio=Math.min(maxW/imgW,maxH/imgH);
-        const w=imgW*ratio, h=imgH*ratio;
-        pdf.addImage(dataUrl, realOpen?'PNG':'JPEG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');
+        const pageW=Number(pdf.internal.pageSize.getWidth()), pageH=Number(pdf.internal.pageSize.getHeight());
+        const margin=6;
+        const maxW=pageW-margin*2, maxH=pageH-margin*2;
+        const ratio=Math.min(maxW/ew,maxH/eh);
+        const w=Number(ew*ratio), h=Number(eh*ratio);
+        const x=Number((pageW-w)/2), y=Number((pageH-h)/2);
+        if(![x,y,w,h].every(Number.isFinite)||w<=0||h<=0) throw new Error('Invalid PDF image coordinates');
+        pdf.addImage(dataUrl,'JPEG',x,y,w,h,undefined,'FAST');
         pdf.save('family-tree.pdf');
     }catch(e){
         console.error('PDF download error:',e);
-        alert('PDF download error: '+(e && e.message ? e.message : e));
+        alert('PDF download error: '+(e&&e.message?e.message:e));
     }finally{
         btns.forEach((el,i)=>el.style.display=oldDisplay[i]);
         if(typeof treeZoom==='number'){ treeZoom=oldZoom; if(typeof applyTreeZoom==='function') applyTreeZoom(); }
     }
 }
-
         async function downloadPNG(){
             if(!people.length)return;
             await loadHtml2Canvas();
