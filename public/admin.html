@@ -286,14 +286,14 @@
 .photo-choice-input{display:none!important}
 
         /* Real Tree: Close button only at the very bottom */
-        #realTreeBottomClose{display:none!important;text-align:center;padding:18px 10px 30px;position:relative;z-index:100;}
-        .real-tree-open #realTreeBottomClose{display:block!important;}
+        #realTreeBottomClose{display:none!important;text-align:center;padding:18px 10px 28px;position:relative;z-index:100;clear:both;}
+        .real-tree-open #realTreeBottomClose{display:block!important;width:100%!important;box-sizing:border-box!important;}
         .real-tree-open #realTreeBtn{display:none!important;}
         @media(max-width:700px){
             .real-tree-open{padding:8px!important;overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y!important;}
             .real-tree-open #treebox{height:auto!important;min-height:420px!important;overflow:visible!important;touch-action:auto!important;}
             .real-tree-open #realTreeBottomClose{padding:22px 10px 40px!important;}
-            .real-tree-open #realTreeBottomClose .btn{width:min(92vw,320px)!important;font-size:15px!important;padding:12px 18px!important;}
+            .real-tree-open #realTreeBottomClose .btn{width:min(92vw,320px)!important;font-size:15px!important;padding:12px 18px!important;display:inline-flex!important;justify-content:center!important;}
         }
 </style>
 
@@ -327,12 +327,12 @@
                         <div id="cards"></div>
                     </div></div>
                 </div>
+                <div id="realTreeBottomClose" class="real-tree-bottom-close"><button type="button" class="btn danger" onclick="toggleRealTreeView()">✕ Close Tree View</button></div>
                 <div class="links-panel">
                     <h3 style="margin:0">🔗 બધા Members ની Links</h3>
                     <div style="font-size:13px;color:#718096;margin-top:5px">Admin અહીંથી કોઈપણ member નું નામ બદલી શકે છે અને તેની link copy/share કરી શકે છે. Name બદલવાથી link બદલાશે નહીં.</div>
                     <div id="memberLinks" class="member-list"></div>
                 </div>
-                <div id="realTreeBottomClose" class="real-tree-bottom-close"><button type="button" class="btn danger" onclick="toggleRealTreeView()">✕ Close Tree View</button></div>
             </div>
         </div>
     </div>
