@@ -149,6 +149,21 @@
         .real-tree-open #treeLayer.real-natural-tree #svg text{font-family:Georgia,'Noto Sans Gujarati',Arial,sans-serif}
         .real-tree-close{background:#dc3545!important;color:#fff!important}
 
+        .real-tree-open #treeLayer.real-natural-tree{
+            background:linear-gradient(#a9d7ee 0%,#dcefcf 62%,#78ad54 100%)!important;
+            overflow:visible!important;
+        }
+        .real-tree-open #treeLayer.real-natural-tree #svg{
+            width:100%!important;height:100%!important;
+            min-width:100%!important;min-height:100%!important;
+            background:transparent!important;
+            display:block!important;visibility:visible!important;opacity:1!important;
+        }
+        .real-tree-open #treeLayer.real-natural-tree #svg .rt-trunk{stroke-width:150px!important}
+        .real-tree-open #treeLayer.real-natural-tree #svg .rt-main-branch{stroke-width:34px!important}
+        .real-tree-open #treeLayer.real-natural-tree #svg .rt-branch{stroke-width:18px!important}
+        .real-tree-open #treeLayer.real-natural-tree #svg .rt-twig{stroke-width:7px!important}
+
         .canvas {
             position: relative;
             width: 7000px;
@@ -643,204 +658,186 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
         function escAttr(v){return String(v??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
         function drawRealTreeStructure(){
-            const layer=$('treeLayer'), svg=$('svg');
-            if(!layer||!svg||!people.length)return;
+            const layer=$('treeLayer'), svg=$('svg'), canvas=$('canvas');
+            if(!layer||!svg||!canvas||!people.length)return;
             layer.classList.add('real-natural-tree');
 
             const NS='http://www.w3.org/2000/svg';
-            const CARD_W=210, CARD_H=178, LEVEL_GAP=250, SIDE_GAP=105, PAD=320;
+            const CARD_W=210, CARD_H=178, X_GAP=70, LEVEL_GAP=235, PAD=260;
             const children=new Map();
             people.forEach(p=>{
                 if(!p.parentId)return;
-                const pid=String(p.parentId);
-                if(!children.has(pid))children.set(pid,[]);
-                children.get(pid).push(p);
+                const id=String(p.parentId);
+                if(!children.has(id))children.set(id,[]);
+                children.get(id).push(p);
             });
-            children.forEach(a=>a.sort((x,y)=>(Number(x.generation)||1)-(Number(y.generation)||1)));
             const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>(Number(a.generation)||1)-(Number(b.generation)||1))[0];
             if(!root)return;
+            children.forEach(a=>a.sort((a,b)=>(Number(a.generation)||0)-(Number(b.generation)||0)));
 
-            // Width of every natural branch.  More children = wider branch canopy.
             const widthMemo=new Map();
-            function subtreeWidth(id){
-                id=String(id); if(widthMemo.has(id))return widthMemo.get(id);
+            function subtreeWidth(node){
+                const id=String(node._id);
+                if(widthMemo.has(id))return widthMemo.get(id);
                 const kids=children.get(id)||[];
-                if(!kids.length){widthMemo.set(id,CARD_W+50);return CARD_W+50;}
-                const total=kids.reduce((sum,k)=>sum+subtreeWidth(k._id),0)+SIDE_GAP*(kids.length-1);
-                const w=Math.max(CARD_W+80,total);
-                widthMemo.set(id,w);return w;
+                if(!kids.length){const w=CARD_W+40;widthMemo.set(id,w);return w;}
+                const w=kids.reduce((sum,k)=>sum+subtreeWidth(k),0)+X_GAP*(kids.length-1);
+                const out=Math.max(CARD_W+40,w);widthMemo.set(id,out);return out;
             }
+
+            // In Real Tree View the oldest/root member is near the bottom of the trunk.
+            // Each younger generation grows upward and outward, like a real tree.
+            const maxGen=Math.max(...people.map(p=>Number(p.generation)||1),1);
             const positions=new Map();
+            const totalW=Math.max(1800,subtreeWidth(root)+PAD*2);
+            const totalH=Math.max(1500,(maxGen+1)*LEVEL_GAP+PAD*2);
+            const rootY=totalH-PAD-CARD_H;
+
             function place(node,cx,y){
-                const kids=children.get(String(node._id))||[];
-                const w=subtreeWidth(node._id);
-                positions.set(String(node._id),{x:cx-CARD_W/2,y});
+                const id=String(node._id), kids=children.get(id)||[];
+                const w=subtreeWidth(node);
+                positions.set(id,{x:cx-CARD_W/2,y});
                 if(!kids.length)return;
                 let cur=cx-w/2;
-                kids.forEach(k=>{
-                    const kw=subtreeWidth(k._id), childCx=cur+kw/2;
-                    place(k,childCx,y+LEVEL_GAP);
-                    cur+=kw+SIDE_GAP;
+                // children spread left/right above the parent
+                kids.forEach((kid,i)=>{
+                    const kw=subtreeWidth(kid);
+                    place(kid,cur+kw/2,y-LEVEL_GAP);
+                    cur+=kw+X_GAP;
                 });
             }
+            place(root,totalW/2,rootY);
 
-            const totalW=Math.max(1500,subtreeWidth(root._id)+PAD*2);
-            const maxLevel=Math.max(...people.map(p=>Number(p.generation)||1),1);
-            const totalH=Math.max(1500,PAD+maxLevel*LEVEL_GAP+520);
-            place(root,totalW/2,135);
-
-            const oldCanvas=$('canvas');
-            oldCanvas.dataset.baseWidth=totalW; oldCanvas.dataset.baseHeight=totalH;
+            canvas.dataset.baseWidth=totalW;
+            canvas.dataset.baseHeight=totalH;
             applyTreeZoom(totalW,totalH);
-            svg.setAttribute('width',totalW); svg.setAttribute('height',totalH);
+            svg.setAttribute('width',totalW);
+            svg.setAttribute('height',totalH);
             svg.setAttribute('viewBox',`0 0 ${totalW} ${totalH}`);
             svg.innerHTML='';
 
             document.querySelectorAll('#cards .card').forEach(card=>{
                 const q=positions.get(String(card.dataset.personId));
                 if(!q)return;
-                card.style.left=q.x+'px'; card.style.top=q.y+'px';
-                card.style.zIndex='20';
+                card.style.left=q.x+'px';
+                card.style.top=q.y+'px';
+                card.style.zIndex='30';
             });
 
-            const add=(tag,attrs,parent=svg)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));parent.appendChild(e);return e;};
-            const path=(d,stroke,width,extra={})=>{
-                const cls=extra.class || extra.className || 'rt-branch';
-                const attrs={d,fill:'none',stroke,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',...extra,class:cls};
-                delete attrs.className;
-                const e=add('path',attrs);
+            const add=(tag,attrs,parent=svg)=>{
+                const e=document.createElementNS(NS,tag);
+                Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));
+                parent.appendChild(e);return e;
+            };
+            const path=(d,stroke,width,cls='rt-branch',extra={})=>{
+                const e=add('path',{d,fill:'none',stroke,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',class:cls,...extra});
                 e.style.setProperty('stroke',stroke,'important');
-                e.style.setProperty('stroke-width',String(width),'important');
+                e.style.setProperty('stroke-width',width+'px','important');
                 e.style.setProperty('stroke-linecap','round','important');
                 e.style.setProperty('stroke-linejoin','round','important');
                 e.style.setProperty('fill','none','important');
                 return e;
             };
-            const text=(x,y,value,size=15,extra={})=>{const t=add('text',{x,y,'text-anchor':'middle','font-size':size,'font-family':'Noto Sans, Arial, sans-serif','font-weight':'800',fill:'#4a2917',...extra});t.textContent=value;return t;};
+
             const defs=add('defs');
             defs.innerHTML=`
-              <linearGradient id="rtSky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9e3f2"/><stop offset=".58" stop-color="#dff0d1"/><stop offset="1" stop-color="#79aa54"/></linearGradient>
-              <linearGradient id="rtGround2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#78b452"/><stop offset="1" stop-color="#315f31"/></linearGradient>
-              <linearGradient id="rtWood2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3b1f10"/><stop offset=".18" stop-color="#75411f"/><stop offset=".42" stop-color="#c17a3b"/><stop offset=".58" stop-color="#d99555"/><stop offset=".78" stop-color="#7b4722"/><stop offset="1" stop-color="#32190c"/></linearGradient>
-              <linearGradient id="rtBranch2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4a2814"/><stop offset=".45" stop-color="#b56d36"/><stop offset=".7" stop-color="#d18a4c"/><stop offset="1" stop-color="#4b2814"/></linearGradient>
-              <radialGradient id="rtLeaf2"><stop offset="0" stop-color="#bce982"/><stop offset=".52" stop-color="#5caa3d"/><stop offset="1" stop-color="#1e592b"/></radialGradient>
-              <filter id="rtShadow2"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity=".23"/></filter>`;
+              <linearGradient id="rtSkyReal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ec9ea"/><stop offset=".68" stop-color="#dceecf"/><stop offset="1" stop-color="#77aa50"/></linearGradient>
+              <linearGradient id="rtGroundReal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#82b95b"/><stop offset="1" stop-color="#315c2d"/></linearGradient>
+              <linearGradient id="rtWoodReal" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#35190b"/><stop offset=".17" stop-color="#75401e"/><stop offset=".38" stop-color="#c27a3c"/><stop offset=".55" stop-color="#e0a062"/><stop offset=".76" stop-color="#814a24"/><stop offset="1" stop-color="#32170a"/></linearGradient>
+              <linearGradient id="rtBranchReal" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#45230f"/><stop offset=".35" stop-color="#9c5b2c"/><stop offset=".62" stop-color="#d18a4e"/><stop offset="1" stop-color="#4a2511"/></linearGradient>
+              <radialGradient id="rtLeafReal"><stop offset="0" stop-color="#d2ef91"/><stop offset=".5" stop-color="#61aa3e"/><stop offset="1" stop-color="#18552a"/></radialGradient>
+              <filter id="rtShadowReal"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".28"/></filter>`;
 
-            // Natural background.
-            add('rect',{x:0,y:0,width:totalW,height:totalH,fill:'url(#rtSky2)'});
-            add('path',{d:`M0 ${totalH-570} Q ${totalW*.18} ${totalH-730} ${totalW*.38} ${totalH-590} T ${totalW*.72} ${totalH-650} T ${totalW} ${totalH-570} L${totalW} ${totalH} L0 ${totalH}Z`,fill:'url(#rtGround2)'});
+            // Full natural background so the tree itself is always visible.
+            add('rect',{x:0,y:0,width:totalW,height:totalH,fill:'url(#rtSkyReal)'});
+            add('path',{d:`M0 ${totalH-420} Q${totalW*.18} ${totalH-560} ${totalW*.36} ${totalH-440} T${totalW*.72} ${totalH-510} T${totalW} ${totalH-430} L${totalW} ${totalH} L0 ${totalH}Z`,fill:'url(#rtGroundReal)'});
 
             const rootQ=positions.get(String(root._id));
             const cx=rootQ.x+CARD_W/2;
-            const groundY=totalH-145;
-            const trunkTop=rootQ.y+CARD_H*.58;
+            const trunkBaseY=totalH+30;
+            const trunkTopY=rootQ.y+CARD_H*.35;
 
-            // Big organic trunk, deliberately much wider than the family branches.
-            path(`M ${cx-110} ${groundY} C ${cx-150} ${groundY-180}, ${cx-85} ${groundY-360}, ${cx-100} ${groundY-610} C ${cx-115} ${groundY-870}, ${cx-65} ${trunkTop+300}, ${cx-34} ${trunkTop}`,'url(#rtWood2)',145,{filter:'url(#rtShadow2)',class:'rt-trunk'});
-            path(`M ${cx+110} ${groundY} C ${cx+150} ${groundY-180}, ${cx+85} ${groundY-360}, ${cx+100} ${groundY-610} C ${cx+115} ${groundY-870}, ${cx+65} ${trunkTop+300}, ${cx+34} ${trunkTop}`,'url(#rtWood2)',145,{filter:'url(#rtShadow2)',class:'rt-trunk'});
-            // Strong central trunk face so it remains clearly visible behind the cards.
-            path(`M ${cx-28} ${groundY-10} C ${cx-48} ${groundY-230}, ${cx-30} ${groundY-430}, ${cx-18} ${trunkTop+35}`,'#a96832',52,{opacity:.92,class:'rt-trunk'});
-            path(`M ${cx+8} ${groundY-10} C ${cx+28} ${groundY-250}, ${cx+25} ${groundY-430}, ${cx+18} ${trunkTop+35}`,'#e0a166',18,{opacity:.55,class:'rt-trunk'});
-            for(let i=-7;i<=7;i++){
+            // Large, unmistakable main trunk.
+            path(`M${cx-105} ${trunkBaseY} C${cx-155} ${trunkBaseY-180},${cx-90} ${trunkBaseY-390},${cx-72} ${trunkTopY+120} C${cx-58} ${trunkTopY+65},${cx-45} ${trunkTopY+35},${cx-35} ${trunkTopY}`,'url(#rtWoodReal)',150,'rt-trunk',{filter:'url(#rtShadowReal)'});
+            path(`M${cx+105} ${trunkBaseY} C${cx+155} ${trunkBaseY-180},${cx+90} ${trunkBaseY-390},${cx+72} ${trunkTopY+120} C${cx+58} ${trunkTopY+65},${cx+45} ${trunkTopY+35},${cx+35} ${trunkTopY}`,'url(#rtWoodReal)',150,'rt-trunk',{filter:'url(#rtShadowReal)'});
+            path(`M${cx-30} ${trunkBaseY} C${cx-50} ${trunkBaseY-240},${cx-25} ${trunkBaseY-500},${cx-16} ${trunkTopY+5}`,'#b66c34',46,'rt-trunk',{opacity:.85});
+            for(let i=-8;i<=8;i++){
                 const ox=i*13;
-                path(`M ${cx+ox} ${groundY-30} C ${cx+ox+i*7} ${groundY-240}, ${cx+ox-i*6} ${groundY-470}, ${cx+ox+i*5} ${trunkTop+30}`,'#5b3118',Math.max(2,Math.abs(i)%3+2),{opacity:.36});
+                path(`M${cx+ox} ${trunkBaseY-15} C${cx+ox+i*5} ${trunkBaseY-260},${cx+ox-i*4} ${trunkBaseY-520},${cx+ox+i*2} ${trunkTopY+10}`,'#4d2814',Math.max(2,Math.abs(i)%4+2),'rt-trunk',{opacity:.28});
             }
 
-            // Roots spreading out from the trunk.
-            [-1,-.82,-.63,-.4,.4,.63,.82,1].forEach((dir,i)=>{
-                const ex=cx+dir*(150+i*24);
-                path(`M ${cx+dir*25} ${groundY-45} C ${cx+dir*55} ${groundY-10}, ${cx+dir*105} ${groundY+8}, ${ex} ${groundY+55}`,'url(#rtBranch2)',11-(i%3),{opacity:.95,class:'rt-root'});
+            // Roots.
+            [-1,-.82,-.62,-.42,-.22,.22,.42,.62,.82,1].forEach((dir,i)=>{
+                const ex=cx+dir*(170+i*28);
+                path(`M${cx+dir*22} ${trunkBaseY-35} C${cx+dir*70} ${trunkBaseY-5},${cx+dir*120} ${trunkBaseY+10},${ex} ${trunkBaseY+70}`,'url(#rtBranchReal)',10-(i%4),'rt-root',{filter:'url(#rtShadowReal)'});
             });
 
-            function leafCluster(x,y,dir=1,count=8){
-                for(let i=0;i<count;i++){
-                    const lx=x+dir*((i%4)*18-(i%2)*7), ly=y-((i*19)%58);
-                    add('ellipse',{cx:lx,cy:ly,rx:15-(i%3)*2,ry:9+(i%2)*2,fill:'url(#rtLeaf2)',transform:`rotate(${dir*(i*17-28)} ${lx} ${ly})`,filter:'url(#rtShadow2)',opacity:.96});
+            function leaves(x,y,dir=1,n=9){
+                for(let i=0;i<n;i++){
+                    const lx=x+dir*((i%4)*18),ly=y-(i%5)*15;
+                    add('ellipse',{cx:lx,cy:ly,rx:15-(i%3)*2,ry:9+(i%2)*2,fill:'url(#rtLeafReal)',filter:'url(#rtShadowReal)',transform:`rotate(${dir*(i*15-30)} ${lx} ${ly})`});
                 }
             }
 
-            // Branch labels are written on the wood, like the reference image.
-            function branchLabel(p,x,y,angle){
-                const name=(p.name||'').trim();
-                if(!name)return;
-                const safe=name.length>22?name.slice(0,21)+'…':name;
+            // A small wooden name plate placed on a branch itself.
+            function branchName(p,x,y,angle){
+                const name=(p.name||'').trim();if(!name)return;
                 const g=add('g',{transform:`rotate(${angle} ${x} ${y})`});
-                add('rect',{x:x-58,y:y-12,width:116,height:24,rx:10,fill:'#d99758',opacity:.84,stroke:'#7a421f','stroke-width':1},g);
-                const t=add('text',{x,y:y+5,'text-anchor':'middle','font-size':'12','font-weight':'900','font-family':'Noto Sans, Arial, sans-serif',fill:'#3f2415'},g);t.textContent=safe;
+                add('rect',{x:x-62,y:y-13,width:124,height:26,rx:9,fill:'#d99a5d',stroke:'#6d381a','stroke-width':2,opacity:.96},g);
+                const t=add('text',{x,y:y+5,'text-anchor':'middle','font-size':12,'font-weight':900,'font-family':'Noto Sans,Arial,sans-serif',fill:'#3a1d0d'},g);t.textContent=name.length>20?name.slice(0,19)+'…':name;
             }
 
-            // Each parent gets a real branch junction; every child gets its own offshoot.
-            // This creates the "one trunk -> many branches -> smaller twigs" structure.
-            function drawParentBranches(parent){
-                const kids=children.get(String(parent._id))||[];
-                if(!kids.length)return;
-                const pq=positions.get(String(parent._id));
-                if(!pq)return;
-                const px=pq.x+CARD_W/2, py=pq.y+CARD_H*.35;
+            // Each parent -> child is an actual curved wooden branch.
+            function drawParent(parent){
+                const kids=children.get(String(parent._id))||[];if(!kids.length)return;
+                const pq=positions.get(String(parent._id));if(!pq)return;
+                const px=pq.x+CARD_W/2, py=pq.y+CARD_H*.18;
                 const level=Number(parent.generation)||1;
-                const stemWidth=Math.max(12,30-(level-1)*2.2);
-                const junctionY=py-58;
-                const spread=Math.max(70,Math.min(190,subtreeWidth(parent._id)/(kids.length+1)*.35));
-
-                // Parent stem rising above the card to a visible fork.
-                path(`M ${px} ${py+30} C ${px} ${py-10}, ${px} ${junctionY+45}, ${px} ${junctionY}`,'url(#rtBranch2)',stemWidth,{filter:'url(#rtShadow2)'});
-                add('circle',{cx:px,cy:junctionY,r:stemWidth*.48,fill:'#875025',filter:'url(#rtShadow2)'});
-
+                const stemW=Math.max(10,26-(level-1)*2.3);
+                // stem behind parent card
+                path(`M${px} ${py+35} C${px} ${py+5},${px} ${py-35},${px} ${py-75}`,'url(#rtBranchReal)',stemW,'rt-main-branch',{filter:'url(#rtShadowReal)'});
                 kids.forEach((child,i)=>{
-                    const cq=positions.get(String(child._id)); if(!cq)return;
-                    const tx=cq.x+CARD_W/2, ty=cq.y+CARD_H*.78;
-                    const dir=tx>=px?1:-1;
-                    const dx=Math.abs(tx-px);
-                    const bend=Math.max(75,Math.min(250,dx*.34));
-                    const bw=Math.max(6,21-(level-1)*1.8);
-                    const endY=ty+6;
-                    const c1x=px+dir*Math.max(25,bend*.25);
-                    const c2x=tx-dir*Math.max(35,bend*.55);
-                    path(`M ${px} ${junctionY} C ${c1x} ${junctionY-18}, ${c2x} ${endY-55}, ${tx} ${endY}`,'url(#rtBranch2)',bw,{filter:'url(#rtShadow2)'});
-                    path(`M ${px+dir*2} ${junctionY-1} C ${c1x+dir*9} ${junctionY-15}, ${c2x-dir*8} ${endY-48}, ${tx+dir*2} ${endY}`,'#e0a166',Math.max(2,bw*.2),{opacity:.55});
-
-                    // Name burned/written along this actual branch.
-                    const lx=px+(tx-px)*.52, ly=junctionY+(endY-junctionY)*.52-10;
-                    const ang=Math.max(-28,Math.min(28,Math.atan2(endY-junctionY,tx-px)*180/Math.PI-90));
-                    branchLabel(child,lx,ly,ang);
-
-                    // Small twig splitting off the child branch.
-                    const twigX=tx-dir*40, twigY=endY-20;
-                    path(`M ${twigX} ${twigY+20} C ${twigX+dir*15} ${twigY-5}, ${twigX+dir*42} ${twigY-18}, ${twigX+dir*65} ${twigY-42}`,'url(#rtBranch2)',Math.max(3,bw*.28),{opacity:.95,class:'rt-twig'});
-                    leafCluster(twigX+dir*62,twigY-42,dir,7);
+                    const cq=positions.get(String(child._id));if(!cq)return;
+                    const tx=cq.x+CARD_W/2,ty=cq.y+CARD_H*.85;
+                    const dir=tx>=px?1:-1, dx=Math.abs(tx-px);
+                    const jx=px+dir*Math.min(120,Math.max(55,dx*.28));
+                    const branchW=Math.max(7,19-(level-1)*1.5);
+                    path(`M${px} ${py-75} C${jx} ${py-115},${tx-dir*Math.max(60,dx*.28)} ${ty+70},${tx} ${ty}`,'url(#rtBranchReal)',branchW,'rt-branch',{filter:'url(#rtShadowReal)'});
+                    branchName(child,px+(tx-px)*.48,py-88+(ty-py)*.48,Math.max(-25,Math.min(25,dir*18)));
+                    // terminal twig / leaf spray on every child branch
+                    const twigX=tx-dir*28,twigY=ty-18;
+                    path(`M${twigX} ${twigY} C${twigX+dir*35} ${twigY-28},${twigX+dir*60} ${twigY-45},${twigX+dir*82} ${twigY-70}`,'url(#rtBranchReal)',Math.max(4,branchW*.42),'rt-twig');
+                    leaves(twigX+dir*78,twigY-68,dir,8);
                 });
             }
 
-            // Root's connection to the giant trunk is a large crown fork.
+            // Connect the giant trunk to root's children with thick crown branches.
             const rootKids=children.get(String(root._id))||[];
             rootKids.forEach((child,i)=>{
                 const q=positions.get(String(child._id));if(!q)return;
-                const tx=q.x+CARD_W/2, ty=q.y+CARD_H*.78, dir=tx>=cx?1:-1;
-                const bw=32;
-                path(`M ${cx} ${trunkTop+25} C ${cx+dir*95} ${trunkTop-10}, ${tx-dir*120} ${ty-95}, ${tx} ${ty}`,'url(#rtWood2)',bw,{filter:'url(#rtShadow2)'});
-                path(`M ${cx+dir*5} ${trunkTop+24} C ${cx+dir*90} ${trunkTop+3}, ${tx-dir*110} ${ty-85}, ${tx+dir*3} ${ty}`,'#e0a166',6,{opacity:.45});
-                branchLabel(child,cx+(tx-cx)*.45,trunkTop+(ty-trunkTop)*.45-15,dir*(i%2?16:-16));
+                const tx=q.x+CARD_W/2,ty=q.y+CARD_H*.9,dir=tx>=cx?1:-1,dx=Math.abs(tx-cx);
+                path(`M${cx} ${trunkTopY+40} C${cx+dir*Math.max(80,dx*.25)} ${trunkTopY-15},${tx-dir*Math.max(90,dx*.35)} ${ty+80},${tx} ${ty}`,'url(#rtWoodReal)',34,'rt-main-branch',{filter:'url(#rtShadowReal)'});
+                branchName(child,cx+(tx-cx)*.48,trunkTopY-8+(ty-trunkTopY)*.48,dir*16);
             });
 
-            // Draw all lower-generation branch junctions.
-            people.forEach(p=>{ if(String(p._id)!==String(root._id)) drawParentBranches(p); });
+            people.forEach(p=>{if(String(p._id)!==String(root._id))drawParent(p);});
 
-            // Every last-generation member gets a visible terminal twig and leaves.
+            // Every last-generation member has a real terminal branch + leaves.
             people.filter(p=>(children.get(String(p._id))||[]).length===0).forEach((p,i)=>{
                 const q=positions.get(String(p._id));if(!q)return;
                 const x=q.x+CARD_W/2,y=q.y+CARD_H*.9,dir=i%2?-1:1;
-                path(`M ${x} ${y} C ${x+dir*18} ${y+35}, ${x-dir*22} ${y+78}, ${x+dir*5} ${y+118}`,'url(#rtBranch2)',7,{filter:'url(#rtShadow2)',class:'rt-twig'});
-                leafCluster(x+dir*8,y+115,dir,9);
+                path(`M${x} ${y} C${x+dir*18} ${y+35},${x-dir*10} ${y+75},${x+dir*12} ${y+120}`,'url(#rtBranchReal)',7,'rt-twig');
+                leaves(x+dir*14,y+116,dir,10);
             });
 
-            // Generation text sits subtly on the trunk/wood, not as diagram lines.
-            const gens=[...new Set(people.map(p=>Number(p.generation)||1))].sort((a,b)=>a-b);
-            gens.forEach((g,i)=>{
-                const members=people.filter(p=>(Number(p.generation)||1)===g); if(!members.length)return;
-                const q=positions.get(String(members[0]._id));if(!q)return;
-                const gx=(q.x+CARD_W/2), gy=Math.max(70,q.y-35);
-                text(gx,gy,`Generation ${g}`,13,{opacity:.78});
-            });
+            // A few extra leaf clusters around the upper canopy make it look like a real tree,
+            // while all family branches still come from the actual parent/child data.
+            for(let i=0;i<Math.min(14,Math.max(6,people.length));i++){
+                const ang=(i/(Math.min(14,Math.max(6,people.length))-1))*Math.PI;
+                const lx=cx+Math.cos(ang)*Math.min(totalW*.38,700);
+                const ly=trunkTopY-80-Math.sin(ang)*260;
+                leaves(lx,ly,i%2?1:-1,7);
+            }
         }
 
         async function toggleRealTreeView(){
@@ -971,7 +968,6 @@ function chooseGallery(){
 
 
 <script id="adminPhotoChoiceScript">
-let photoChoiceTargetInput=null;
 function openPhotoChoice(input){
   photoChoiceTargetInput=input||null;
   const o=document.getElementById('photoChoiceOverlay');
