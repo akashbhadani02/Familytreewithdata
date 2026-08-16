@@ -153,6 +153,47 @@ html,body{overflow-x:hidden;}
    min-height:320px!important;
  }
 }
+</style><style>
+/* ===== FULLSCREEN TREE POPUP ===== */
+.tree-popup-overlay{
+  position:fixed!important;inset:0!important;z-index:2147483000!important;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);padding:10px;box-sizing:border-box;
+}
+.tree-popup-overlay.open{display:flex!important;}
+.tree-popup{
+  position:relative!important;width:100%!important;height:100%!important;
+  max-width:1800px!important;max-height:100%!important;
+  background:#fff!important;border-radius:14px!important;
+  overflow:hidden!important;box-shadow:0 20px 70px rgba(0,0,0,.35);
+  display:flex!important;flex-direction:column!important;
+}
+.tree-popup-header{
+  flex:0 0 auto;height:54px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 12px 0 16px;
+  background:#fff;border-bottom:1px solid #ddd;z-index:20;
+}
+.tree-popup-title{font-size:17px;font-weight:700;}
+.tree-popup-close{
+  width:42px;height:42px;border:0;border-radius:10px;
+  background:#ef4444;color:#fff;font-size:26px;line-height:1;
+  cursor:pointer;font-weight:700;
+}
+.tree-popup-body{
+  position:relative;flex:1 1 auto;min-height:0;overflow:hidden!important;
+}
+.tree-popup-body .tree-only-viewport,
+.tree-popup-body .real-tree-viewport,
+.tree-popup-body #realTreeViewport,
+.tree-popup-body #treeViewport{
+  width:100%!important;height:100%!important;max-height:none!important;
+  min-height:0!important;border-radius:0!important;
+}
+@media(max-width:768px){
+ .tree-popup-overlay{padding:0;}
+ .tree-popup{border-radius:0;}
+ .tree-popup-header{height:50px;}
+}
 </style></head>
 <body>
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
@@ -950,5 +991,75 @@ initTreeZoomTouch();
   document.addEventListener('DOMContentLoaded',()=>setTimeout(bootTreeOnlyZoom,500));
   window.addEventListener('load',()=>setTimeout(bootTreeOnlyZoom,800));
   window.bootTreeOnlyZoom=bootTreeOnlyZoom;
+})();
+</script><script>
+/* ===== TREE POPUP OPEN/CLOSE ===== */
+(function(){
+  function makePopup(){
+    if(document.getElementById('treePopupOverlay')) return;
+    const ov=document.createElement('div');
+    ov.id='treePopupOverlay';
+    ov.className='tree-popup-overlay';
+    ov.innerHTML='<div class="tree-popup" role="dialog" aria-modal="true">'+
+      '<div class="tree-popup-header"><div class="tree-popup-title">🌳 Family Tree</div>'+
+      '<button type="button" class="tree-popup-close" id="treePopupClose" aria-label="Close">×</button></div>'+
+      '<div class="tree-popup-body" id="treePopupBody"></div></div>';
+    document.body.appendChild(ov);
+    document.getElementById('treePopupClose').onclick=closeTreePopup;
+    ov.addEventListener('click',e=>{if(e.target===ov)closeTreePopup();});
+  }
+
+  window.openTreePopup=function(treeEl){
+    makePopup();
+    const body=document.getElementById('treePopupBody');
+    const el=typeof treeEl==='string'?document.querySelector(treeEl):treeEl;
+    if(!el) return;
+    el.__treePopupOriginalParent=el.parentNode;
+    el.__treePopupOriginalNext=el.nextSibling;
+    body.appendChild(el);
+    document.getElementById('treePopupOverlay').classList.add('open');
+    document.body.style.overflow='hidden';
+    setTimeout(()=>{
+      if(window.bootTreeOnlyZoom) window.bootTreeOnlyZoom();
+      if(window.initMobilePinch) window.initMobilePinch();
+      if(window.fitFamilyTreeToScreen) window.fitFamilyTreeToScreen();
+    },150);
+  };
+
+  window.closeTreePopup=function(){
+    const ov=document.getElementById('treePopupOverlay');
+    if(!ov)return;
+    const el=document.querySelector('#treePopupBody > .tree-only-viewport,#treePopupBody > .real-tree-viewport,#treePopupBody > #realTreeViewport,#treePopupBody > #treeViewport');
+    if(el && el.__treePopupOriginalParent){
+      el.__treePopupOriginalParent.insertBefore(el,el.__treePopupOriginalNext);
+    }
+    ov.classList.remove('open');
+    document.body.style.overflow='';
+  };
+
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTreePopup();});
+
+  function addOpenButtons(){
+    // Existing buttons whose text indicates a tree view open the popup.
+    document.querySelectorAll('button,a').forEach(btn=>{
+      if(btn.dataset.popupTreeBound) return;
+      const txt=(btn.textContent||'').trim().toLowerCase();
+      if(!/real tree|family tree|tree view|view tree/.test(txt)) return;
+      if(/close|download|pdf/.test(txt)) return;
+      btn.dataset.popupTreeBound='1';
+      btn.addEventListener('click',function(e){
+        // Only intercept if a tree viewport already exists on this page.
+        const tree=document.querySelector('#realTreeViewport,#treeViewport,.real-tree-viewport,.tree-only-viewport');
+        if(tree){
+          e.preventDefault();e.stopImmediatePropagation();
+          openTreePopup(tree);
+        }
+      },true);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(addOpenButtons,300));
+  window.addEventListener('load',()=>setTimeout(addOpenButtons,700));
+  window.addEventListener('treeRendered',addOpenButtons);
 })();
 </script></body></html>
