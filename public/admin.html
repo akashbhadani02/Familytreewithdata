@@ -403,7 +403,27 @@
         }
 </style>
 
-</head>
+<style>
+/* ===== GENERATION-WISE COMPACT REAL TREE / A4 PRINT ===== */
+.gen-real-tree-wrap{
+ position:relative;width:100%;height:100%;overflow:auto;
+ background:#fff;touch-action:none;overscroll-behavior:contain;
+}
+.gen-real-tree{
+ transform-origin:0 0;display:block;margin:0 auto;
+}
+.gen-node-photo{stroke:#fff;stroke-width:3}
+.gen-node-name{font-family:Arial,sans-serif;font-weight:700;fill:#111;text-anchor:middle}
+.gen-branch{fill:none;stroke:#6b4f2a;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.gen-trunk{fill:none;stroke:#6b4f2a;stroke-width:7;stroke-linecap:round}
+.gen-gen-label{font-family:Arial,sans-serif;font-size:13px;font-weight:700;fill:#777;text-anchor:middle}
+.gen-a4-print{
+ width:297mm!important;height:210mm!important;
+ max-width:none!important;max-height:none!important;
+ overflow:hidden!important;background:#fff!important;
+}
+.gen-a4-print .gen-real-tree{width:297mm;height:210mm}
+</style></head>
 
 <body>
     <header>
@@ -911,13 +931,13 @@ async function editName(id){
     }));
 
     const maxGen = Math.max(...people.map(generation),1);
-    const plaqueW = 150;
-    const plaqueH = 90;
-    const gen1Gap = 108;
-    const levelGap = 175;
-    const sideGap = 72;
-    const topPad = 100;
-    const bottomPad = 90;
+    const plaqueW = 230;
+    const plaqueH = 158;
+    const gen1Gap = 190;
+    const levelGap = 245;
+    const sideGap = 300;
+    const topPad = 150;
+    const bottomPad = 120;
 
     // Measure each Gen-1 branch horizontally so Gen-2/3 siblings never overlap.
     const branchWidth = new Map();
@@ -935,7 +955,7 @@ async function editName(id){
     gen1.forEach(measureBranch);
 
     const maxBranchWidth=Math.max(...gen1.map(p=>branchWidth.get(String(p._id))||plaqueW+80), plaqueW+80);
-    const treeWidth=Math.max(1100, Math.min(9000, Math.max(maxBranchWidth+360, gen1.length*120+700)));
+    const treeWidth=Math.max(2200, Math.min(14000, Math.max(maxBranchWidth+800, gen1.length*260+1200)));
     const trunkTopY=topPad;
     const trunkBottomY=topPad + (gen1.length-1)*gen1Gap;
     const trunkX=treeWidth/2;
@@ -1029,29 +1049,22 @@ async function editName(id){
     }
     function plaque(p,x,y,small=false){
         const name=String(p.name||'').trim(); if(!name)return;
-        // CARDLESS REAL TREE: only a small photo circle + compact name label.
-        // This dramatically reduces horizontal space for brothers/sisters.
-        const photoR = small ? 24 : 29;
-        drawMemberPhoto(p,x,y-18,photoR);
-        const font='800 '+(small?14:16)+'px Arial, "Noto Sans Gujarati", sans-serif';
-        const lines=wrapName(name,145,font);
-        ctx.save();
-        ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font=font;
-        ctx.shadowColor='rgba(255,255,255,.85)'; ctx.shadowBlur=3;
-        ctx.fillStyle='#2d1609';
-        const startY=y+27-(lines.length-1)*8;
-        lines.forEach((line,i)=>ctx.fillText(line,x,startY+i*17));
-        ctx.font='700 9px Arial'; ctx.fillStyle='#5b3218'; ctx.shadowBlur=2;
-        ctx.fillText('Gen '+generation(p),x,y+58+(lines.length-1)*2);
-        ctx.restore();
+        const cardW=230, cardH=164, top=y-cardH/2;
+        ctx.save();ctx.shadowColor='rgba(30,15,5,.32)';ctx.shadowBlur=10;ctx.shadowOffsetY=5;ctx.fillStyle='#c98543';ctx.strokeStyle='#5b3218';ctx.lineWidth=4;ctx.beginPath();ctx.roundRect(x-cardW/2,top,cardW,cardH,14);ctx.fill();ctx.stroke();ctx.restore();
+        drawMemberPhoto(p,x,top+42,31);
+        const font='800 '+(small?15:17)+'px Arial, "Noto Sans Gujarati", sans-serif';
+        const lines=wrapName(name,195,font);
+        ctx.save();ctx.fillStyle='#2d1609';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=font;
+        const start=top+88-(lines.length-1)*9;lines.forEach((line,i)=>ctx.fillText(line,x,start+i*20));
+        ctx.font='700 11px Arial';ctx.fillStyle='#5b3218';ctx.fillText('Generation '+generation(p),x,top+139);ctx.restore();
     }
 
     /* ---------- ONE LARGE CONTINUOUS GEN-1 TRUNK ---------- */
-    strokeCurve(trunkX-115,groundY+10,trunkX-170,groundY-190,trunkX-120,trunkBottomY+170,trunkX-52,trunkTopY,78);
-    strokeCurve(trunkX+115,groundY+10,trunkX+170,groundY-190,trunkX+120,trunkBottomY+170,trunkX+52,trunkTopY,78);
-    strokeCurve(trunkX,groundY,trunkX-40,groundY-260,trunkX-30,trunkBottomY+120,trunkX,trunkTopY-5,92);
+    strokeCurve(trunkX-115,groundY+10,trunkX-170,groundY-190,trunkX-120,trunkBottomY+170,trunkX-52,trunkTopY,105);
+    strokeCurve(trunkX+115,groundY+10,trunkX+170,groundY-190,trunkX+120,trunkBottomY+170,trunkX+52,trunkTopY,105);
+    strokeCurve(trunkX,groundY,trunkX-40,groundY-260,trunkX-30,trunkBottomY+120,trunkX,trunkTopY-5,120);
     // A central spine runs behind every Gen-1 plaque, so all Gen-1 members visibly belong to one trunk.
-    strokeCurve(trunkX,trunkBottomY+55,trunkX-18,trunkBottomY-20,trunkX+18,trunkTopY+90,trunkX,trunkTopY-20,68);
+    strokeCurve(trunkX,trunkBottomY+55,trunkX-18,trunkBottomY-20,trunkX+18,trunkTopY+90,trunkX,trunkTopY-20,92);
     for(let i=-6;i<=6;i++){ctx.beginPath();ctx.moveTo(trunkX+i*12,groundY-10);ctx.quadraticCurveTo(trunkX+i*15,(groundY+trunkTopY)/2,trunkX+i*7,trunkTopY+35);ctx.strokeStyle='rgba(46,21,8,.25)';ctx.lineWidth=3;ctx.stroke();}
 
     // IMPORTANT: draw every branch/twig BEFORE any member plaque.
@@ -1064,11 +1077,11 @@ async function editName(id){
         kids.forEach(child=>{
             const cp=pos.get(String(child._id)); if(!cp)return;
             const dx=cp.x-pp.x, side=dx>=0?1:-1, distance=Math.abs(dx);
-            const width=Math.max(7,24-(generation(parent)-1)*3);
+            const width=Math.max(10,34-(generation(parent)-1)*4);
             // Never start a branch inside a card. Cards are 164px tall, so
             // the branch starts just above the parent's top edge and ends
             // just below the child's bottom edge. This also applies to Gen-1.
-            const CARD_H = 92;
+            const CARD_H = 164;
             const parentEdgeY = pp.y - CARD_H/2 - 3;
             const childEdgeY  = cp.y + CARD_H/2 + 3;
             strokeCurve(pp.x,parentEdgeY,
@@ -1410,7 +1423,101 @@ function forwardPhoto(file){
   });
 }
 </script>
-</body>
+<script>
+/* ===== GENERATION-WISE BRANCH TREE ===== */
+(function(){
+  function esc(v){
+    return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function photoOf(n){
+    return n.photo||n.image||n.photoUrl||n.profilePhoto||n.avatar||'';
+  }
+  function childrenOf(n,all){
+    const id=n.id??n._id??n.key;
+    return all.filter(x=>(x.parentId??x.fatherId??x.parent??x.father??'')==id);
+  }
+
+  window.renderGenerationWiseTree=function(container,nodes,opts={}){
+    if(!container||!Array.isArray(nodes)||!nodes.length)return;
+    const idSet=new Set(nodes.map(n=>String(n.id??n._id??n.key)));
+    let roots=nodes.filter(n=>{
+      const p=String(n.parentId??n.fatherId??n.parent??n.father??'');
+      return !p||!idSet.has(p);
+    });
+    if(!roots.length) roots=[nodes[0]];
+
+    // Compact vertical generation bands. Siblings share one branch level.
+    const levels=[];
+    const seen=new Set();
+    let q=roots.map(n=>({n,d:0}));
+    while(q.length){
+      const {n,d}=q.shift();
+      const id=String(n.id??n._id??n.key);
+      if(seen.has(id))continue; seen.add(id);
+      (levels[d]??=[]).push(n);
+      childrenOf(n,nodes).forEach(c=>q.push({n:c,d:d+1}));
+    }
+
+    const W=Math.max(1100,Math.min(2600,380+Math.max(...levels.map(a=>a.length))*92));
+    const rowH=150, H=Math.max(500,100+levels.length*rowH);
+    const cx=W/2;
+    let svg=`<svg class="gen-real-tree" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">`;
+    svg+=`<defs><filter id="gshadow"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".18"/></filter></defs>`;
+
+    const pos=new Map();
+    levels.forEach((arr,d)=>{
+      const y=70+d*rowH;
+      const gap=Math.min(110, Math.max(62,(W-100)/(arr.length+1)));
+      const total=(arr.length-1)*gap;
+      arr.forEach((n,i)=>{
+        const x=cx-total/2+i*gap;
+        pos.set(String(n.id??n._id??n.key),{x,y});
+      });
+    });
+
+    // Generation-wise curved branches: parent -> child, compact horizontally.
+    nodes.forEach(n=>{
+      const p=String(n.parentId??n.fatherId??n.parent??n.father??'');
+      const a=pos.get(String(n.id??n._id??n.key)), b=pos.get(p);
+      if(!a||!b)return;
+      const mid=(a.y+b.y)/2;
+      svg+=`<path class="gen-branch" d="M ${b.x} ${b.y+22} C ${b.x} ${mid}, ${a.x} ${mid}, ${a.x} ${a.y-25}"/>`;
+    });
+
+    levels.forEach((arr,d)=>{
+      const y=70+d*rowH;
+      svg+=`<text class="gen-gen-label" x="${cx}" y="${y-45}">Generation ${d+1}</text>`;
+      arr.forEach(n=>{
+        const p=pos.get(String(n.id??n._id??n.key)), name=String(n.name??n.fullName??'');
+        const img=photoOf(n);
+        svg+=`<g filter="url(#gshadow)">`;
+        if(img){
+          svg+=`<image href="${esc(img)}" x="${p.x-25}" y="${p.y-25}" width="50" height="50" preserveAspectRatio="xMidYMid slice" class="gen-node-photo"/>`;
+        }else{
+          svg+=`<circle cx="${p.x}" cy="${p.y}" r="25" fill="#e5e7eb" class="gen-node-photo"/>`;
+        }
+        svg+=`</g><text class="gen-node-name" x="${p.x}" y="${p.y+43}" font-size="13">${esc(name)}</text>`;
+      });
+    });
+    svg+=`</svg>`;
+    container.innerHTML=svg;
+  };
+
+  window.printGenerationTreeA4=function(){
+    const el=document.querySelector('.gen-real-tree');
+    if(!el)return;
+    const w=window.open('','_blank');
+    w.document.write(`<html><head><title>Family Tree</title><style>
+      @page{size:A4 landscape;margin:0}
+      html,body{margin:0;padding:0;background:#fff}
+      body{width:297mm;height:210mm;overflow:hidden}
+      svg{width:297mm;height:210mm;display:block}
+    </style></head><body>${el.outerHTML}</body></html>`);
+    w.document.close();
+    setTimeout(()=>{w.focus();w.print();},500);
+  };
+})();
+</script></body>
 </html>
 
 <script id="adminTreeAddChildHelper">
