@@ -109,8 +109,9 @@
         }
 
         .tree-search{display:flex;gap:8px;max-width:620px;margin:0 auto 12px}.tree-search input{flex:1;padding:12px 14px;border:1px solid #cbd6e2;border-radius:10px;font-size:15px;outline:none}.tree-search input:focus{border-color:#315f91;box-shadow:0 0 0 3px #315f9118}.tree-search button{border:0;border-radius:10px;padding:12px 16px;background:#315f91;color:#fff;font-weight:800;cursor:pointer}.card.selfFound{background:#dff7e5!important;border-color:#69b77b!important;box-shadow:0 0 0 3px #9ad7a7,0 8px 24px #2e7d3230!important}.search-hint{text-align:center;font-size:12px;color:#718096;margin:-4px 0 10px}.tree-zoom-controls{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.tree-zoom-controls button{border:1px solid #cbd6e2;background:#fff;color:#203047;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:800;cursor:pointer}.tree-zoom-controls button:hover{background:#f1f5f9}.tree-zoom-label{min-width:58px;text-align:center;font-weight:800;color:#315f91}.tree-layer{position:relative;transform-origin:0 0;will-change:transform}
-        .real-tree-open{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;z-index:99999!important;background:#fff!important;border-radius:0!important;border:0!important;padding:18px!important;box-shadow:none!important}
-        .real-tree-open #treebox{height:calc(100vh - 115px)!important;border-radius:14px;background:#b9dcf0;overflow-x:auto!important;overflow-y:auto!important;touch-action:pan-x pan-y!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;position:relative!important}
+        .real-tree-open{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;z-index:99999!important;background:#fff!important;border-radius:0!important;border:0!important;padding:18px!important;box-shadow:none!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:auto!important;touch-action:pan-y!important}
+        .real-tree-open #treebox{height:auto!important;min-height:520px!important;border-radius:14px;background:#b9dcf0;overflow:visible!important;touch-action:auto!important;-webkit-overflow-scrolling:auto!important;position:relative!important;flex:none!important}
+        .real-tree-open #canvas{overflow:visible!important;position:relative!important}
         .real-tree-open .tree-search,.real-tree-open .tree-zoom-controls,.real-tree-open .links-panel{display:flex!important;position:relative;z-index:20}
         .real-tree-open .card{box-shadow:0 7px 24px #24384e24}
         /* Real Tree View only: wooden plaques sit on a natural tree. Normal Tree View is untouched. */
@@ -289,8 +290,8 @@
         .real-tree-open #realTreeBottomClose{display:block!important;}
         .real-tree-open #realTreeBtn{display:none!important;}
         @media(max-width:700px){
-            .real-tree-open{padding:8px!important;}
-            .real-tree-open #treebox{height:calc(100vh - 155px)!important;min-height:420px!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-x pan-y!important;}
+            .real-tree-open{padding:8px!important;overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y!important;}
+            .real-tree-open #treebox{height:auto!important;min-height:420px!important;overflow:visible!important;touch-action:auto!important;}
             .real-tree-open #realTreeBottomClose{padding:22px 10px 40px!important;}
             .real-tree-open #realTreeBottomClose .btn{width:min(92vw,320px)!important;font-size:15px!important;padding:12px 18px!important;}
         }
@@ -825,6 +826,16 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
     baseCanvas.dataset.baseWidth = treeWidth;
     baseCanvas.dataset.baseHeight = treeHeight;
 
+    /* The whole Real Tree is one page-sized document.
+       Do NOT put a second scroll box around the tree. This lets
+       desktop and mobile scroll all the way to the bottom Close button. */
+    const treebox = $('treebox');
+    if(treebox){
+        treebox.style.height = treeHeight + 'px';
+        treebox.style.minHeight = treeHeight + 'px';
+        treebox.style.overflow = 'visible';
+    }
+
     layer.style.transform = 'scale(' + treeZoom + ')';
     updateTreeZoomLabel();
 
@@ -953,7 +964,13 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
         });
     }
 
+    const drawnPlaques = new Set();
+
     function plaque(p,x,y,small=false){
+        const pid=String(p._id||'');
+        if(pid && drawnPlaques.has(pid)) return;
+        if(pid) drawnPlaques.add(pid);
+
         const name=String(p.name||'').trim();
         if(!name) return;
 
@@ -1247,7 +1264,16 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
             layer.classList.remove('real-natural-tree');
             layer.style.width='';
             layer.style.height='';
+            layer.style.minWidth='';
+            layer.style.minHeight='';
             layer.style.transform='scale(1)';
+        }
+
+        const treebox=$('treebox');
+        if(treebox){
+            treebox.style.height='';
+            treebox.style.minHeight='';
+            treebox.style.overflow='';
         }
 
         const oldSvg=$('svg');
