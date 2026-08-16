@@ -122,6 +122,37 @@
 @media(max-width:768px){
  .mobile-zoom-buttons{display:flex!important;position:sticky;top:0}
 }
+</style><style>
+/* ===== TREE-ONLY VIEWPORT: PAGE MUST NOT ZOOM/SCROLL ===== */
+html,body{overflow-x:hidden;}
+.tree-only-viewport,.real-tree-viewport,#realTreeViewport,#treeViewport{
+  position:relative!important;
+  width:100%!important;
+  height:min(72vh,760px)!important;
+  min-height:420px!important;
+  max-height:calc(100dvh - 210px)!important;
+  overflow:auto!important;
+  overscroll-behavior:contain!important;
+  touch-action:none!important;
+  -webkit-overflow-scrolling:touch!important;
+  border-radius:12px;
+}
+.tree-only-viewport::-webkit-scrollbar,.real-tree-viewport::-webkit-scrollbar,
+#realTreeViewport::-webkit-scrollbar,#treeViewport::-webkit-scrollbar{width:10px;height:10px;}
+.tree-only-zoom-controls{
+  display:flex!important;gap:8px;justify-content:center;align-items:center;
+  margin:8px auto;position:relative;z-index:99999;
+}
+.tree-only-zoom-controls button{
+  min-width:46px;height:40px;border:1px solid #bbb;border-radius:9px;
+  background:#fff;font-size:20px;font-weight:700;cursor:pointer;
+}
+@media(max-width:768px){
+ .tree-only-viewport,.real-tree-viewport,#realTreeViewport,#treeViewport{
+   height:calc(100dvh - 250px)!important;
+   min-height:320px!important;
+ }
+}
 </style></head>
 <body>
 <header><h1>🌳 અમારું પરિવાર વૃક્ષ</h1><div id="siteNav" style="margin-top:10px"><a href="/" style="text-decoration:none;color:#315f91;font-weight:800">➕ નવી Family શરૂ કરો</a> <span style="color:#9aa6b2">|</span> <a href="/admin" style="text-decoration:none;color:#315f91;font-weight:800">🔐 Admin</a></div></header>
@@ -832,5 +863,92 @@ initTreeZoomTouch();
   document.addEventListener('DOMContentLoaded',()=>setTimeout(initMobilePinch,400));
   window.addEventListener('load',()=>setTimeout(initMobilePinch,700));
   window.initMobilePinch=initMobilePinch;
+})();
+</script><script>
+/* ===== TREE-ONLY ZOOM CONTROLLER ===== */
+(function(){
+  function bootTreeOnlyZoom(){
+    const vp=document.querySelector('#realTreeViewport,#treeViewport,.real-tree-viewport,.tree-only-viewport,.tree-scroll,.tree-viewport');
+    const target=document.querySelector('#realTreeCanvas,#treeCanvas,.real-tree-canvas,.tree-canvas,.tree-zoom-content');
+    if(!vp||!target||vp.dataset.treeOnlyZoom==='1') return;
+    vp.dataset.treeOnlyZoom='1';
+
+    // Disable page-level gestures while pointer is over the tree.
+    vp.style.overflow='auto';
+    vp.style.touchAction='none';
+
+    let scale=1, sx=1, dist0=0, drag=false, x0=0,y0=0,l0=0,t0=0;
+
+    function baseSize(){
+      const w=target.dataset.baseW ? +target.dataset.baseW : (target.offsetWidth||target.width||1200);
+      const h=target.dataset.baseH ? +target.dataset.baseH : (target.offsetHeight||target.height||800);
+      target.dataset.baseW=w; target.dataset.baseH=h;
+      return [w,h];
+    }
+    function render(){
+      const [w,h]=baseSize();
+      target.style.transformOrigin='0 0';
+      target.style.transform='scale('+scale+')';
+      target.style.width=w+'px'; target.style.height=h+'px';
+      target.style.margin= '0';
+      // The wrapper itself becomes the scrollable surface.
+      const spacer=vp.querySelector('.tree-zoom-spacer') || (function(){
+        const d=document.createElement('div'); d.className='tree-zoom-spacer';
+        d.style.position='absolute'; d.style.left='0'; d.style.top='0'; d.style.pointerEvents='none';
+        vp.appendChild(d); return d;
+      })();
+      spacer.style.width=(w*scale+30)+'px';
+      spacer.style.height=(h*scale+30)+'px';
+    }
+    function zoom(f){
+      const old=scale; scale=Math.max(.2,Math.min(5,scale*f));
+      const cx=vp.clientWidth/2,cy=vp.clientHeight/2;
+      render();
+      vp.scrollLeft=(vp.scrollLeft+cx)*(scale/old)-cx;
+      vp.scrollTop=(vp.scrollTop+cy)*(scale/old)-cy;
+    }
+
+    let bar=document.createElement('div');
+    bar.className='tree-only-zoom-controls';
+    bar.innerHTML='<button type="button">−</button><button type="button">100%</button><button type="button">+</button>';
+    vp.parentNode.insertBefore(bar,vp);
+    bar.children[0].onclick=()=>zoom(.8);
+    bar.children[2].onclick=()=>zoom(1.25);
+    bar.children[1].onclick=()=>{scale=1;render();vp.scrollLeft=0;vp.scrollTop=0;};
+
+    vp.addEventListener('wheel',e=>{
+      if(e.ctrlKey||e.metaKey){
+        e.preventDefault(); zoom(e.deltaY<0?1.12:.89);
+      }
+    },{passive:false});
+
+    vp.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='touch') return;
+      drag=true; vp.setPointerCapture(e.pointerId);
+      x0=e.clientX;y0=e.clientY;l0=vp.scrollLeft;t0=vp.scrollTop;
+    });
+    vp.addEventListener('pointermove',e=>{
+      if(!drag)return;
+      vp.scrollLeft=l0-(e.clientX-x0);vp.scrollTop=t0-(e.clientY-y0);
+    });
+    vp.addEventListener('pointerup',()=>drag=false);
+    vp.addEventListener('pointercancel',()=>drag=false);
+
+    function td(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
+    vp.addEventListener('touchstart',e=>{
+      if(e.touches.length===2){e.preventDefault();dist0=td(e.touches[0],e.touches[1]);sx=scale;}
+    },{passive:false});
+    vp.addEventListener('touchmove',e=>{
+      if(e.touches.length===2&&dist0){
+        e.preventDefault(); scale=Math.max(.2,Math.min(5,sx*(td(e.touches[0],e.touches[1])/dist0)));render();
+      }
+    },{passive:false});
+    vp.addEventListener('touchend',()=>{if(!event.touches||event.touches.length<2)dist0=0;},{passive:false});
+
+    render();
+  }
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(bootTreeOnlyZoom,500));
+  window.addEventListener('load',()=>setTimeout(bootTreeOnlyZoom,800));
+  window.bootTreeOnlyZoom=bootTreeOnlyZoom;
 })();
 </script></body></html>
