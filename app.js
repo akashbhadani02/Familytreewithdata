@@ -55,6 +55,24 @@ app.post("/api/family/start",upload.single("photo"),async(req,res)=>{
   }catch(e){res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 50MB allowed.":e.message})}
 });
 
+app.post("/api/family/:familyId/person",upload.single("photo"),async(req,res)=>{
+  try{
+    await connectDB();
+    const familyId=String(req.params.familyId||"").trim();
+    const parentId=String(req.body.parentId||"").trim();
+    const name=(req.body.name||"").trim();
+    if(!familyId||!parentId||!name) return res.status(400).json({ok:false,error:"Family, parent and name are required"});
+    const parent=await Person.findOne({_id:parentId,familyId});
+    if(!parent) return res.status(404).json({ok:false,error:"Parent member not found in this family"});
+    if(parent.generation>=13) return res.status(400).json({ok:false,error:"This family tree has reached the maximum of 13 generations."});
+    const p=await Person.create({
+      familyId,name,parentId:parent._id,generation:parent.generation+1,
+      photo:photoData(req.file),addToken:newToken()
+    });
+    res.json({ok:true,person:{_id:p._id,name:p.name,parentId:p.parentId,generation:p.generation,addToken:p.addToken},addLink:"/add/"+p.addToken});
+  }catch(e){res.status(400).json({ok:false,error:e.message.includes("File too large")?"Photo is too large. Maximum 50MB allowed.":e.message})}
+});
+
 app.post("/api/add/:token",upload.single("photo"),async(req,res)=>{
   try{
     await connectDB();
