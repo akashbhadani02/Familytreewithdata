@@ -595,9 +595,9 @@ function toggleAncestorList(){
 }
 
 let realTreeReturnUrl = location.href;
-let preserveRealTreeReturnUrl = false;
-function closeRealTreeAndReturn(){
-  const returnUrl = realTreeReturnUrl || location.href;
+let realTreeHistoryActive = false;
+
+function cleanupRealTreeUI(){
   const view=$('viewBox');
   document.body.classList.remove('real-tree-open');
   if(view) view.classList.remove('real-tree-open');
@@ -606,20 +606,42 @@ function closeRealTreeAndReturn(){
   const rc=$('realTreeCanvas'); if(rc)rc.remove();
   const svg=$('svg'); if(svg)svg.style.display='';
   const cards=$('cards'); if(cards)cards.style.display='';
-  const layer=$('treeLayer'); if(layer){layer.classList.remove('real-natural-tree');layer.style.width='';layer.style.height='';layer.style.minWidth='';layer.style.minHeight='';layer.style.transform='scale('+treeZoom+')';}
+  const layer=$('treeLayer');
+  if(layer){
+    layer.classList.remove('real-natural-tree');
+    layer.style.width='';layer.style.height='';layer.style.minWidth='';layer.style.minHeight='';
+    layer.style.transform='scale('+treeZoom+')';
+  }
   const canvas=$('canvas'); if(canvas){canvas.style.width='';canvas.style.height='';}
-  renderTree();
-  if(returnUrl && location.href !== returnUrl){
-    location.href = returnUrl;
+  try{ renderTree(); }catch(e){ console.error('Tree render error:',e); }
+}
+
+function closeRealTreeAndReturn(fromPopState=false){
+  // The button uses the browser history entry created when Real Tree opened.
+  // This keeps mobile Back/Swipe Back and the on-screen button in sync.
+  if(!fromPopState && realTreeHistoryActive && history.state && history.state.realTreeOpen){
+    history.back();
+    return;
+  }
+  realTreeHistoryActive=false;
+  cleanupRealTreeUI();
+  const returnUrl=realTreeReturnUrl;
+  if(returnUrl && location.href!==returnUrl){
+    location.replace(returnUrl);
   }
 }
+
 function toggleUserRealTree(){
  const view=$('viewBox'), btn=$('userRealTreeBtn');
  if(!view)return;
  const opening=!document.body.classList.contains('real-tree-open');
  if(opening){
-   if(!preserveRealTreeReturnUrl) realTreeReturnUrl=location.href;
-   preserveRealTreeReturnUrl=false;
+   // Save the exact page from which Real Tree was opened.
+   if(!realTreeReturnUrl) realTreeReturnUrl=location.href;
+   if(!realTreeHistoryActive){
+     history.pushState({...(history.state||{}),realTreeOpen:true,realTreeReturnUrl},'',location.href);
+     realTreeHistoryActive=true;
+   }
    document.body.classList.add('real-tree-open');
    view.classList.add('real-tree-open');
    if(btn) btn.textContent='✕ Close Real Tree';
@@ -629,17 +651,26 @@ function toggleUserRealTree(){
      catch(e){ console.error('Real Tree render error:',e); }
    });
  }else{
-   document.body.classList.remove('real-tree-open');
-   view.classList.remove('real-tree-open');
-   if(btn) btn.textContent='🌳 Real Tree View';
-   const rc=$('realTreeCanvas'); if(rc)rc.remove();
-   const svg=$('svg'); if(svg)svg.style.display='';
-   const cards=$('cards'); if(cards)cards.style.display='';
-   const layer=$('treeLayer'); if(layer){layer.classList.remove('real-natural-tree');layer.style.width='';layer.style.height='';layer.style.minWidth='';layer.style.minHeight='';layer.style.transform='scale('+treeZoom+')';}
-   const canvas=$('canvas'); if(canvas){canvas.style.width='';canvas.style.height='';}
-   renderTree();
+   closeRealTreeAndReturn(false);
  }
 }
+
+// Browser Back button + Android/iPhone swipe-back gesture.
+// When Real Tree is open, Back only closes Real Tree and returns to the
+// exact Child/Add page that opened it. It will not jump to another page.
+window.addEventListener('popstate',function(e){
+  if(document.body.classList.contains('real-tree-open')){
+    const stateUrl=e.state && e.state.realTreeReturnUrl;
+    if(stateUrl) realTreeReturnUrl=stateUrl;
+    realTreeHistoryActive=false;
+    cleanupRealTreeUI();
+    if(realTreeReturnUrl && location.href!==realTreeReturnUrl){
+      location.replace(realTreeReturnUrl);
+    }
+    return;
+  }
+  if(typeof updateAddPageBackButton==='function') updateAddPageBackButton();
+});
 
 function initTreeZoomTouch(){
  const box=document.querySelector('.treebox');if(!box||box.dataset.zoomReady)return;box.dataset.zoomReady='1';

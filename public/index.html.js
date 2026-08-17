@@ -595,3 +595,4 @@ init();
 initTreeZoomTouch();
 
 let photoTargetId=null;function openPhotoChoice(id){photoTargetId=id;document.getElementById('photoChoiceOverlay').classList.add('show')}function closePhotoChoice(){document.getElementById('photoChoiceOverlay').classList.remove('show');photoTargetId=null}function setPhoto(file){if(!file||!photoTargetId){closePhotoChoice();return}const target=document.getElementById(photoTargetId);const dt=new DataTransfer();dt.items.add(file);target.files=dt.files;target.dispatchEvent(new Event('change',{bubbles:true}));closePhotoChoice()}function chooseCamera(){const i=document.getElementById('cameraPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}function chooseGallery(){const i=document.getElementById('galleryPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}
+// Mobile browser Back/Swipe support is implemented in index.html.
