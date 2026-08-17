@@ -1,8 +1,45 @@
 
-const $=id=>document.getElementById(id);let token=null,familyId=null,people=[],focusPersonId=null;let treeZoom=1;let pinchStartDistance=0,pinchStartZoom=1;const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
+const $=id=>document.getElementById(id);let token=null,familyId=null,people=[],focusPersonId=null,childStatusParentId=null;let treeZoom=1;let pinchStartDistance=0,pinchStartZoom=1;const CARD_W=190,GAP=55,LEVEL_GAP=300,START_X=4000;
 function showPreview(input,id){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{$(id).src=e.target.result;$(id).style.display='block'};r.readAsDataURL(f)}
-function absoluteLink(path){return location.origin+path}
-function copyText(text){navigator.clipboard.writeText(text).then(()=>alert('Link copy થઈ ગઈ')).catch(()=>prompt('આ link copy કરો:',text))}
+function absoluteLink(path){
+  const clean=String(path||'').trim();
+  if(/^https?:\/\//i.test(clean)) return clean;
+  const base=location.origin.replace(/\/$/,'');
+  return base+'/'+clean.replace(/^\//,'');
+}
+function memberAddLink(person){
+  if(!person || !person.addToken) return '';
+  return absoluteLink('/add/'+encodeURIComponent(String(person.addToken)));
+}
+async function copyMemberLink(person,button){
+  const link=memberAddLink(person);
+  if(!link) return alert('આ Childની link હજી generate થઈ નથી.');
+  const ok=await copyText(link);
+  if(ok && button){
+    const old=button.textContent;
+    button.textContent='✅ Copied!';
+    button.disabled=true;
+    setTimeout(()=>{button.textContent=old;button.disabled=false},1800);
+  }
+}
+async function copyText(text){
+  if(!text) return false;
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+    }else{
+      const ta=document.createElement('textarea');
+      ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.focus();ta.select();
+      const ok=document.execCommand('copy');ta.remove();
+      if(!ok) throw new Error('copy failed');
+    }
+    return true;
+  }catch(e){
+    prompt('આ link copy કરો:',text);
+    return false;
+  }
+}
 function safe(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 async function init(){
  const m=location.pathname.match(/^\/add\/([^/]+)$/);
@@ -16,16 +53,25 @@ async function init(){
    try{
      const r=await fetch('/api/add/'+encodeURIComponent(token),{cache:'no-store'});
      const d=await r.json();
+     if(r.status===404){
+       $('parentText').innerHTML='<b style="color:#b42318">આ link સાચી નથી અથવા databaseમાં મળતી નથી.</b>';
+       $('addName').disabled=true;$('addPhoto').disabled=true;
+       return;
+     }
      if(!r.ok || !d.ok){
-       $('parentText').innerHTML='<b style="color:#b42318">આ link સાચી નથી અથવા expire થઈ ગઈ છે.</b>';
+       $('parentText').innerHTML='<b style="color:#b42318">Server તરફથી link ચેક થઈ શકી નથી. થોડા સમય પછી ફરી પ્રયત્ન કરો.</b>';
        $('addName').disabled=true;$('addPhoto').disabled=true;
        return;
      }
      familyId=d.parent.familyId;
      focusPersonId=String(d.parent._id||'');
+     childStatusParentId=focusPersonId;
      const parentDisplay=d.parent.name;
-     $('parentText').innerHTML='આ સભ્યનું નામ <b>'+safe(parentDisplay)+'</b>ની નીચે ઉમેરાશે. નામ અને ફોટો ભરીને Add કરો.';
-     loadFamily();
+     $('fatherName').value=parentDisplay;
+     $('fatherName').readOnly=false;
+     $('parentText').innerHTML='આ link <b>'+safe(parentDisplay)+'</b>ના Child માટે છે. તમારું નામ, Father અને Grandfather ચકાસીને આખી વંશાવલી બતાવવામાં આવશે.';
+     await loadFamily();
+     prepareLineageFields();
    }catch(e){
      $('parentText').innerHTML='<b style="color:#b42318">Link load થઈ શકી નથી. કૃપા કરીને page ફરી ખોલો.</b>';
    }
@@ -71,14 +117,65 @@ async function preparePhoto(file){
  });
 }
 async function createRoot(){const name=$('rootName').value.trim();if(!name)return alert('કૃપા કરીને નામ લખો');const fd=new FormData();fd.append('name',name);try{const photo=await preparePhoto($('rootPhoto').files[0]);if(photo)fd.append('photo',photo);}catch(e){return alert('ફોટો upload માટે તૈયાર થઈ શક્યો નથી. બીજો ફોટો પસંદ કરો.');}const r=await fetch('/api/family/start',{method:'POST',body:fd});const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}if(!r.ok||!d.ok)return alert(d.error||'Upload failed');familyId=d.familyId;token=d.person.addToken;const link=absoluteLink(d.addLink);$('rootSuccess').style.display='block';$('rootSuccess').innerHTML='<b>નામ સાચવાઈ ગયું! 🎉</b><div>હવે આ link '+safe(name)+'ના દીકરા/આગળના સભ્યને મોકલો:</div><div class="linkbox">'+safe(link)+'</div><div class="copy" onclick="copyText('+JSON.stringify(link)+')">Link copy કરો</div>';history.replaceState({},'', '/?family='+encodeURIComponent(familyId));$('rootBox').classList.add('hidden');$('viewBox').classList.remove('hidden');$('currentLink').textContent=link;loadFamily()}
+function normalizeName(v){return String(v||'').trim().replace(/\\s+/g,' ').toLowerCase();}
+function copyCurrentPersonLink(){
+  if(!focusPersonId)return alert('આ સભ્યની link ઉપલબ્ધ નથી.');
+  const person=people.find(p=>String(p._id)===String(focusPersonId));
+  if(!person || !person.addToken)return alert('આ સભ્યની link ઉપલબ્ધ નથી.');
+  copyText(absoluteLink('/add/'+person.addToken));
+}
+function renderChildStatus(){
+  const box=$('childStatus');
+  const parentId=childStatusParentId||focusPersonId;
+  if(!box || !parentId || !people.length){if(box)box.style.display='none';return;}
+  const kids=people.filter(p=>p.parentId && String(p.parentId)===String(parentId)).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+  if(!kids.length){box.style.display='block';box.innerHTML='<b>👦 તમારા Child/પુત્રની સ્થિતિ</b><div style="margin-top:5px;color:#68778a">હજુ સુધી કોઈ Childનું નામ add થયું નથી.</div>';return;}
+  box.style.display='block';
+  box.innerHTML=kids.map(k=>{
+    const link=memberAddLink(k);
+    const safeJson=JSON.stringify(k).replace(/</g,'\u003c');
+    return '<div class="child-row"><div class="child-name">'+safe(k.name)+'</div><div class="child-link-box"><a class="child-add-link" href="'+safe(link)+'" target="_self">'+safe(link)+'</a></div></div>'
+  }).join('');
+}
+function prepareLineageFields(){
+  if(!people.length || !focusPersonId)return;
+  const father=people.find(p=>String(p._id)===String(focusPersonId));
+  if(!father)return;
+  $('fatherName').value=father.name||'';
+  $('fatherName').readOnly=false;
+  const grand=father.parentId ? people.find(p=>String(p._id)===String(father.parentId)) : null;
+  const gi=$('grandfatherName');
+  const hint=$('lineageHint');
+  if(grand){
+    gi.value=grand.name||'';
+    hint.style.display='block';
+    hint.innerHTML='🌳 <b>'+safe(grand.name)+'</b> → <b>'+safe(father.name)+'</b> → <b>તમારું નામ</b><br><small>નામ સાચું હોય તો Add કર્યા પછી આખી ઉપલબ્ધ વંશાવલી આપમેળે ખુલશે.</small>';
+  }else{
+    hint.style.display='block';
+    hint.textContent='આ link પરિવારના સૌથી ઉપરના સભ્ય માટે છે; Grandfather ઉપલબ્ધ નથી.';
+  }
+}
 async function addPerson(){
  const btn=$('addPersonBtn');
  const name=$('addName').value.trim();
+ const fatherName=$('fatherName').value.trim();
+ const grandfatherName=$('grandfatherName').value.trim();
  if(!name)return alert('કૃપા કરીને તમારું પૂરું નામ લખો');
+ if(!fatherName)return alert('કૃપા કરીને Fatherનું નામ લખો');
+ if(!grandfatherName && people.some(p=>String(p._id)===String(focusPersonId) && p.parentId)) return alert('કૃપા કરીને Grandfatherનું નામ લખો');
  if(!token)return alert('આ add link મળતી નથી');
+ const linkedFather=people.find(p=>String(p._id)===String(focusPersonId));
+ if(linkedFather && normalizeName(fatherName)!==normalizeName(linkedFather.name))
+   return alert('Fatherનું નામ આ link સાથે match થતું નથી. કૃપા કરીને સાચું નામ લખો.');
+ if(linkedFather && linkedFather.parentId){
+   const grand=people.find(p=>String(p._id)===String(linkedFather.parentId));
+   if(grand && normalizeName(grandfatherName)!==normalizeName(grand.name))
+     return alert('Grandfatherનું નામ match થતું નથી. કૃપા કરીને સાચું નામ લખો.');
+ }
  if(btn.disabled)return;
  btn.disabled=true;btn.textContent='⏳ Upload થઈ રહ્યું છે...';btn.style.opacity='.6';btn.style.cursor='not-allowed';
  const parentAddToken=token;
+ const fatherStatusId=focusPersonId;
  const fd=new FormData();fd.append('name',name);
  try{
    const photo=await preparePhoto($('addPhoto').files[0]);
@@ -88,13 +185,17 @@ async function addPerson(){
    if(!d.ok)throw new Error(d.error||'નામ add થયું નથી');
    const link=absoluteLink(d.addLink);
    token=d.person.addToken;
+   focusPersonId=String(d.person._id||focusPersonId);
+   childStatusParentId=fatherStatusId;
    const parentLink=absoluteLink('/add/'+parentAddToken);
    $('addSuccess').style.display='block';
-   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે શું કરવું છે?</b><div style="display:grid;gap:8px;margin-top:10px"><button type="button" class="btn" onclick="copyText('+JSON.stringify(parentLink)+')">👦 આ જ Father માટે બીજો Son ઉમેરો</button><button type="button" class="btn" onclick="copyText('+JSON.stringify(link)+')">➡️ '+safe(name)+'નો Son ઉમેરો</button><button type="button" class="btn" onclick="showFamilyTree()">🌳 Family Tree જુઓ</button></div><div class="linkbox" style="margin-top:8px">બીજો Son ઉમેરવા માટેની link: '+safe(parentLink)+'</div><div class="copy" onclick="copyText('+JSON.stringify(parentLink)+')">🔗 Parent Link Copy કરો</div></div>';
+   $('addSuccess').innerHTML='<b>✅ '+safe(name)+'નું નામ સફળતાપૂર્વક ઉમેરાઈ ગયું!</b><div class="nextBox"><b>હવે શું કરવું છે?</b><div style="display:grid;gap:8px;margin-top:10px"><button type="button" class="btn" onclick="copyText('+JSON.stringify(parentLink)+')">👦 આ જ Father માટે બીજો Son ઉમેરો</button><button type="button" class="btn" onclick="copyMemberLink('+JSON.stringify(d.person)+')">🔗 '+safe(name)+'ની Link Copy કરો</button><button type="button" class="btn" onclick="copyMemberLink('+JSON.stringify(d.person)+')">➡️ '+safe(name)+'નો Son ઉમેરો</button><button type="button" class="btn" onclick="showFamilyTree()">🌳 Family Tree જુઓ</button></div><div class="linkbox" style="margin-top:8px">'+safe(name)+'ની નવી link: '+safe(link)+'</div><div class="copy" onclick="copyMemberLink('+JSON.stringify(d.person)+')">🔗 '+safe(name)+'ની Link Copy કરો</div><div class="linkbox" style="margin-top:8px">બીજો Son ઉમેરવા માટેની Father link: '+safe(parentLink)+'</div><div class="copy" onclick="copyText('+JSON.stringify(parentLink)+')">🔗 Father Link Copy કરો</div></div>';
    $('addName').value='';$('addPhoto').value='';$('addPreview').style.display='none';
-   $('parentText').innerHTML='હવે આગળનું નામ <b>'+safe(name)+'</b>ની નીચે ઉમેરાશે.';
+   $('parentText').innerHTML='હવે <b>'+safe(name)+'</b>ની કડી સાચવાઈ ગઈ છે. આખી વંશાવલી નીચે ખુલશે.';
    await loadFamily();
+   renderChildStatus();
    alert('✅ Child સફળતાપૂર્વક add થઈ ગયો!');
+   showFamilyTree();
  }catch(e){
    alert('❌ '+e.message);
  }finally{
@@ -113,6 +214,9 @@ function showFamilyTree(){
 }
 function showReadOnlyRealTree(){
  if(!familyId)return alert('Family Tree હજુ તૈયાર નથી.');
+ // Remember the exact Add/Child link so Real Tree's Back button returns to that page.
+ realTreeReturnUrl = location.href;
+ preserveRealTreeReturnUrl = true;
  document.body.classList.add('readonly-view');
  $('addBox').classList.add('hidden');
  $('rootBox').classList.add('hidden');
@@ -136,144 +240,41 @@ function showReadOnlyTree(){
  loadFamily();
  window.scrollTo({top:0,behavior:'smooth'});
 }
-async function loadFamily(){if(!familyId)return;const r=await fetch('/api/family/'+encodeURIComponent(familyId));const d=await r.json();if(d.ok){people=d.people;renderTree()}}
+async function loadFamily(){if(!familyId)return;try{const r=await fetch('/api/family/'+encodeURIComponent(familyId),{cache:'no-store'});const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(_){throw new Error('Family data load failed ('+r.status+')')}if(!r.ok||!d.ok)throw new Error(d.error||'Family data load failed');people=d.people||[];renderTree();renderChildStatus()}catch(e){console.error('loadFamily:',e);if($('childStatus')){$('childStatus').style.display='block';$('childStatus').innerHTML='<b style="color:#b42318">Family data હાલ load થઈ શક્યો નથી.</b>'}}}
 async function renderTree(){
- const cards=$('cards'),svg=$('svg'),canvas=$('canvas'),layer=$('treeLayer');
+ const cards=$('cards'),svg=$('svg'),canvas=$('canvas');
  cards.innerHTML='';svg.innerHTML='';if(!people.length)return;
-
- const NS='http://www.w3.org/2000/svg';
- const CARD_W=230,CARD_H=82,H_GAP=42,V_GAP=105,PAD_X=80,PAD_Y=70;
  const children={};
- const roots=[];
- people.forEach(p=>{
-   const pid=p.parentId?String(p.parentId):'root';
-   (children[pid]??=[]).push(p);
-   if(!p.parentId)roots.push(p);
- });
- Object.values(children).forEach(a=>a.sort((x,y)=>(Number(x.generation)-Number(y.generation))||new Date(x.createdAt)-new Date(y.createdAt)));
- if(!roots.length)return;
-
- /* Hidden index cards keep search/focus behaviour working; the visible tree is 100% SVG. */
- people.forEach(p=>{
-   const c=document.createElement('div');
-   c.className='card';
-   c.dataset.personId=String(p._id);
-   c.dataset.personName=(p.name||'').toLowerCase();
-   c.style.display='none';
-   cards.appendChild(c);
- });
-
+ people.forEach(p=>{const pid=p.parentId?String(p.parentId):'root';(children[pid]??=[]).push(p)});
+ Object.values(children).forEach(a=>a.sort((x,y)=>(x.generation-y.generation)||new Date(x.createdAt)-new Date(y.createdAt)));
+ const root=people.find(p=>!p.parentId)||people.slice().sort((a,b)=>a.generation-b.generation)[0];if(!root)return;
+ const CARD_H=145,H_GAP=38,V_GAP=95,PAD_X=80,PAD_Y=50;
  const widths={};
- function width(id){
-   id=String(id);
-   if(widths[id]!=null)return widths[id];
-   const kids=children[id]||[];
-   widths[id]=kids.length
-     ? Math.max(CARD_W,kids.reduce((sum,k)=>sum+width(k._id),0)+H_GAP*(kids.length-1))
-     : CARD_W;
-   return widths[id];
- }
-
+ function width(id){id=String(id);if(widths[id]!=null)return widths[id];const kids=children[id]||[];const w=kids.length?kids.reduce((sum,k)=>sum+width(k._id),0)+H_GAP*(kids.length-1):CARD_W;return widths[id]=w}
  const pos={};
  window.__treePositions=pos;
-
- function place(node,cx,y){
-   const id=String(node._id),kids=children[id]||[],w=width(id);
-   pos[id]={x:cx-CARD_W/2,y,w};
-   if(kids.length){
-     let cur=cx-w/2;
-     kids.forEach(k=>{
-       const kw=width(k._id);
-       place(k,cur+kw/2,y+CARD_H+V_GAP);
-       cur+=kw+H_GAP;
-     });
-   }
- }
-
- /* Support multiple roots by laying them side-by-side. */
- const rootWidths=roots.map(r=>width(r._id));
- let totalRootW=rootWidths.reduce((a,b)=>a+b,0)+H_GAP*Math.max(0,roots.length-1);
- let rootCursor=PAD_X;
- roots.forEach((r,i)=>{
-   const rw=rootWidths[i];
-   place(r,rootCursor+rw/2,PAD_Y);
-   rootCursor+=rw+H_GAP;
+ function place(node,cx,y){const id=String(node._id),kids=children[id]||[],w=width(id),left=cx-w/2;pos[id]={x:cx-CARD_W/2,y,w};if(kids.length){let cur=left;kids.forEach(k=>{const kw=width(k._id);place(k,cur+kw/2,y+CARD_H+V_GAP);cur+=kw+H_GAP})}}
+ place(root,PAD_X+width(root._id)/2,PAD_Y);
+ const all=Object.values(pos),maxX=Math.max(1100,...all.map(q=>q.x+CARD_W+PAD_X)),maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
+ canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;applyTreeZoom(maxX,maxY);svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
+ const readonly=document.body.classList.contains('readonly-view');
+ const localized={}; people.forEach(p=>localized[String(p._id)]=p.name);
+ people.forEach(p=>{const q=pos[String(p._id)];if(!q)return;const d=document.createElement('div');d.className='card';d.dataset.personId=String(p._id);d.dataset.personName=(p.name||'').toLowerCase();d.style.left=q.x+'px';d.style.top=q.y+'px';const link=absoluteLink('/add/'+p.addToken);const shown=localized[String(p._id)]||p.name;d.innerHTML='<img src="'+(p.photo||avatar(shown))+'"><b>'+safe(shown)+'</b><small class="relation">Generation '+p.generation+'</small>'+(readonly?'':'<span class="personLink" data-link="'+safe(link)+'">🔗 '+(children[String(p._id)]?'આગળનું નામ ઉમેરો':'આ સભ્યનો દીકરો ઉમેરવા link')+'</span>');if(!readonly){const pl=d.querySelector('.personLink');pl.onclick=()=>copyText(link);pl.onpointerdown=e=>e.stopPropagation();pl.ontouchstart=e=>e.stopPropagation()}d.onpointerdown=e=>{if(e.target.closest('button,input,a,.personLink'))e.stopPropagation()};cards.appendChild(d)});
+ const grouped={};
+ people.forEach(p=>{if(!p.parentId)return;const pid=String(p.parentId);(grouped[pid]??=[]).push(p)});
+ Object.entries(grouped).forEach(([pid,kids])=>{
+   const parent=pos[pid];if(!parent)return;
+   const childData=kids.map(k=>pos[String(k._id)]).filter(Boolean);if(!childData.length)return;
+   const px=parent.x+CARD_W/2,py=parent.y+CARD_H;
+   const childY=childData[0].y,busY=py+(childY-py)/2;
+   const xs=childData.map(q=>q.x+CARD_W/2),minX=Math.min(...xs),maxX=Math.max(...xs);
+   draw(svg,px,py,px,busY);
+   if(childData.length>1)draw(svg,minX,busY,maxX,busY);
+   childData.forEach(q=>draw(svg,q.x+CARD_W/2,busY,q.x+CARD_W/2,childY));
  });
-
- const all=Object.values(pos);
- const maxX=Math.max(1100,totalRootW+PAD_X*2,...all.map(q=>q.x+CARD_W+PAD_X));
- const maxY=Math.max(900,...all.map(q=>q.y+CARD_H+PAD_Y));
- canvas.dataset.baseWidth=maxX;canvas.dataset.baseHeight=maxY;
- applyTreeZoom(maxX,maxY);
- svg.setAttribute('width',maxX);svg.setAttribute('height',maxY);
- svg.setAttribute('viewBox',`0 0 ${maxX} ${maxY}`);
-
- function el(tag,attrs={}){
-   const n=document.createElementNS(NS,tag);
-   Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,String(v)));
-   return n;
+ if(focusPersonId){
+   requestAnimationFrame(()=>focusTreePerson(focusPersonId));
  }
- function addText(g,text,x,y,size=15,weight='700'){
-   const t=el('text',{x,y,'text-anchor':'middle','font-size':size,'font-weight':weight,fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
-   const value=String(text||'');
-   const max=24;
-   if(value.length<=max){t.textContent=value;}
-   else{
-     let line='',lines=[];
-     value.split(/\s+/).forEach(word=>{
-       if((line+' '+word).trim().length>max){if(line)lines.push(line);line=word;}
-       else line=(line+' '+word).trim();
-     });
-     if(line)lines.push(line);
-     lines=lines.slice(0,2);
-     lines.forEach((ln,i)=>{
-       const sp=el('tspan',{x,y:y+i*19});sp.textContent=ln;t.appendChild(sp);
-     });
-   }
-   g.appendChild(t);
- }
-
- /* Draw connectors first so they always stay behind the name boxes. */
- people.forEach(p=>{
-   if(!p.parentId)return;
-   const parent=pos[String(p.parentId)],child=pos[String(p._id)];
-   if(!parent||!child)return;
-   const x1=parent.x+CARD_W/2,y1=parent.y+CARD_H;
-   const x2=child.x+CARD_W/2,y2=child.y;
-   const mid=y1+(y2-y1)*0.5;
-   const path=el('path',{
-     d:`M ${x1} ${y1} V ${mid} C ${x1} ${mid} ${x2} ${mid} ${x2} ${mid} V ${y2}`,
-     fill:'none',stroke:'#78909c','stroke-width':4,'stroke-linecap':'round'
-   });
-   svg.appendChild(path);
- });
-
- const colors=['#eaf4ff','#eefbf2','#fff8e7','#f6efff','#fff0f0'];
- people.forEach((p,i)=>{
-   const q=pos[String(p._id)];if(!q)return;
-   const g=el('g',{class:'svg-person-node','data-person-id':String(p._id),cursor:'pointer'});
-   const shadow=el('rect',{x:q.x+3,y:q.y+5,width:CARD_W,height:CARD_H,rx:16,fill:'#203047',opacity:.10});
-   const rect=el('rect',{x:q.x,y:q.y,width:CARD_W,height:CARD_H,rx:16,fill:colors[i%colors.length],stroke:'#315f91','stroke-width':2});
-   g.appendChild(shadow);g.appendChild(rect);
-   const name=el('text',{x:q.x+CARD_W/2,y:q.y+34,'text-anchor':'middle','font-size':16,'font-weight':'800',fill:'#203047','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
-   const value=String(p.name||'');
-   if(value.length<=25) name.textContent=value;
-   else{
-     const words=value.split(/\s+/);let a='',b='';
-     words.forEach(w=>{if((a+' '+w).trim().length<=25)a=(a+' '+w).trim();else if((b+' '+w).trim().length<=25)b=(b+' '+w).trim();});
-     name.textContent='';
-     const t1=el('tspan',{x:q.x+CARD_W/2,y:q.y+29});t1.textContent=a;name.appendChild(t1);
-     if(b){const t2=el('tspan',{x:q.x+CARD_W/2,y:q.y+48});t2.textContent=b;name.appendChild(t2);}
-   }
-   g.appendChild(name);
-   const gen=el('text',{x:q.x+CARD_W/2,y:q.y+68,'text-anchor':'middle','font-size':11,'font-weight':'700',fill:'#718096','font-family':"Arial,'Noto Sans Gujarati',sans-serif"});
-   gen.textContent='Generation '+(p.generation||1);
-   g.appendChild(gen);
-   g.addEventListener('click',()=>focusTreePerson(String(p._id)));
-   svg.appendChild(g);
- });
- window.__treeSvgNodes=svg.querySelectorAll('.svg-person-node');
- if(focusPersonId)requestAnimationFrame(()=>focusTreePerson(focusPersonId));
 }
 function searchTreePerson(value,focus=false){
  const term=(value||'').trim().toLowerCase();
@@ -516,11 +517,137 @@ function treeZoomCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.cl
     // Leaves are shown ONLY on the final (last) generation. No leaves on the trunk/top.
 }
 
+function buildAncestorList(){
+ const panel=$('ancestorListPanel'), list=$('ancestorList');
+ if(!panel||!list)return;
+ list.innerHTML='';
+ if(!people.length){list.innerHTML='<div class="ancestor-item">Family Treeમાં નામ મળ્યાં નથી.</div>';return;}
+ let current=people.find(p=>String(p._id)===String(focusPersonId));
+ if(!current){
+   list.innerHTML='<div class="ancestor-item">જે સભ્યની linkથી page ખૂલ્યું છે તેનું નામ મળ્યું નથી.</div>';return;
+ }
+ const chain=[]; const seen=new Set();
+ while(current && !seen.has(String(current._id))){
+   seen.add(String(current._id));
+   chain.push(current);
+   current=current.parentId ? people.find(p=>String(p._id)===String(current.parentId)) : null;
+ }
+ list.innerHTML=chain.map((p,i)=>{
+   const photo=safe(p.photo||avatar(p.name||'નામ નથી')); const item='<div class="ancestor-item"><img src="'+photo+'" alt="" style="width:58px;height:58px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 8px;border:3px solid #e5d7f3"><div>'+safe(p.name||'નામ નથી')+'</div></div>';
+   return i<chain.length-1 ? item+'<div class="ancestor-arrow">↑</div>' : item;
+ }).join('');
+}
+function updateAddPageBackButton(){
+ const b=document.getElementById('addPageBackBtn');
+ if(!b)return;
+ // On every Child/Add page show the Family Tree button in place of the old Back button.
+ b.style.display=token?'block':'none';
+}
+function goBackToParentAddPage(){
+ const ref=document.referrer;
+ if(ref && ref.startsWith(location.origin) && ref!==location.href){ location.href=ref; return; }
+ if(history.length>1){ history.back(); return; }
+ const family=familyId?('/?family='+encodeURIComponent(familyId)):'/';
+ location.href=family;
+}
+let addTreeReturnUrl='';
+let addTreeHistoryActive=false;
+function showReadOnlyTreeFromAddPage(){
+ if(!familyId)return alert('Family Tree હજુ તૈયાર નથી.');
+ addTreeReturnUrl=location.href;
+ if(!addTreeHistoryActive){
+   history.pushState({...(history.state||{}),addTreeOpen:true,addTreeReturnUrl:addTreeReturnUrl},'',location.href);
+   addTreeHistoryActive=true;
+ }
+ document.body.classList.add('readonly-view','readonly-add-tree-open');
+ $('addBox').classList.add('hidden');
+ $('rootBox').classList.add('hidden');
+ $('viewBox').classList.remove('hidden');
+ $('currentLink').textContent='';
+ loadFamily();
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function closeReadOnlyTreeAndReturn(fromPopState=false){
+ addTreeHistoryActive=false;
+ document.body.classList.remove('readonly-add-tree-open');
+ if(fromPopState){
+   document.body.classList.remove('readonly-view');
+   $('viewBox').classList.add('hidden');
+   $('addBox').classList.remove('hidden');
+   updateAddPageBackButton();
+   return;
+ }
+ if(history.state && history.state.addTreeOpen){ history.back(); return; }
+ const u=addTreeReturnUrl;
+ document.body.classList.remove('readonly-view');
+ if(u && location.href!==u) location.replace(u);
+}
+function toggleAncestorList(){
+ const panel=$('ancestorListPanel'),btn=$('ancestorListBtn');
+ if(!panel)return;
+ const show=panel.style.display==='none'||!panel.style.display;
+ if(show){
+   buildAncestorList();
+   panel.style.display='block';
+   if(btn)btn.textContent='✕ વંશાવલી List બંધ કરો';
+ }else{
+   panel.style.display='none';
+   if(btn)btn.textContent='📜 વંશાવલી List જુઓ';
+ }
+}
+
+let realTreeReturnUrl = location.href;
+let realTreeHistoryActive = false;
+
+function cleanupRealTreeUI(){
+  const view=$('viewBox');
+  document.body.classList.remove('real-tree-open');
+  if(view) view.classList.remove('real-tree-open');
+  const btn=$('userRealTreeBtn');
+  if(btn) btn.textContent='🌳 Real Tree View';
+  const rc=$('realTreeCanvas'); if(rc)rc.remove();
+  const svg=$('svg'); if(svg)svg.style.display='';
+  const cards=$('cards'); if(cards)cards.style.display='';
+  const layer=$('treeLayer');
+  if(layer){
+    layer.classList.remove('real-natural-tree');
+    layer.style.width='';layer.style.height='';layer.style.minWidth='';layer.style.minHeight='';
+    layer.style.transform='scale('+treeZoom+')';
+  }
+  const canvas=$('canvas'); if(canvas){canvas.style.width='';canvas.style.height='';}
+  try{ renderTree(); }catch(e){ console.error('Tree render error:',e); }
+}
+
+function closeReadOnlyTreeOrRealTree(){
+ if(document.body.classList.contains('readonly-add-tree-open')){ closeReadOnlyTreeAndReturn(false); return; }
+ closeRealTreeAndReturn(false);
+}
+function closeRealTreeAndReturn(fromPopState=false){
+  // The button uses the browser history entry created when Real Tree opened.
+  // This keeps mobile Back/Swipe Back and the on-screen button in sync.
+  if(!fromPopState && realTreeHistoryActive && history.state && history.state.realTreeOpen){
+    history.back();
+    return;
+  }
+  realTreeHistoryActive=false;
+  cleanupRealTreeUI();
+  const returnUrl=realTreeReturnUrl;
+  if(returnUrl && location.href!==returnUrl){
+    location.replace(returnUrl);
+  }
+}
+
 function toggleUserRealTree(){
  const view=$('viewBox'), btn=$('userRealTreeBtn');
  if(!view)return;
  const opening=!document.body.classList.contains('real-tree-open');
  if(opening){
+   // Save the exact page from which Real Tree was opened.
+   if(!realTreeReturnUrl) realTreeReturnUrl=location.href;
+   if(!realTreeHistoryActive){
+     history.pushState({...(history.state||{}),realTreeOpen:true,realTreeReturnUrl},'',location.href);
+     realTreeHistoryActive=true;
+   }
    document.body.classList.add('real-tree-open');
    view.classList.add('real-tree-open');
    if(btn) btn.textContent='✕ Close Real Tree';
@@ -530,17 +657,32 @@ function toggleUserRealTree(){
      catch(e){ console.error('Real Tree render error:',e); }
    });
  }else{
-   document.body.classList.remove('real-tree-open');
-   view.classList.remove('real-tree-open');
-   if(btn) btn.textContent='🌳 Real Tree View';
-   const rc=$('realTreeCanvas'); if(rc)rc.remove();
-   const svg=$('svg'); if(svg)svg.style.display='';
-   const cards=$('cards'); if(cards)cards.style.display='';
-   const layer=$('treeLayer'); if(layer){layer.classList.remove('real-natural-tree');layer.style.width='';layer.style.height='';layer.style.minWidth='';layer.style.minHeight='';layer.style.transform='scale('+treeZoom+')';}
-   const canvas=$('canvas'); if(canvas){canvas.style.width='';canvas.style.height='';}
-   renderTree();
+   closeRealTreeAndReturn(false);
  }
 }
+
+// Browser Back button + Android/iPhone swipe-back gesture.
+// When Real Tree is open, Back only closes Real Tree and returns to the
+// exact Child/Add page that opened it. It will not jump to another page.
+window.addEventListener('popstate',function(e){
+  if(document.body.classList.contains('readonly-add-tree-open')){
+    const stateUrl=e.state && e.state.addTreeReturnUrl;
+    if(stateUrl) addTreeReturnUrl=stateUrl;
+    closeReadOnlyTreeAndReturn(true);
+    return;
+  }
+  if(document.body.classList.contains('real-tree-open')){
+    const stateUrl=e.state && e.state.realTreeReturnUrl;
+    if(stateUrl) realTreeReturnUrl=stateUrl;
+    realTreeHistoryActive=false;
+    cleanupRealTreeUI();
+    if(realTreeReturnUrl && location.href!==realTreeReturnUrl){
+      location.replace(realTreeReturnUrl);
+    }
+    return;
+  }
+  if(typeof updateAddPageBackButton==='function') updateAddPageBackButton();
+});
 
 function initTreeZoomTouch(){
  const box=document.querySelector('.treebox');if(!box||box.dataset.zoomReady)return;box.dataset.zoomReady='1';
@@ -593,24 +735,4 @@ function copyCurrentLink(){copyText(location.href)}
 async function downloadPNG(){if(!people.length)return alert('Tree ખાલી છે');if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r)}const c=await html2canvas($('canvas'),{scale:2,backgroundColor:'#fbfcfe'}),a=document.createElement('a');a.download='family-tree.png';a.href=c.toDataURL('image/png');a.click()}
 init();
 initTreeZoomTouch();
-
-let photoTargetId=null;function openPhotoChoice(id){photoTargetId=id;document.getElementById('photoChoiceOverlay').classList.add('show')}function closePhotoChoice(){document.getElementById('photoChoiceOverlay').classList.remove('show');photoTargetId=null}function setPhoto(file){if(!file||!photoTargetId){closePhotoChoice();return}const target=document.getElementById(photoTargetId);const dt=new DataTransfer();dt.items.add(file);target.files=dt.files;target.dispatchEvent(new Event('change',{bubbles:true}));closePhotoChoice()}function chooseCamera(){const i=document.getElementById('cameraPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}function chooseGallery(){const i=document.getElementById('galleryPicker');i.value='';i.onchange=()=>setPhoto(i.files&&i.files[0]);i.click()}
-// Mobile browser Back/Swipe support is implemented in index.html.
-
-// Child/Add page -> read-only normal tree -> exact Child/Add page back flow.
-let addTreeReturnUrl=''; let addTreeHistoryActive=false;
-function showReadOnlyTreeFromAddPage(){
- if(!familyId)return alert('Family Tree હજુ તૈયાર નથી.');
- addTreeReturnUrl=location.href;
- if(!addTreeHistoryActive){ history.pushState({...(history.state||{}),addTreeOpen:true,addTreeReturnUrl:addTreeReturnUrl},'',location.href); addTreeHistoryActive=true; }
- document.body.classList.add('readonly-view','readonly-add-tree-open');
- $('addBox').classList.add('hidden'); $('rootBox').classList.add('hidden'); $('viewBox').classList.remove('hidden'); $('currentLink').textContent='';
- loadFamily(); window.scrollTo({top:0,behavior:'smooth'});
-}
-function closeReadOnlyTreeAndReturn(fromPopState=false){
- addTreeHistoryActive=false; document.body.classList.remove('readonly-add-tree-open');
- if(fromPopState){ document.body.classList.remove('readonly-view'); $('viewBox').classList.add('hidden'); $('addBox').classList.remove('hidden'); updateAddPageBackButton(); return; }
- if(history.state && history.state.addTreeOpen){ history.back(); return; }
- if(addTreeReturnUrl && location.href!==addTreeReturnUrl) location.replace(addTreeReturnUrl);
-}
-function closeReadOnlyTreeOrRealTree(){ if(document.body.classList.contains('readonly-add-tree-open')) closeReadOnlyTreeAndReturn(false); else closeRealTreeAndReturn(false); }
+updateAddPageBackButton();
