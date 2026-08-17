@@ -307,9 +307,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 await viewFamily(currentFamilyId);
                 await loadFamilies();
 
-                const link=location.origin+d.addLink;
-                alert('✅ '+name.trim()+' સફળતાપૂર્વક Family Tree માં add થઈ ગયો!'+(file?'\\n📷 Photo પણ save થઈ ગયો.':''));
-                prompt('નવો member add થઈ ગયો. તેની link copy કરો:',link);
+
             }catch(e){
                 if(e && e.message!=='Photo selection cancelled.')
                     alert('❌ '+e.message);
