@@ -583,9 +583,11 @@ let addTreeReturnUrl='';
 let addTreeHistoryActive=false;
 function showReadOnlyTreeFromAddPage(){
  if(!familyId)return alert('Family Tree હજુ તૈયાર નથી.');
+ // Remember the exact Child Name + Link page. Do not change the URL.
  addTreeReturnUrl=location.href;
  if(!addTreeHistoryActive){
-   history.pushState({...(history.state||{}),addTreeOpen:true,addTreeReturnUrl:addTreeReturnUrl},'',location.href);
+   const returnUrl=addTreeReturnUrl;
+   history.pushState({...(history.state||{}),familyTreeViewOpen:true,familyTreeReturnUrl:returnUrl},'',location.href);
    addTreeHistoryActive=true;
  }
  document.body.classList.add('readonly-view','readonly-add-tree-open');
@@ -596,20 +598,22 @@ function showReadOnlyTreeFromAddPage(){
  loadFamily();
  window.scrollTo({top:0,behavior:'smooth'});
 }
-function closeReadOnlyTreeAndReturn(fromPopState=false){
+function restoreAddPageAfterTree(){
+ document.body.classList.remove('readonly-view','readonly-add-tree-open');
+ $('viewBox').classList.add('hidden');
+ $('rootBox').classList.add('hidden');
+ $('addBox').classList.remove('hidden');
  addTreeHistoryActive=false;
- document.body.classList.remove('readonly-add-tree-open');
- if(fromPopState){
-   document.body.classList.remove('readonly-view');
-   $('viewBox').classList.add('hidden');
-   $('addBox').classList.remove('hidden');
-   updateAddPageBackButton();
+ updateAddPageBackButton();
+ window.scrollTo({top:0,behavior:'instant'});
+}
+function closeReadOnlyTreeAndReturn(fromPopState=false){
+ if(!fromPopState && addTreeHistoryActive && history.state && history.state.familyTreeViewOpen){
+   history.back();
    return;
  }
- if(history.state && history.state.addTreeOpen){ history.back(); return; }
- const u=addTreeReturnUrl;
- document.body.classList.remove('readonly-view');
- if(u && location.href!==u) location.replace(u);
+ addTreeHistoryActive=false;
+ restoreAddPageAfterTree();
 }
 function toggleAncestorList(){
  const panel=$('ancestorListPanel'),btn=$('ancestorListBtn');
@@ -695,8 +699,10 @@ function toggleUserRealTree(){
 // exact Child/Add page that opened it. It will not jump to another page.
 window.addEventListener('popstate',function(e){
   if(document.body.classList.contains('readonly-add-tree-open')){
-    const stateUrl=e.state && e.state.addTreeReturnUrl;
+    const stateUrl=e.state && (e.state.familyTreeReturnUrl || e.state.addTreeReturnUrl);
     if(stateUrl) addTreeReturnUrl=stateUrl;
+    // Browser Back / Android Back / iPhone swipe-back returns to the
+    // exact Child Name + Link page from which Family Tree View was opened.
     closeReadOnlyTreeAndReturn(true);
     return;
   }
