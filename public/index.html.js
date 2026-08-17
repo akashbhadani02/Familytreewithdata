@@ -8,6 +8,10 @@ async function init(){
  const m=location.pathname.match(/^\/add\/([^/]+)$/);
  if(m){
    token=m[1];
+   // Keep the exact child-link page so Back can return to it later.
+   try{
+     sessionStorage.setItem('familyTreeParentAddReturnUrl', location.pathname+location.search+location.hash);
+   }catch(e){}
    // Always show the add form immediately when a member link is opened.
    $('addBox').classList.remove('hidden');
    $('rootBox').classList.add('hidden');
@@ -113,6 +117,12 @@ function showFamilyTree(){
 }
 function showReadOnlyRealTree(){
  if(!familyId)return alert('Family Tree હજુ તૈયાર નથી.');
+ // Remember the exact page/link from which Real Tree was opened.
+ // This is especially important for /add/<child-token> pages.
+ try{
+   const path=location.pathname+location.search+location.hash;
+   sessionStorage.setItem('familyTreeRealTreeReturnUrl', path);
+ }catch(e){}
  document.body.classList.add('readonly-view');
  $('addBox').classList.add('hidden');
  $('rootBox').classList.add('hidden');
@@ -124,6 +134,30 @@ function showReadOnlyRealTree(){
      if(typeof toggleUserRealTree==='function' && !document.body.classList.contains('real-tree-open')) toggleUserRealTree();
    });
  });
+}
+
+function closeRealTreeAndReturn(){
+ let returnUrl='';
+ try{returnUrl=sessionStorage.getItem('familyTreeRealTreeReturnUrl')||'';}catch(e){}
+ // Only allow an internal path; otherwise fall back to the family add page.
+ if(!returnUrl || !returnUrl.startsWith('/')){
+   returnUrl=token ? ('/add/'+encodeURIComponent(String(token))) : ('/?family='+encodeURIComponent(familyId||''));
+ }
+ try{sessionStorage.removeItem('familyTreeRealTreeReturnUrl');}catch(e){}
+ window.location.href=returnUrl;
+}
+
+function goBackToParentAddPage(){
+ let returnUrl='';
+ try{returnUrl=sessionStorage.getItem('familyTreeParentAddReturnUrl')||'';}catch(e){}
+ if(returnUrl && returnUrl.startsWith('/')){
+   try{sessionStorage.removeItem('familyTreeParentAddReturnUrl');}catch(e){}
+   window.location.href=returnUrl;
+   return;
+ }
+ if(token){window.location.href='/add/'+encodeURIComponent(String(token));return;}
+ if(familyId){window.location.href='/?family='+encodeURIComponent(familyId);return;}
+ window.history.back();
 }
 function showReadOnlyTree(){
  if(!familyId)return alert('Family Tree હજુ તૈયાર નથી.');
