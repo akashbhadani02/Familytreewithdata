@@ -117,11 +117,19 @@ async function createFamily(){
                 people=Array.isArray(d.people)?d.people:[];
                 $('viewer').style.display='block'; renderTree();
                 if(preservePosition){
-                    requestAnimationFrame(()=>{
-                        window.scrollTo(pageX,pageY);
-                        const b=$('treebox');
-                        if(b){b.scrollLeft=treeLeft;b.scrollTop=treeTop;}
-                    });
+                    // Keep the admin exactly at the same page/tree position after any update.
+                    // renderTree() and list refreshes can reset scroll, so restore it several
+                    // times after the DOM has finished updating (including after alerts/async work).
+                    const restoreAdminPosition=()=>{
+                        try{
+                            document.documentElement.style.scrollBehavior='auto';
+                            document.body.style.scrollBehavior='auto';
+                            window.scrollTo({left:pageX,top:pageY,behavior:'auto'});
+                            const b=$('treebox');
+                            if(b){b.scrollLeft=treeLeft;b.scrollTop=treeTop;}
+                        }catch(_e){}
+                    };
+                    [0,40,100,200,350,550,800].forEach(ms=>setTimeout(restoreAdminPosition,ms));
                 }else{
                     $('viewer').scrollIntoView({behavior:'smooth',block:'start'});
                     setTimeout(focusTreeRoot,150);
@@ -419,10 +427,8 @@ async function editName(id){
                 const r=await fetch('/api/admin/person/'+encodeURIComponent(id),{method:'PUT',headers:{'Content-Type':'application/json','x-admin-key':key},body:JSON.stringify({name:name.trim()})});
                 const d=await r.json(); if(!r.ok||!d.ok)return alert(d.error||'Name update થઈ નથી');
                 await viewFamily(currentFamilyId,{preservePosition:true});
-                requestAnimationFrame(()=>{
-                    window.scrollTo(pageX,pageY);
-                    const b=$('treebox'); if(b){b.scrollLeft=savedLeft;b.scrollTop=savedTop;}
-                });
+                const restore=()=>{window.scrollTo({left:pageX,top:pageY,behavior:'auto'});const b=$('treebox');if(b){b.scrollLeft=savedLeft;b.scrollTop=savedTop;}};
+                [0,40,100,200,350,550,800].forEach(ms=>setTimeout(restore,ms));
             }catch(e){alert('Name update error: '+e.message);}
         }
 
