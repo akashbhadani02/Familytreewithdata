@@ -243,6 +243,9 @@ function showFamilyTree(){
 }
 function showReadOnlyRealTree(){
  if(!familyId)return alert('Family Tree હજુ તૈયાર નથી.');
+ // Remember the exact Add/Child link so Real Tree's Back button returns to that page.
+ realTreeReturnUrl = location.href;
+ preserveRealTreeReturnUrl = true;
  document.body.classList.add('readonly-view');
  $('addBox').classList.add('hidden');
  $('rootBox').classList.add('hidden');
@@ -592,6 +595,7 @@ function toggleAncestorList(){
 }
 
 let realTreeReturnUrl = location.href;
+let preserveRealTreeReturnUrl = false;
 function closeRealTreeAndReturn(){
   const returnUrl = realTreeReturnUrl || location.href;
   const view=$('viewBox');
@@ -605,14 +609,17 @@ function closeRealTreeAndReturn(){
   const layer=$('treeLayer'); if(layer){layer.classList.remove('real-natural-tree');layer.style.width='';layer.style.height='';layer.style.minWidth='';layer.style.minHeight='';layer.style.transform='scale('+treeZoom+')';}
   const canvas=$('canvas'); if(canvas){canvas.style.width='';canvas.style.height='';}
   renderTree();
-  if(location.href !== returnUrl){ history.replaceState({},'',returnUrl); }
+  if(returnUrl && location.href !== returnUrl){
+    location.href = returnUrl;
+  }
 }
 function toggleUserRealTree(){
  const view=$('viewBox'), btn=$('userRealTreeBtn');
  if(!view)return;
  const opening=!document.body.classList.contains('real-tree-open');
  if(opening){
-   realTreeReturnUrl=location.href;
+   if(!preserveRealTreeReturnUrl) realTreeReturnUrl=location.href;
+   preserveRealTreeReturnUrl=false;
    document.body.classList.add('real-tree-open');
    view.classList.add('real-tree-open');
    if(btn) btn.textContent='✕ Close Real Tree';
