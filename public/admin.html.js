@@ -105,15 +105,27 @@ async function createFamily(){
         }
         async function deleteCurrentFamily(){if(currentFamilyId)await deleteFamily(currentFamilyId);}
 
-        async function viewFamily(id){
+        async function viewFamily(id, options={}){
+            const preservePosition=!!options.preservePosition;
+            const pageX=window.scrollX, pageY=window.scrollY;
+            const treebox=$('treebox');
+            const treeLeft=treebox?treebox.scrollLeft:0, treeTop=treebox?treebox.scrollTop:0;
             currentFamilyId=id;
             try{
                 const r=await fetch('/api/family/'+encodeURIComponent(id)); const d=await r.json();
                 if(!r.ok||!d.ok)return alert(d.error||'Tree load થઈ નથી');
                 people=Array.isArray(d.people)?d.people:[];
                 $('viewer').style.display='block'; renderTree();
-                $('viewer').scrollIntoView({behavior:'smooth',block:'start'});
-                setTimeout(focusTreeRoot,150);
+                if(preservePosition){
+                    requestAnimationFrame(()=>{
+                        window.scrollTo(pageX,pageY);
+                        const b=$('treebox');
+                        if(b){b.scrollLeft=treeLeft;b.scrollTop=treeTop;}
+                    });
+                }else{
+                    $('viewer').scrollIntoView({behavior:'smooth',block:'start'});
+                    setTimeout(focusTreeRoot,150);
+                }
             }catch(e){alert('Tree load error: '+e.message);}
         }
 
@@ -324,7 +336,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 const raw=await r.text(); let d; try{d=JSON.parse(raw)}catch(_){throw new Error('Server upload error ('+r.status+'). Please try again.')}
                 if(!r.ok || !d.ok) throw new Error(d.error||'Member add થયો નથી');
 
-                await viewFamily(currentFamilyId);
+                await viewFamily(currentFamilyId,{preservePosition:true});
                 await loadFamilies();
 
                 const link=location.origin+d.addLink;
@@ -375,7 +387,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 });
                 const d=await r.json();
                 if(!r.ok||!d.ok)throw new Error(d.error||'Photo update થઈ નથી');
-                await viewFamily(currentFamilyId);
+                await viewFamily(currentFamilyId,{preservePosition:true});
                 alert('✅ '+p.name+' નો photo successfully update થઈ ગયો.');
             }catch(e){
                 if(e && e.message!=='Photo selection cancelled.' && e.message!=='Crop cancelled.') alert('❌ '+e.message);
@@ -392,7 +404,7 @@ function initTreeZoomTouch(){const box=$('treebox');if(!box||box.dataset.zoomRea
                 });
                 const d=await r.json();
                 if(!r.ok||!d.ok)throw new Error(d.error||'Photo delete થયો નથી');
-                await viewFamily(currentFamilyId);
+                await viewFamily(currentFamilyId,{preservePosition:true});
                 alert('✅ '+p.name+' નો photo delete થઈ ગયો.');
             }catch(e){alert('❌ '+e.message);}
         }
@@ -406,7 +418,7 @@ async function editName(id){
             try{
                 const r=await fetch('/api/admin/person/'+encodeURIComponent(id),{method:'PUT',headers:{'Content-Type':'application/json','x-admin-key':key},body:JSON.stringify({name:name.trim()})});
                 const d=await r.json(); if(!r.ok||!d.ok)return alert(d.error||'Name update થઈ નથી');
-                await viewFamily(currentFamilyId);
+                await viewFamily(currentFamilyId,{preservePosition:true});
                 requestAnimationFrame(()=>{
                     window.scrollTo(pageX,pageY);
                     const b=$('treebox'); if(b){b.scrollLeft=savedLeft;b.scrollTop=savedTop;}
@@ -420,7 +432,7 @@ async function editName(id){
             try{
                 const r=await fetch('/api/admin/person/'+encodeURIComponent(id),{method:'DELETE',headers:{'x-admin-key':key}}); const d=await r.json();
                 if(!r.ok||!d.ok)return alert(d.error||'Member delete થયો નથી');
-                await viewFamily(currentFamilyId); await loadFamilies();
+                await viewFamily(currentFamilyId,{preservePosition:true}); await loadFamilies();
             }catch(e){alert('Member delete error: '+e.message);}
         }
 
