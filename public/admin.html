@@ -403,6 +403,43 @@
         }
 </style>
 
+<style>
+
+/* REAL TREE VIEW - NATURAL CONNECTED TREE */
+.real-tree-overlay{
+  position:fixed; inset:0; z-index:99999;
+  background:linear-gradient(to bottom,#76ccef 0%,#dff7ff 63%,#82bd51 63%,#57963d 100%);
+  overflow:hidden;
+}
+.real-tree-overlay .rt-title{
+  position:absolute; top:18px; left:0; width:100%; text-align:center;
+  font-size:30px; font-weight:700; color:#275d27; z-index:5;
+}
+.real-tree-overlay .rt-stage{
+  position:absolute; left:50%; top:58px; width:min(1400px,96vw);
+  height:calc(100vh - 70px); transform:translateX(-50%);
+  transform-origin:center center;
+}
+.real-tree-overlay svg{width:100%;height:100%;overflow:visible}
+.rt-trunk{fill:none;stroke:#633719;stroke-width:58;stroke-linecap:round;stroke-linejoin:round}
+.rt-main-branch{fill:none;stroke:#6b3d1c;stroke-width:28;stroke-linecap:round;stroke-linejoin:round}
+.rt-branch{fill:none;stroke:#74441f;stroke-width:14;stroke-linecap:round;stroke-linejoin:round}
+.rt-twig{fill:none;stroke:#815026;stroke-width:7;stroke-linecap:round}
+.rt-leaf{fill:url(#rtLeaf);stroke:#286d25;stroke-width:1}
+.rt-plate{fill:#9a6335;stroke:#4d2a15;stroke-width:2}
+.rt-plate-text{fill:#fff2d0;font:700 16px Arial;text-anchor:middle}
+.rt-person{fill:#f5e3b0;stroke:#6b3b1c;stroke-width:2}
+.rt-person-text{fill:#4b2a15;font:700 14px Arial;text-anchor:middle}
+.rt-close{position:absolute;right:22px;top:18px;z-index:8;border:0;border-radius:8px;
+  padding:10px 15px;background:#fff;color:#4d2a15;font-weight:700;cursor:pointer;
+  box-shadow:0 3px 12px rgba(0,0,0,.2)}
+.rt-hint{position:absolute;left:20px;bottom:18px;z-index:8;background:rgba(255,255,255,.82);
+  padding:7px 11px;border-radius:8px;color:#4b2a15;font:13px Arial}
+.rt-node{cursor:pointer}
+.rt-node:hover .rt-person,.rt-node:hover .rt-plate{filter:brightness(1.06)}
+/* END REAL TREE VIEW - NATURAL CONNECTED TREE */
+
+</style>
 </head>
 
 <body>
@@ -1426,6 +1463,211 @@ function forwardPhoto(file){
   });
 }
 </script>
+
+<script>
+/* REAL TREE VIEW: connected organic SVG tree */
+(function(){
+  const oldOpen = window.openRealTreeView;
+  window.openRealTreeView = function(){
+    const data = window.familyData || window.familyMembers || window.members ||
+                 window.familyTreeData || window.treeData || [];
+    const members = normalizeMembers(data);
+    renderRealTree(members);
+  };
+
+  function normalizeMembers(raw){
+    let arr = Array.isArray(raw) ? raw : [];
+    if (!arr.length && raw && typeof raw === 'object'){
+      arr = Object.values(raw);
+    }
+    return arr.map((m,i)=>({
+      id:String(m.id ?? m.memberId ?? m.uid ?? i),
+      parentId:m.parentId ?? m.parent_id ?? m.fatherId ?? m.father_id ?? m.parent ?? null,
+      name:String(m.name ?? m.fullName ?? m.displayName ?? m.firstName ?? ('Member '+(i+1))),
+      photo:m.photo ?? m.photoUrl ?? m.image ?? m.imageUrl ?? m.avatar ?? '',
+      gender:m.gender ?? ''
+    }));
+  }
+
+  function renderRealTree(members){
+    const old=document.getElementById('realTreeOverlay');
+    if(old) old.remove();
+
+    const ov=document.createElement('div');
+    ov.id='realTreeOverlay';
+    ov.className='real-tree-overlay';
+    ov.innerHTML=`
+      <div class="rt-title">🌳 આપણું પરિવારનું ઝાડ 🥭</div>
+      <button class="rt-close" id="rtClose">✕ Close</button>
+      <div class="rt-stage" id="rtStage">
+        <svg id="rtSvg" viewBox="0 0 1400 850" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="rtLeaf" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#7bd557"/>
+              <stop offset="50%" stop-color="#3c9b31"/>
+              <stop offset="100%" stop-color="#17691f"/>
+            </linearGradient>
+          </defs>
+          <g id="rtConnections"></g>
+          <g id="rtNodes"></g>
+        </svg>
+      </div>
+      <div class="rt-hint">Mouse wheel: zoom · Drag: move tree</div>`;
+    document.body.appendChild(ov);
+    document.getElementById('rtClose').onclick=()=>ov.remove();
+
+    if(!members.length){
+      document.getElementById('rtNodes').innerHTML =
+        '<text x="700" y="420" text-anchor="middle" font-size="24" fill="#4b2a15">No family data found</text>';
+      return;
+    }
+
+    drawConnectedTree(members);
+    enablePanZoom(document.getElementById('rtStage'));
+  };
+
+  function drawConnectedTree(ms){
+    const svg=document.getElementById('rtSvg');
+    const con=document.getElementById('rtConnections');
+    const nodes=document.getElementById('rtNodes');
+
+    const byId=new Map(ms.map(m=>[m.id,m]));
+    const children=new Map();
+    ms.forEach(m=>{
+      if(!children.has(m.parentId)) children.set(m.parentId,[]);
+      children.get(m.parentId).push(m);
+    });
+
+    // Roots are members whose parent is absent. If multiple roots exist,
+    // they are connected to a common family trunk junction.
+    let roots=ms.filter(m=>!m.parentId || !byId.has(String(m.parentId)));
+    if(!roots.length) roots=[ms[0]];
+
+    const level=new Map();
+    function setLevel(m,l){
+      if(level.has(m.id) && level.get(m.id)<=l) return;
+      level.set(m.id,l);
+      (children.get(m.id)||[]).forEach(c=>setLevel(c,l+1));
+    }
+    roots.forEach(r=>setLevel(r,0));
+
+    // Prevent disconnected/cyclic records from floating.
+    ms.forEach(m=>{ if(!level.has(m.id)) level.set(m.id,0); });
+
+    const levels={};
+    ms.forEach(m=>{
+      const l=level.get(m.id);
+      (levels[l] ||= []).push(m);
+    });
+
+    const maxL=Math.max(...Object.keys(levels).map(Number),0);
+    const yGap=Math.min(155, 680/Math.max(maxL+1,1));
+    const pos=new Map();
+
+    // Give every node a deterministic x position. Descendants are centered
+    // beneath their parent, which makes every branch visibly terminate at
+    // the child node instead of using unrelated free-floating branches.
+    function layoutSubtree(m, depth, left, right){
+      const kids=(children.get(m.id)||[]).filter(k=>level.get(k.id)===depth+1);
+      const y=120+depth*yGap;
+      if(!kids.length){
+        const x=(left+right)/2;
+        pos.set(m.id,{x,y});
+        return x;
+      }
+      const span=(right-left)/kids.length;
+      const xs=kids.map((k,i)=>layoutSubtree(k,depth+1,left+i*span,right-(kids.length-1-i)*span));
+      const x=xs.reduce((a,b)=>a+b,0)/xs.length;
+      pos.set(m.id,{x,y});
+      return x;
+    }
+
+    const rootSpan=Math.max(1200, roots.length*190);
+    const unit=rootSpan/roots.length;
+    roots.forEach((r,i)=>layoutSubtree(r,0,i*unit,(i+1)*unit));
+
+    // If a node's parent wasn't represented in the same tree, position it
+    // near the top and connect it through the trunk.
+    const missing=ms.filter(m=>!m.parentId || !byId.has(String(m.parentId)));
+    const rootXs=missing.map(m=>pos.get(m.id)?.x).filter(Boolean);
+    const trunkX=rootXs.length ? rootXs.reduce((a,b)=>a+b,0)/rootXs.length : 700;
+
+    // Main continuous trunk.
+    const bottom=825, top=95;
+    con.innerHTML=`<path class="rt-trunk" d="M ${trunkX} ${bottom}
+      C ${trunkX-18} ${bottom-130}, ${trunkX+20} ${bottom-240}, ${trunkX} ${top}"/>`;
+
+    // Every parent-child relationship gets its own curved wooden connection.
+    ms.forEach(m=>{
+      if(!m.parentId) {
+        const p=pos.get(m.id); if(!p) return;
+        con.innerHTML += `<path class="rt-main-branch" d="M ${trunkX} ${p.y+25}
+          C ${trunkX} ${p.y+55}, ${p.x} ${p.y-35}, ${p.x} ${p.y}"/>`;
+        return;
+      }
+      const parent=pos.get(String(m.parentId));
+      const child=pos.get(m.id);
+      if(!child) return;
+      if(parent){
+        const mid=(parent.y+child.y)/2;
+        const cls=(level.get(m.id)<=1?'rt-main-branch':'rt-branch');
+        con.innerHTML += `<path class="${cls}" d="M ${parent.x} ${parent.y+22}
+          C ${parent.x} ${mid}, ${child.x} ${mid}, ${child.x} ${child.y-22}"/>`;
+      }else{
+        con.innerHTML += `<path class="rt-main-branch" d="M ${trunkX} ${child.y+22}
+          C ${trunkX} ${child.y+60}, ${child.x} ${child.y-45}, ${child.x} ${child.y-22}"/>`;
+      }
+    });
+
+    // Twigs/leaves behind terminal nodes, matching the supplied example.
+    ms.filter(m=>(children.get(m.id)||[]).length===0).forEach(m=>{
+      const p=pos.get(m.id); if(!p) return;
+      const d=p.y-42;
+      con.innerHTML += `<path class="rt-twig" d="M ${p.x} ${p.y-18} C ${p.x-18} ${d-15}, ${p.x-34} ${d-35}, ${p.x-42} ${d-55}"/>`;
+      con.innerHTML += `<path class="rt-twig" d="M ${p.x} ${p.y-18} C ${p.x+18} ${d-15}, ${p.x+34} ${d-35}, ${p.x+42} ${d-55}"/>`;
+      con.innerHTML += `<ellipse class="rt-leaf" cx="${p.x-48}" cy="${d-62}" rx="18" ry="30" transform="rotate(-35 ${p.x-48} ${d-62})"/>`;
+      con.innerHTML += `<ellipse class="rt-leaf" cx="${p.x+48}" cy="${d-62}" rx="18" ry="30" transform="rotate(35 ${p.x+48} ${d-62})"/>`;
+    });
+
+    ms.forEach(m=>{
+      const p=pos.get(m.id); if(!p) return;
+      const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('class','rt-node');
+      const isRoot=roots.some(r=>r.id===m.id);
+      const w=isRoot?132:118, h=isRoot?44:42;
+      g.innerHTML=`
+        <rect class="${isRoot?'rt-plate':'rt-person'}" x="${p.x-w/2}" y="${p.y-h/2}" width="${w}" height="${h}" rx="7"/>
+        ${m.photo ? `<image href="${escapeAttr(m.photo)}" x="${p.x-w/2+5}" y="${p.y-h/2+5}" width="${h-10}" height="${h-10}" preserveAspectRatio="xMidYMid slice" clip-path="inset(0 round 5px)"/>` : ''}
+        <text class="${isRoot?'rt-plate-text':'rt-person-text'}" x="${p.x+(m.photo?18:0)}" y="${p.y+5}">${escapeText(m.name)}</text>`;
+      nodes.appendChild(g);
+    });
+  }
+
+  function escapeText(s){
+    return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+  function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+
+  function enablePanZoom(stage){
+    let scale=1, x=0, y=0, drag=false, sx=0, sy=0;
+    function apply(){stage.style.transform=`translate(calc(-50% + ${x}px),${y}px) scale(${scale})`;}
+    stage.addEventListener('wheel',e=>{
+      e.preventDefault();
+      scale=Math.max(.45,Math.min(2.5,scale*(e.deltaY<0?1.08:.92)));
+      apply();
+    },{passive:false});
+    stage.addEventListener('pointerdown',e=>{
+      drag=true;sx=e.clientX-x;sy=e.clientY-y;stage.setPointerCapture(e.pointerId);
+    });
+    stage.addEventListener('pointermove',e=>{
+      if(!drag)return;x=e.clientX-sx;y=e.clientY-sy;apply();
+    });
+    stage.addEventListener('pointerup',()=>drag=false);
+    stage.addEventListener('pointercancel',()=>drag=false);
+  }
+})();
+</script>
+
 </body>
 </html>
 
